@@ -45,7 +45,20 @@ export default function SupervisorAttendancePage() {
     setTotal(result.data!.total);
   }, []);
 
-  useEffect(() => { load(page, filter); }, [page, filter, load]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (isMounted) {
+        await load(page, filter);
+      }
+    };
+
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [page, filter, load]);
 
   async function openRecord(record: AttendanceWithStudent) {
     setSelected(record);

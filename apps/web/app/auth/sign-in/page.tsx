@@ -52,7 +52,7 @@ export default function SignInPage() {
       <>
         <div className="mb-6">
           <h2 className="text-xl font-bold text-slate-900">Reset your password</h2>
-          <p className="text-sm text-slate-500 mt-1">Enter your email and we'll send a reset link.</p>
+          <p className="text-sm text-slate-500 mt-1">Enter your email and we&apos;ll send a reset link.</p>
         </div>
         <form onSubmit={handleResetRequest} className="flex flex-col gap-4">
           <Input label="Email" type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="you@example.com" required />

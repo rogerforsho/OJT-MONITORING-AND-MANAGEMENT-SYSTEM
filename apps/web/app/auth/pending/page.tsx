@@ -11,7 +11,7 @@ export default function PendingPage() {
       <div>
         <h2 className="text-xl font-bold text-slate-900">Registration Submitted</h2>
         <p className="text-sm text-slate-500 mt-2 leading-relaxed max-w-xs mx-auto">
-          Your account is pending approval by the OJT Coordinator. You'll be able to sign in once your registration is approved.
+          Your account is pending approval by the OJT Coordinator. You&apos;ll be able to sign in once your registration is approved.
         </p>
       </div>
       <div className="w-full rounded-xl bg-teal-50 border border-teal-100 px-5 py-4 text-left">
