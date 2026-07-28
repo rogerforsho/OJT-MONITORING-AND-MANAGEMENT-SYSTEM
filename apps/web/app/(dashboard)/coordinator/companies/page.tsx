@@ -40,7 +40,20 @@ export default function CompaniesPage() {
     setTotal(result.data!.total);
   }, []);
 
-  useEffect(() => { load(page); }, [page, load]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (isMounted) {
+        await load(page);
+      }
+    };
+
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [page, load]);
 
   function openCreate() {
     setEditing(null);

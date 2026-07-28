@@ -140,8 +140,15 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load students.' } };
 
+  interface AssignmentStudentRow {
+    student_id: string;
+    student_number: string;
+    course: string;
+    users: { full_name: string; account_status: string };
+  }
+
   return {
-    data: (data ?? []).map((s: any) => ({
+    data: (data ?? []).map((s: AssignmentStudentRow) => ({
       student_id: s.student_id,
       student_number: s.student_number,
       full_name: s.users.full_name,
@@ -166,8 +173,14 @@ export async function listSupervisorsForCompany(
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load supervisors.' } };
 
+  interface SupervisorRow {
+    supervisor_id: string;
+    position: string;
+    users: { full_name: string };
+  }
+
   return {
-    data: (data ?? []).map((s: any) => ({
+    data: (data ?? []).map((s: SupervisorRow) => ({
       supervisor_id: s.supervisor_id,
       full_name: s.users.full_name,
       position: s.position,

@@ -44,7 +44,20 @@ export default function AssignmentsPage() {
     setTotal(result.data!.total);
   }, []);
 
-  useEffect(() => { load(page); }, [page, load]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (isMounted) {
+        await load(page);
+      }
+    };
+
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [page, load]);
 
   async function openCreate() {
     setForm({ student_id: '', company_id: '', supervisor_id: '', start_date: '', end_date: '' });
