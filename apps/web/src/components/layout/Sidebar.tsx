@@ -18,6 +18,7 @@ const NAV_ITEMS: Record<string, { label: string; href: string; icon: string }[]>
     { label: 'Approvals', href: '/coordinator/approvals', icon: '✅' },
     { label: 'Students', href: '/coordinator/students', icon: '👥' },
     { label: 'Companies', href: '/coordinator/companies', icon: '🏢' },
+    { label: 'Supervisors', href: '/coordinator/supervisors', icon: '👩‍🏫' },
     { label: 'Assignments', href: '/coordinator/assignments', icon: '🔗' },
     { label: 'Submissions', href: '/coordinator/submissions', icon: '📁' },
     { label: 'Progress', href: '/coordinator/progress', icon: '📈' },

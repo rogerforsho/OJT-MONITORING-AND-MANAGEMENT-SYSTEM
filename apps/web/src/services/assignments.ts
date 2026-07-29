@@ -144,16 +144,19 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
     student_id: string;
     student_number: string;
     course: string;
-    users: { full_name: string; account_status: string };
+    users: { full_name: string; account_status: string } | { full_name: string; account_status: string }[];
   }
 
   return {
-    data: (data ?? []).map((s: AssignmentStudentRow) => ({
-      student_id: s.student_id,
-      student_number: s.student_number,
-      full_name: s.users.full_name,
-      course: s.course,
-    })),
+    data: (data ?? []).map((s: AssignmentStudentRow) => {
+      const user = Array.isArray(s.users) ? s.users[0] : s.users;
+      return {
+        student_id: s.student_id,
+        student_number: s.student_number,
+        full_name: user?.full_name ?? '',
+        course: s.course,
+      };
+    }),
     error: null,
   };
 }
@@ -176,15 +179,18 @@ export async function listSupervisorsForCompany(
   interface SupervisorRow {
     supervisor_id: string;
     position: string;
-    users: { full_name: string };
+    users: { full_name: string } | { full_name: string }[];
   }
 
   return {
-    data: (data ?? []).map((s: SupervisorRow) => ({
-      supervisor_id: s.supervisor_id,
-      full_name: s.users.full_name,
-      position: s.position,
-    })),
+    data: (data ?? []).map((s: SupervisorRow) => {
+      const user = Array.isArray(s.users) ? s.users[0] : s.users;
+      return {
+        supervisor_id: s.supervisor_id,
+        full_name: user?.full_name ?? '',
+        position: s.position,
+      };
+    }),
     error: null,
   };
 }
