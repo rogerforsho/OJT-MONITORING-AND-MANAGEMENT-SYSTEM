@@ -50,12 +50,28 @@ export default function StudentReportsPage() {
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
           <p className="text-sm text-slate-500 mt-0.5">Submit internship reports and requirements.</p>
         </div>
         <Button onClick={() => setModalOpen(true)}>+ New Report</Button>
+      </div>
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Report workflow</h2>
+          <p className="mt-2 text-sm text-slate-600">Submit your progress and document your internship requirements here.</p>
+          <ol className="mt-4 space-y-3 text-sm text-slate-600">
+            <li><span className="font-semibold text-slate-900">1.</span> Create a new report for each requirement.</li>
+            <li><span className="font-semibold text-slate-900">2.</span> Keep your file path or attachments updated.</li>
+            <li><span className="font-semibold text-slate-900">3.</span> Ask your supervisor to review and approve your submission.</li>
+          </ol>
+        </div>
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Need help?</h2>
+          <p className="mt-2 text-sm text-slate-600">If your report is not reviewed yet, check in with your supervisor and keep your file path details accurate.</p>
+        </div>
       </div>
 
       {error && <div className="mb-4"><Alert type="error" message={error} /></div>}
@@ -66,7 +82,7 @@ export default function StudentReportsPage() {
         ) : reports.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <span className="text-4xl mb-3">📁</span>
-            <p className="text-sm">No reports submitted yet.</p>
+            <p className="text-sm">No reports submitted yet. Create your first report to begin tracking progress.</p>
           </div>
         ) : (
           <table className="w-full text-sm">

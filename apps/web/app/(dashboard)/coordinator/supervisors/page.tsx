@@ -29,25 +29,40 @@ export default function SupervisorsPage() {
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<{ company_id: string; company_name: string }[]>([]);
+  const [companiesError, setCompaniesError] = useState('');
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
     setError('');
     const result = await listSupervisors(p, PAGE_SIZE);
     setLoading(false);
-    if (result.error) { setError(result.error.message); return; }
+    if (result.error) { 
+      setError(result.error.message); 
+      return; 
+    }
     setSupervisors(result.data!.supervisors);
     setTotal(result.data!.total);
   }, []);
 
+  // Consolidating your data fetching loop to isolate state contamination 
   useEffect(() => {
     let mounted = true;
     const fetchData = async () => {
       if (!mounted) return;
       await load(page);
+      
+      // Fetching up to 100 system companies matching OJT structure requirements
       const companiesResult = await listCompanies(1, 100);
-      if (mounted) {
-        setCompanies((companiesResult.data?.companies ?? []).filter(c => c.status === 'active').map(c => ({ company_id: c.company_id, company_name: c.company_name })));
+      if (!mounted) return;
+      
+      if (companiesResult.error) {
+        setCompaniesError(companiesResult.error.message);
+        setCompanies([]);
+      } else {
+        // This ensures ONLY companies with an 'active' status populate the options selection pool
+        setCompanies((companiesResult.data?.companies ?? [])
+          .filter(c => c.status === 'active')
+          .map(c => ({ company_id: c.company_id, company_name: c.company_name })));
       }
     };
     fetchData();
@@ -59,17 +74,20 @@ export default function SupervisorsPage() {
     setSaving(true);
     const result = await createSupervisor(form);
     setSaving(false);
-    if (result.error) { setFormError(result.error.message); return; }
+    if (result.error) { 
+      setFormError(result.error.message); 
+      return; 
+    }
     setModalOpen(false);
     setForm(EMPTY_FORM);
-    load(page);
+    await load(page);
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Supervisors</h1>
           <p className="text-sm text-slate-500 mt-0.5">Create supervisor accounts and link them to companies.</p>
@@ -78,6 +96,12 @@ export default function SupervisorsPage() {
       </div>
 
       {error && <div className="mb-4"><Alert type="error" message={error} /></div>}
+      {companiesError && <div className="mb-4"><Alert type="error" message={companiesError} /></div>}
+
+      <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Supervisor creation requirement</h2>
+        <p className="mt-2 text-sm text-slate-600">You can only create supervisors that are linked to an active company. If no company is available, add one first on the Companies page.</p>
+      </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
@@ -125,22 +149,41 @@ export default function SupervisorsPage() {
         <Input label="Full Name" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} required />
         <Input label="Email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
         <Input label="Temporary Password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
-        <div className="flex flex-col gap-1">
+        
+        <div className="flex flex-col gap-1 mb-3">
           <label className="text-sm font-medium text-slate-700">Company</label>
           <select
             value={form.company_id}
             onChange={e => setForm(f => ({ ...f, company_id: e.target.value }))}
             className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            required
           >
             <option value="">Select company</option>
-            {companies.map(c => <option key={c.company_id} value={c.company_id}>{c.company_name}</option>)}
+            {companies.map(c => (
+              <option key={c.company_id} value={c.company_id}>
+                {c.company_name}
+              </option>
+            ))}
           </select>
         </div>
+
+        {companies.length === 0 && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 mt-3 mb-3">
+            No active companies found. Create a company first on the Companies page before adding supervisors.
+          </div>
+        )}
+
         <Input label="Position" value={form.position} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} required />
-        {formError && <Alert type="error" message={formError} />}
-        <div className="flex gap-3 pt-1">
-          <Button onClick={handleSave} loading={saving} className="flex-1">Create Supervisor</Button>
-          <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">Cancel</Button>
+        
+        {formError && <div className="mt-3"><Alert type="error" message={formError} /></div>}
+        
+        <div className="flex gap-3 pt-4">
+          <Button onClick={handleSave} loading={saving} className="flex-1" disabled={companies.length === 0}>
+            Create Supervisor
+          </Button>
+          <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">
+            Cancel
+          </Button>
         </div>
       </Modal>
     </div>

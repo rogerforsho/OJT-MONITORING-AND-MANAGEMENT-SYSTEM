@@ -3,8 +3,7 @@
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
-import type { AppResult } from '@ojt/shared';
-import type { RegisterStudentInput, SignInInput } from '@ojt/shared';
+import type { AppResult, AuthUser, RegisterStudentInput, SignInInput } from '@ojt/shared';
 
 function serviceClient() {
   return createServiceClient(
@@ -176,7 +175,7 @@ export async function registerStudent(
   return { data: null, error: null };
 }
 
-export async function signIn(input: SignInInput): Promise<AppResult<null>> {
+export async function signIn(input: SignInInput): Promise<AppResult<AuthUser>> {
   if (!input.email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
   if (!input.password)
@@ -193,31 +192,39 @@ export async function signIn(input: SignInInput): Promise<AppResult<null>> {
     return { data: null, error: { code: 'UNAUTHORIZED', message: 'Invalid email or password.' } };
 
   // Check account status — backend authority
-  const { data: user } = await supabase
+  const { data: profile } = await supabase
     .from('users')
-    .select('account_status, role')
+    .select('user_id, full_name, email, account_status, role')
     .eq('user_id', data.user.id)
     .single();
 
-  if (!user)
+  if (!profile)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Account not found.' } };
 
-  if (user.account_status === 'pending') {
+  if (profile.account_status === 'pending') {
     await supabase.auth.signOut();
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account is pending approval.' } };
   }
 
-  if (user.account_status === 'rejected') {
+  if (profile.account_status === 'rejected') {
     await supabase.auth.signOut();
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account registration was rejected.' } };
   }
 
-  if (user.account_status === 'inactive') {
+  if (profile.account_status === 'inactive') {
     await supabase.auth.signOut();
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account has been deactivated.' } };
   }
 
-  return { data: null, error: null };
+  const user: AuthUser = {
+    user_id: profile.user_id,
+    full_name: profile.full_name,
+    email: profile.email,
+    role: profile.role,
+    account_status: profile.account_status,
+  };
+
+  return { data: user, error: null };
 }
 
 export async function signOut(): Promise<void> {

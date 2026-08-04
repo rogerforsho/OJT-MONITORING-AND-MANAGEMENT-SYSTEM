@@ -69,9 +69,15 @@ export default function CoordinatorApprovalsPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Student Approvals</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Review and approve pending student registrations.</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Student Approvals</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Review and approve pending student registrations.</p>
+        </div>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-semibold">{total} pending</p>
+          <p className="text-xs text-amber-700">Awaiting coordinator decision</p>
+        </div>
       </div>
 
       {error && <div className="mb-4"><Alert type="error" message={error} /></div>}
@@ -120,6 +126,7 @@ export default function CoordinatorApprovalsPage() {
                       <Button
                         onClick={() => handleAction(student.user_id, 'active')}
                         loading={actionLoading === student.user_id}
+                        className="bg-emerald-600 hover:bg-emerald-700"
                       >
                         Approve
                       </Button>

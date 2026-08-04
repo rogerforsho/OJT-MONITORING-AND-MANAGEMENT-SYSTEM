@@ -116,13 +116,29 @@ export async function createSupervisor(input: SupervisorInput): Promise<AppResul
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to create supervisor account.' } };
   }
 
-  const { error: supervisorError } = await service.from('supervisors').insert({
+  const { error: userError } = await service.from('users').upsert({
     user_id: authData.user.id,
-    company_id: input.company_id,
-    position: input.position.trim(),
-  });
+    full_name: input.full_name.trim(),
+    email: input.email.trim(),
+    role: 'Supervisor',
+    account_status: 'active',
+  }, { onConflict: 'user_id' });
+
+  if (userError) {
+    console.error("DEBUG USERS TABLE ERROR:", userError);
+    await service.auth.admin.deleteUser(authData.user.id);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to create supervisor profile.' } };
+  }
+
+ const { error: supervisorError } = await service.from('supervisors').insert({
+  supervisor_id: authData.user.id, // Maps to the first column slot
+  user_id: authData.user.id,       // Maps to the second required column slot
+  company_id: input.company_id,
+  position: input.position.trim(),
+});
 
   if (supervisorError) {
+     console.error("DEBUG SUPERVISORS TABLE ERROR:", supervisorError);
     await service.auth.admin.deleteUser(authData.user.id);
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to create supervisor profile.' } };
   }

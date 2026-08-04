@@ -12,7 +12,7 @@ export default function CoordinatorSubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reviewingId, setReviewingId] = useState<string | null>(null);
-  const [remarks, setRemarks] = useState('');
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -28,10 +28,10 @@ export default function CoordinatorSubmissionsPage() {
 
   async function handleReview(report_id: string, status: 'reviewed' | 'approved' | 'rejected') {
     setReviewingId(report_id);
-    const result = await reviewReport(report_id, status, remarks);
+    const result = await reviewReport(report_id, status, reviewNotes[report_id] ?? '');
     setReviewingId(null);
     if (result.error) { setError(result.error.message); return; }
-    setRemarks('');
+    setReviewNotes(prev => ({ ...prev, [report_id]: '' }));
     load(page);
   }
 
@@ -61,7 +61,7 @@ export default function CoordinatorSubmissionsPage() {
                 <th className="text-left px-5 py-3.5 font-medium text-slate-500">Student</th>
                 <th className="text-left px-5 py-3.5 font-medium text-slate-500">Type</th>
                 <th className="text-left px-5 py-3.5 font-medium text-slate-500">Status</th>
-                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Remarks</th>
+                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Review</th>
                 <th className="px-5 py-3.5" />
               </tr>
             </thead>
@@ -73,8 +73,27 @@ export default function CoordinatorSubmissionsPage() {
                     <p className="text-xs text-slate-400">{r.students?.student_number}</p>
                   </td>
                   <td className="px-5 py-4 text-slate-700">{r.report_type}</td>
-                  <td className="px-5 py-4 text-slate-700">{r.status}</td>
-                  <td className="px-5 py-4 text-slate-700">{r.remarks ?? '—'}</td>
+                  <td className="px-5 py-4">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                      r.status === 'approved'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : r.status === 'rejected'
+                          ? 'bg-rose-50 text-rose-700'
+                          : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      {r.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 min-w-[280px]">
+                    <textarea
+                      rows={2}
+                      value={reviewNotes[r.report_id] ?? ''}
+                      onChange={e => setReviewNotes(prev => ({ ...prev, [r.report_id]: e.target.value }))}
+                      placeholder="Add review note..."
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                    />
+                    <p className="mt-2 text-xs text-slate-400">{r.remarks ?? 'No prior remarks.'}</p>
+                  </td>
                   <td className="px-5 py-4">
                     <div className="flex gap-2 justify-end">
                       <Button variant="ghost" onClick={() => handleReview(r.report_id, 'approved')} loading={reviewingId === r.report_id}>Approve</Button>

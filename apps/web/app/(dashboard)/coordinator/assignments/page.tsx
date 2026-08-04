@@ -219,11 +219,16 @@ export default function AssignmentsPage() {
             className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 disabled:opacity-50"
           >
             <option value="">Select supervisor</option>
-            {supervisors.map(s => (
-              <option key={s.supervisor_id} value={s.supervisor_id}>
-                {s.full_name} — {s.position}
-              </option>
-            ))}
+            {supervisors.map(s => {
+  // Gracefully fallback to nested object format if the service uses the users join table
+  const displayName = s.full_name || (s as any).users?.full_name || 'Unnamed Supervisor';
+  
+  return (
+    <option key={s.supervisor_id} value={s.supervisor_id}>
+      {displayName} — {s.position}
+    </option>
+  );
+})}
           </select>
           {form.company_id && supervisors.length === 0 && (
             <p className="text-xs text-amber-600">No supervisors found for this company.</p>

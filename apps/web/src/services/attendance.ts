@@ -31,6 +31,169 @@ export interface AttendanceWithStudent extends DbAttendance {
   };
 }
 
+export interface AttendanceInput {
+  selfie_path?: string;
+}
+
+function getTodayDateString(date = new Date()) {
+  return date.toISOString().slice(0, 10);
+}
+
+function getDayOfWeekNumber(date = new Date()) {
+  const day = date.getDay();
+  if (day === 0) return 7;
+  return day;
+}
+
+function inferLateStatus(timeIn: string, schedule: { time_in_cutoff: string } | null) {
+  if (!schedule) return 'unknown';
+  const cutoff = new Date(`2000-01-01T${schedule.time_in_cutoff}`);
+  const arrivedAt = new Date(timeIn);
+  return arrivedAt > cutoff ? 'late' : 'on_time';
+}
+
+export async function startAttendance(input: AttendanceInput): Promise<AppResult<{ attendance_id: string }>> {
+  if (!input.selfie_path?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'A selfie reference is required.' } };
+
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { data: student, error: studentError } = await supabase
+    .from('students')
+    .select('student_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (studentError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load student profile.' } };
+  if (!student) return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
+
+  const today = getTodayDateString();
+  const { data: existingToday, error: existingError } = await supabase
+    .from('attendance')
+    .select('attendance_id')
+    .eq('student_id', student.student_id)
+    .eq('attendance_date', today)
+    .is('time_out', null)
+    .maybeSingle();
+
+  if (existingError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to check existing attendance.' } };
+  if (existingToday) return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'You already have an active attendance session for today.' } };
+
+  const { data: assignment, error: assignmentError } = await supabase
+    .from('student_assignments')
+    .select('assignment_id, company_id')
+    .eq('student_id', student.student_id)
+    .eq('assignment_status', 'active')
+    .maybeSingle();
+
+  if (assignmentError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load assignment.' } };
+  if (!assignment) return { data: null, error: { code: 'NOT_FOUND', message: 'No active assignment found.' } };
+
+  const dayOfWeek = getDayOfWeekNumber();
+  if (dayOfWeek > 5) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Weekend attendance is not allowed.' } };
+
+  const { data: schedule } = await supabase
+    .from('work_schedules')
+    .select('time_in_cutoff')
+    .eq('company_id', assignment.company_id)
+    .eq('day_of_week', dayOfWeek)
+    .maybeSingle();
+
+  const timeIn = new Date().toISOString();
+  const lateStatus = inferLateStatus(timeIn, schedule);
+
+  const { data, error } = await supabase
+    .from('attendance')
+    .insert({
+      student_id: student.student_id,
+      assignment_id: assignment.assignment_id,
+      attendance_date: today,
+      time_in: timeIn,
+      time_in_selfie_path: input.selfie_path.trim(),
+      qr_validation_status: 'valid',
+      verification_status: 'pending',
+      late_status: lateStatus,
+      sync_status: 'synced',
+    })
+    .select('attendance_id')
+    .single();
+
+  if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to start attendance.' } };
+
+  return { data: { attendance_id: data.attendance_id }, error: null };
+}
+
+export async function endAttendance(attendance_id: string, input: AttendanceInput): Promise<AppResult<null>> {
+  if (!attendance_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Attendance ID is required.' } };
+  if (!input.selfie_path?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'A selfie reference is required.' } };
+
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { data: student, error: studentError } = await supabase
+    .from('students')
+    .select('student_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (studentError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load student profile.' } };
+  if (!student) return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
+
+  const { data: existing, error: existingError } = await supabase
+    .from('attendance')
+    .select('attendance_id')
+    .eq('attendance_id', attendance_id)
+    .eq('student_id', student.student_id)
+    .is('time_out', null)
+    .maybeSingle();
+
+  if (existingError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load attendance session.' } };
+  if (!existing) return { data: null, error: { code: 'NOT_FOUND', message: 'No active attendance session found.' } };
+
+  const { error } = await supabase
+    .from('attendance')
+    .update({
+      time_out: new Date().toISOString(),
+      time_out_selfie_path: input.selfie_path.trim(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('attendance_id', attendance_id);
+
+  if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to end attendance.' } };
+
+  return { data: null, error: null };
+}
+
+export async function getCurrentAttendanceSession(): Promise<AppResult<{ record: DbAttendance | null }>> {
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { data: student, error: studentError } = await supabase
+    .from('students')
+    .select('student_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (studentError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load student profile.' } };
+  if (!student) return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
+
+  const today = getTodayDateString();
+  const { data, error } = await supabase
+    .from('attendance')
+    .select('*')
+    .eq('student_id', student.student_id)
+    .eq('attendance_date', today)
+    .is('time_out', null)
+    .maybeSingle();
+
+  if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load current session.' } };
+
+  return { data: { record: data as DbAttendance | null }, error: null };
+}
+
 export async function listAttendanceForSupervisor(
   page = 1,
   pageSize = 20,
@@ -186,11 +349,14 @@ export async function listOwnAttendance(
   if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data: student } = await supabase
+  const { data: student, error: studentError } = await supabase
     .from('students')
     .select('student_id')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (studentError)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load student profile.' } };
 
   if (!student)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };

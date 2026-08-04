@@ -80,12 +80,13 @@ export async function createAssignment(input: AssignmentInput): Promise<AppResul
   if (existing) return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Student already has an active assignment.' } };
 
   // Verify supervisor belongs to the selected company
-  const { data: supervisor } = await supabase
+  const { data: supervisor, error: supervisorError } = await supabase
     .from('supervisors')
     .select('company_id')
     .eq('supervisor_id', input.supervisor_id)
-    .single();
+    .maybeSingle();
 
+  if (supervisorError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to validate supervisor.' } };
   if (!supervisor) return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor not found.' } };
   if (supervisor.company_id !== input.company_id)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Supervisor does not belong to the selected company.' } };
@@ -130,6 +131,15 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   // Only active students without an active assignment
+  const { data: assignmentsData, error: assignmentsError } = await supabase
+    .from('student_assignments')
+    .select('student_id')
+    .eq('assignment_status', 'active');
+
+  if (assignmentsError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load assignments.' } };
+
+  const assignedStudentIds = new Set((assignmentsData ?? []).map((row: { student_id: string }) => row.student_id));
+
   const { data, error } = await supabase
     .from('students')
     .select(`
@@ -148,15 +158,17 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
   }
 
   return {
-    data: (data ?? []).map((s: AssignmentStudentRow) => {
-      const user = Array.isArray(s.users) ? s.users[0] : s.users;
-      return {
-        student_id: s.student_id,
-        student_number: s.student_number,
-        full_name: user?.full_name ?? '',
-        course: s.course,
-      };
-    }),
+    data: (data ?? [])
+      .filter((s: AssignmentStudentRow) => !assignedStudentIds.has(s.student_id))
+      .map((s: AssignmentStudentRow) => {
+        const user = Array.isArray(s.users) ? s.users[0] : s.users;
+        return {
+          student_id: s.student_id,
+          student_number: s.student_number,
+          full_name: user?.full_name ?? '',
+          course: s.course,
+        };
+      }),
     error: null,
   };
 }
