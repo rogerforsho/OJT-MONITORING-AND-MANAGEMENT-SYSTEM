@@ -1,121 +1,113 @@
-import { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  View, Text, FlatList, RefreshControl,
+  ActivityIndicator, StyleSheet,
+} from 'react-native';
 import { fetchOwnAttendance } from '../../services/attendance';
 import type { DbAttendance } from '@ojt/shared';
 
-const PAGE_SIZE = 20;
-
-function StatusPill({ value, type }: { value: string; type: 'verification' | 'late' | 'sync' }) {
-  const colors: Record<string, string> = {
-    verified: 'bg-teal-100 text-teal-700',
-    pending: 'bg-amber-100 text-amber-700',
-    rejected: 'bg-red-100 text-red-600',
-    on_time: 'bg-teal-100 text-teal-700',
-    late: 'bg-red-100 text-red-600',
-    unknown: 'bg-slate-100 text-slate-500',
-    synced: 'bg-teal-100 text-teal-700',
-    pending_sync: 'bg-blue-100 text-blue-700',
-    conflict: 'bg-red-100 text-red-600',
-  };
-  const style = colors[value] ?? 'bg-slate-100 text-slate-500';
-  return (
-    <View className={`px-2 py-0.5 rounded-full ${style.split(' ')[0]}`}>
-      <Text className={`text-xs font-medium capitalize ${style.split(' ')[1]}`}>
-        {value.replace('_', ' ')}
-      </Text>
-    </View>
-  );
-}
-
 export default function AttendanceHistoryScreen() {
   const [records, setRecords] = useState<DbAttendance[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(async (p: number, append = false) => {
-    if (p === 1) setLoading(true); else setLoadingMore(true);
+  const loadHistory = useCallback(async () => {
     setError('');
-    const result = await fetchOwnAttendance(p, PAGE_SIZE);
-    if (p === 1) setLoading(false); else setLoadingMore(false);
-    if (result.error) { setError(result.error.message); return; }
-    setRecords(prev => append ? [...prev, ...result.data!.records] : result.data!.records);
-    setTotal(result.data!.total);
+    const result = await fetchOwnAttendance(1, 50);
+    if (result.error) {
+      setError(result.error.message);
+    } else {
+      setRecords(result.data?.records ?? []);
+    }
+    setLoading(false);
+    setRefreshing(false);
   }, []);
 
-  useEffect(() => { load(1); }, [load]);
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
-  function loadMore() {
-    const nextPage = page + 1;
-    if (records.length >= total) return;
-    setPage(nextPage);
-    load(nextPage, true);
-  }
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadHistory();
+  };
 
   if (loading) {
     return (
-      <View className="flex-1 bg-slate-50 items-center justify-center">
+      <View style={s.center}>
         <ActivityIndicator size="large" color="#0f766e" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-50">
-      <View className="px-6 pt-6 pb-4">
-        <Text className="text-2xl font-bold text-slate-900">Attendance History</Text>
-        <Text className="text-sm text-slate-500 mt-0.5">{total} record{total !== 1 ? 's' : ''}</Text>
+    <View style={s.root}>
+      <View style={s.header}>
+        <Text style={s.title}>Attendance History</Text>
+        <Text style={s.subtitle}>{records.length} logged session{records.length !== 1 ? 's' : ''}</Text>
       </View>
 
       {!!error && (
-        <View className="mx-6 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
-          <Text className="text-red-600 text-sm">{error}</Text>
+        <View style={s.alertError}>
+          <Text style={s.alertErrorText}>⚠ {error}</Text>
         </View>
       )}
 
       <FlatList
         data={records}
-        keyExtractor={item => item.attendance_id}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, gap: 12 }}
+        keyExtractor={(item) => item.attendance_id}
+        contentContainerStyle={s.listContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0f766e']} />}
         ListEmptyComponent={
-          <View className="items-center py-20">
-            <Text className="text-4xl mb-3">📋</Text>
-            <Text className="text-slate-400 text-sm">No attendance records yet.</Text>
+          <View style={s.emptyContainer}>
+            <Text style={{ fontSize: 36, marginBottom: 8 }}>📅</Text>
+            <Text style={s.emptyTitle}>No attendance records found</Text>
+            <Text style={s.emptySub}>Your verified time in and out records will appear here.</Text>
           </View>
         }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.3}
-        ListFooterComponent={loadingMore ? <ActivityIndicator color="#0f766e" className="py-4" /> : null}
         renderItem={({ item }) => (
-          <View className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-            <View className="flex-row justify-between items-start mb-3">
-              <Text className="font-semibold text-slate-900">{item.attendance_date}</Text>
-              <StatusPill value={item.verification_status} type="verification" />
+          <View style={s.card}>
+            <View style={s.cardTop}>
+              <Text style={s.dateText}>
+                {new Date(item.attendance_date).toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              </Text>
+              <View style={[
+                s.badge,
+                item.verification_status === 'verified' ? s.badgeTeal :
+                item.verification_status === 'rejected' ? s.badgeRed : s.badgeAmber
+              ]}>
+                <Text style={[
+                  s.badgeText,
+                  item.verification_status === 'verified' ? s.badgeTextTeal :
+                  item.verification_status === 'rejected' ? s.badgeTextRed : s.badgeTextAmber
+                ]}>
+                  {item.verification_status}
+                </Text>
+              </View>
             </View>
-            <View className="flex-row gap-4 mb-3">
-              <View className="flex-1">
-                <Text className="text-xs text-slate-400 mb-0.5">Time In</Text>
-                <Text className="text-sm font-medium text-slate-900">
+
+            <View style={s.timeGrid}>
+              <View style={s.timeCol}>
+                <Text style={s.timeLabel}>Time In</Text>
+                <Text style={s.timeValue}>
                   {new Date(item.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
-              <View className="flex-1">
-                <Text className="text-xs text-slate-400 mb-0.5">Time Out</Text>
-                <Text className={`text-sm font-medium ${item.time_out ? 'text-slate-900' : 'text-amber-500'}`}>
+              <View style={s.timeCol}>
+                <Text style={s.timeLabel}>Time Out</Text>
+                <Text style={[s.timeValue, !item.time_out && s.textMuted]}>
                   {item.time_out
                     ? new Date(item.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     : 'Pending'}
                 </Text>
               </View>
-            </View>
-            <View className="flex-row gap-2 flex-wrap">
-              <StatusPill value={item.late_status} type="late" />
-              <StatusPill value={item.sync_status} type="sync" />
-              {item.sync_status === 'conflict' && (
-                <Text className="text-xs text-red-500 self-center">Contact coordinator</Text>
-              )}
+              <View style={s.timeCol}>
+                <Text style={s.timeLabel}>Punctuality</Text>
+                <Text style={[s.timeValue, item.late_status === 'late' ? s.textRed : s.textTeal]}>
+                  {item.late_status.replace('_', ' ')}
+                </Text>
+              </View>
             </View>
           </View>
         )}
@@ -123,3 +115,35 @@ export default function AttendanceHistoryScreen() {
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#f8fafc' },
+  center: { flex: 1, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' },
+  header: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12 },
+  title: { fontSize: 26, fontWeight: '800', color: '#0f172a' },
+  subtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
+  alertError: { marginHorizontal: 24, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12 },
+  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
+  listContent: { paddingHorizontal: 24, paddingBottom: 24, gap: 12 },
+  card: { backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  dateText: { fontSize: 14, fontWeight: '700', color: '#0f172a' },
+  badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
+  badgeTeal: { backgroundColor: '#ccfbf1' },
+  badgeTextTeal: { color: '#0f766e', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  badgeRed: { backgroundColor: '#fee2e2' },
+  badgeTextRed: { color: '#dc2626', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  badgeAmber: { backgroundColor: '#fef3c7' },
+  badgeTextAmber: { color: '#d97706', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  badgeText: { fontSize: 11, fontWeight: '600' },
+  timeGrid: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#f8fafc', borderRadius: 12, padding: 12 },
+  timeCol: { alignItems: 'flex-start' },
+  timeLabel: { fontSize: 11, color: '#64748b', marginBottom: 2, fontWeight: '500' },
+  timeValue: { fontSize: 13, fontWeight: '700', color: '#0f172a', textTransform: 'capitalize' },
+  textMuted: { color: '#f59e0b' },
+  textRed: { color: '#dc2626' },
+  textTeal: { color: '#0f766e' },
+  emptyContainer: { alignItems: 'center', paddingVertical: 48 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#334155' },
+  emptySub: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4, paddingHorizontal: 20 },
+});

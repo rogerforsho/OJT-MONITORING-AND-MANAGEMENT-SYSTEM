@@ -3,6 +3,9 @@ import { Text } from 'react-native';
 import type { StudentTabParamList } from './types';
 import AttendanceScreen from '../screens/attendance/AttendanceScreen';
 import AttendanceHistoryScreen from '../screens/attendance/AttendanceHistoryScreen';
+import ProgressScreen from '../screens/progress/ProgressScreen';
+import ReportsScreen from '../screens/reports/ReportsScreen';
+import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 
 const Tab = createBottomTabNavigator<StudentTabParamList>();
 
@@ -39,17 +42,17 @@ export default function StudentNavigator() {
       />
       <Tab.Screen
         name="Progress"
-        component={AttendanceHistoryScreen} // placeholder until Phase 5
+        component={ProgressScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📈" focused={focused} />, title: 'Progress' }}
       />
       <Tab.Screen
         name="Reports"
-        component={AttendanceHistoryScreen} // placeholder until Phase 6
+        component={ReportsScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📁" focused={focused} />, title: 'Reports' }}
       />
       <Tab.Screen
         name="Notifications"
-        component={AttendanceHistoryScreen} // placeholder until Phase 8
+        component={NotificationsScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🔔" focused={focused} />, title: 'Alerts' }}
       />
     </Tab.Navigator>

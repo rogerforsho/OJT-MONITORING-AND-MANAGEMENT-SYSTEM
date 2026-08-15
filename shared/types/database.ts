@@ -136,3 +136,13 @@ export interface DbInternshipProgress {
   progress_status: ProgressStatus;
   updated_at: string;
 }
+
+export interface DbAnnouncement {
+  announcement_id: string;
+  author_user_id: string | null;
+  title: string;
+  content: string;
+  target_role: string;
+  target_department: string;
+  created_at: string;
+}

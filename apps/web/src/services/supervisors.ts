@@ -127,5 +127,11 @@ export async function createSupervisor(input: SupervisorInput): Promise<AppResul
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to create supervisor profile.' } };
   }
 
+  // Set supervisor status to active immediately (as they are created directly by the Coordinator)
+  await service
+    .from('users')
+    .update({ account_status: 'active', updated_at: new Date().toISOString() })
+    .eq('user_id', authData.user.id);
+
   return { data: null, error: null };
 }

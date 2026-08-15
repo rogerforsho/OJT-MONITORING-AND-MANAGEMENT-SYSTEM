@@ -6,9 +6,22 @@ const PUBLIC_PATHS = ['/auth/sign-in', '/auth/register', '/auth/pending', '/auth
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const path = request.nextUrl.pathname;
+  const isPublic = PUBLIC_PATHS.some(p => path.startsWith(p));
+
+  // If Supabase credentials are missing or default placeholder, allow public paths
+  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-project-id')) {
+    if (!isPublic) {
+      return NextResponse.redirect(new URL('/auth/sign-in', request.url));
+    }
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
@@ -23,17 +36,27 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some(p => path.startsWith(p));
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    user = null;
+  }
 
   // Unauthenticated — redirect to sign in unless on public path
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/auth/sign-in', request.url));
   }
 
-  // Authenticated — redirect away from auth pages
-  if (user && isPublic && !path.startsWith('/auth/reset-password') && !path.startsWith('/auth/callback')) {
+  // Authenticated — redirect away from auth pages (except reset-password, callback, and pending approval)
+  if (
+    user &&
+    isPublic &&
+    !path.startsWith('/auth/reset-password') &&
+    !path.startsWith('/auth/callback') &&
+    !path.startsWith('/auth/pending')
+  ) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

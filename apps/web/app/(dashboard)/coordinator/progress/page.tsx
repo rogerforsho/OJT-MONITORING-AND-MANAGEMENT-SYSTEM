@@ -1,0 +1,148 @@
+import { redirect } from 'next/navigation';
+import { createClient } from '@/src/lib/supabase/server';
+import { listCohortProgress } from '@/src/services/progress';
+import { Card } from '@/src/components/ui/Card';
+import { Badge } from '@/src/components/ui/Badge';
+import { Users } from '@/src/components/ui/Icons';
+import Link from 'next/link';
+
+interface Props {
+  searchParams: Promise<{ course?: string; page?: string }>;
+}
+
+export default async function CoordinatorProgressPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const courseFilter = params.course;
+  const page = Number(params.page) || 1;
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/auth/sign-in');
+
+  const { data } = await listCohortProgress(page, 50, courseFilter);
+  const students = data?.students ?? [];
+  const total = data?.total ?? 0;
+
+  const courses = ['All', 'BSIT', 'BSCS', 'BSBA', 'BSA', 'BSHM'];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Cohort Progress Monitoring</h1>
+          <p className="text-sm text-slate-500 mt-1">Track rendered hours and completion status for ICS & IBE 4th-year trainees.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="px-3 py-1 text-sm font-medium">
+            {total} Total Trainees
+          </Badge>
+        </div>
+      </div>
+
+      {/* Course Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {courses.map((c) => {
+          const isSelected = (c === 'All' && !courseFilter) || courseFilter === c;
+          const href = c === 'All' ? '/coordinator/progress' : `/coordinator/progress?course=${c}`;
+          return (
+            <Link
+              key={c}
+              href={href}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                isSelected
+                  ? 'bg-teal-700 text-white shadow-sm'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {c}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Trainees List Table */}
+      <Card className="border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+              <tr>
+                <th className="py-3.5 px-4">Student</th>
+                <th className="py-3.5 px-4">Course</th>
+                <th className="py-3.5 px-4">Host Company</th>
+                <th className="py-3.5 px-4">Rendered / Target</th>
+                <th className="py-3.5 px-4 w-48">Progress</th>
+                <th className="py-3.5 px-4 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {students.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                    <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                    <p>No student progress records found.</p>
+                  </td>
+                </tr>
+              ) : (
+                students.map((s) => {
+                  const isDone = s.progress_status === 'completed';
+                  return (
+                    <tr key={s.student_id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-slate-800">{s.full_name}</div>
+                        <div className="text-xs text-slate-400 font-mono mt-0.5">{s.student_number}</div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <Badge variant="outline" className="text-xs bg-slate-50">
+                          {s.course}
+                        </Badge>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="text-xs font-medium text-slate-700 max-w-[180px] truncate">
+                          {s.company_name}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="text-xs font-bold text-slate-800">
+                          {s.completed_hours} <span className="text-slate-400 font-normal">/ {s.required_hours} hrs</span>
+                        </div>
+                        <div className="text-[11px] text-slate-400">{s.remaining_hours} hrs left</div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-semibold text-slate-600">
+                            <span>{s.percentage}%</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                isDone ? 'bg-emerald-500' : 'bg-teal-600'
+                              }`}
+                              style={{ width: `${s.percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <Badge
+                          className={
+                            isDone
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs'
+                              : s.completed_hours > 0
+                              ? 'bg-teal-50 text-teal-700 border-teal-200 text-xs'
+                              : 'bg-slate-100 text-slate-600 border-slate-200 text-xs'
+                          }
+                        >
+                          {isDone ? 'Completed' : s.completed_hours > 0 ? 'In Progress' : 'Not Started'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}

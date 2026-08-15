@@ -133,3 +133,5 @@ export async function listAssignedStudentsForEvaluation(): Promise<AppResult<{ s
     error: null,
   };
 }
+
+export const listAssignedStudents = listAssignedStudentsForEvaluation;

@@ -57,7 +57,7 @@ export default function RegisterScreen({ navigation }: Props) {
             ] as const).map(({ label, field, placeholder, keyboard }) => (
               <View key={field} style={s.fieldGroup}>
                 <Text style={s.label}>{label}</Text>
-                <TextInput style={s.input} value={form[field]} onChangeText={v => set(field, v)}
+                <TextInput style={s.input} value={form[field]} onChangeText={(v: string) => set(field, v)}
                   placeholder={placeholder} keyboardType={keyboard}
                   autoCapitalize={field === 'email' ? 'none' : 'words'} />
               </View>
@@ -80,10 +80,10 @@ export default function RegisterScreen({ navigation }: Props) {
             <View style={s.fieldGroup}>
               <Text style={s.label}>Year Level</Text>
               <View style={s.pillRow}>
-                {[1, 2, 3, 4].map(y => (
+                {[4].map(y => (
                   <TouchableOpacity key={y} onPress={() => set('year_level', String(y))}
                     style={[s.pill, s.pillFlex, form.year_level === String(y) && s.pillActive]}>
-                    <Text style={[s.pillText, form.year_level === String(y) && s.pillTextActive]}>Year {y}</Text>
+                    <Text style={[s.pillText, form.year_level === String(y) && s.pillTextActive]}>4th Year Intern</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -95,7 +95,7 @@ export default function RegisterScreen({ navigation }: Props) {
             ] as const).map(({ label, field, placeholder }) => (
               <View key={field} style={s.fieldGroup}>
                 <Text style={s.label}>{label}</Text>
-                <TextInput style={s.input} value={form[field]} onChangeText={v => set(field, v)}
+                <TextInput style={s.input} value={form[field]} onChangeText={(v: string) => set(field, v)}
                   placeholder={placeholder} secureTextEntry />
               </View>
             ))}

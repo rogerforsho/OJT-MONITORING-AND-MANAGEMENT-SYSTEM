@@ -128,6 +128,17 @@ export async function registerStudent(
   if (!input.year_level || input.year_level < 1 || input.year_level > 5)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Valid year level is required.' } };
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl || supabaseUrl.includes('your-project-id')) {
+    return {
+      data: null,
+      error: {
+        code: 'SERVER_FAILURE',
+        message: 'Supabase is not configured yet. Please open apps/web/.env.local and add your real NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+      },
+    };
+  }
+
   const service = serviceClient();
 
   // Check duplicate student number
@@ -182,6 +193,17 @@ export async function signIn(input: SignInInput): Promise<AppResult<null>> {
   if (!input.password)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password is required.' } };
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl || supabaseUrl.includes('your-project-id')) {
+    return {
+      data: null,
+      error: {
+        code: 'SERVER_FAILURE',
+        message: 'Supabase is not configured yet. Please open apps/web/.env.local and add your real NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+      },
+    };
+  }
+
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -189,8 +211,13 @@ export async function signIn(input: SignInInput): Promise<AppResult<null>> {
     password: input.password,
   });
 
-  if (error)
-    return { data: null, error: { code: 'UNAUTHORIZED', message: 'Invalid email or password.' } };
+  if (error) {
+    const rawMsg = error.message;
+    const msg = (!rawMsg || rawMsg.trim() === '{}')
+      ? 'Invalid email or password. Please make sure the demo accounts were initialized in your Supabase SQL Editor.'
+      : rawMsg;
+    return { data: null, error: { code: 'UNAUTHORIZED', message: msg } };
+  }
 
   // Check account status — backend authority
   const { data: user } = await supabase

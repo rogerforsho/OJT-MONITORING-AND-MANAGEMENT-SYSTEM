@@ -5,7 +5,6 @@ import { supabase } from './src/lib/supabase';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import StudentNavigator from './src/navigation/StudentNavigator';
 import { getAuthUser } from './src/services/auth';
-import { syncOfflineQueue } from './src/services/attendance';
 import type { AuthUser } from '@ojt/shared';
 
 export default function App() {
@@ -16,7 +15,6 @@ export default function App() {
     getAuthUser().then(u => {
       setUser(u);
       setLoading(false);
-      if (u?.role === 'Student') syncOfflineQueue();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
@@ -25,7 +23,6 @@ export default function App() {
       } else if (event === 'SIGNED_IN') {
         const u = await getAuthUser();
         setUser(u);
-        if (u?.role === 'Student') syncOfflineQueue();
       }
     });
 

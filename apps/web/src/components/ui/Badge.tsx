@@ -28,12 +28,27 @@ const labels: Partial<Record<BadgeVariant, string>> = {
   pending_sync: 'Pending Sync',
 };
 
-export default function Badge({ status }: { status: string }) {
-  const style = styles[status as BadgeVariant] ?? 'bg-slate-100 text-slate-500 border-slate-200';
-  const label = labels[status as BadgeVariant] ?? status;
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  status?: string;
+  variant?: string;
+}
+
+export function Badge({ status, variant, className = '', children, ...props }: BadgeProps) {
+  if (status) {
+    const style = styles[status as BadgeVariant] ?? 'bg-slate-100 text-slate-500 border-slate-200';
+    const label = labels[status as BadgeVariant] ?? status;
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${style} ${className}`} {...props}>
+        {children || label}
+      </span>
+    );
+  }
+
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${style}`}>
-      {label}
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border border-slate-200 bg-slate-100 text-slate-700 ${className}`} {...props}>
+      {children}
     </span>
   );
 }
+
+export default Badge;
