@@ -1,19 +1,26 @@
 import { supabase } from '../lib/supabase';
+import { decodeBase64ToArrayBuffer } from '../lib/base64';
 import type { AppResult, DbAttendance } from '@ojt/shared';
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 
 async function uploadSelfie(
-  localUri: string,
+  imagePayload: string,
   student_id: string,
   type: 'time_in' | 'time_out'
 ): Promise<AppResult<{ path: string }>> {
   const filename = `${student_id}/${type}_${Date.now()}.jpg`;
 
   try {
-    const response = await fetch(localUri);
-    const blob = await response.blob();
-    const arrayBuffer = await blob.arrayBuffer();
+    let arrayBuffer: ArrayBuffer;
+
+    if (imagePayload.startsWith('file://') || imagePayload.startsWith('http')) {
+      const response = await fetch(imagePayload);
+      const blob = await response.blob();
+      arrayBuffer = await blob.arrayBuffer();
+    } else {
+      arrayBuffer = decodeBase64ToArrayBuffer(imagePayload);
+    }
 
     const { data, error } = await supabase.storage
       .from('attendance-selfies')
@@ -245,7 +252,7 @@ export async function getTodayAttendance(): Promise<DbAttendance | null> {
 
   const { data } = await supabase
     .from('attendance')
-    .select('*')
+    .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, qr_validation_status, verification_status, late_status, sync_status, created_at, updated_at')
     .eq('student_id', student.student_id)
     .eq('attendance_date', today)
     .maybeSingle();

@@ -51,7 +51,7 @@ export async function getOwnStudentProgress(): Promise<AppResult<StudentProgress
 
   const { data: progress } = await supabase
     .from('internship_progress')
-    .select('*')
+    .select('progress_id, student_id, completed_hours, remaining_hours, progress_status, updated_at')
     .eq('student_id', student.student_id)
     .maybeSingle();
 

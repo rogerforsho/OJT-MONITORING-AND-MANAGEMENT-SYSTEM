@@ -10,6 +10,7 @@ export type StudentTabParamList = {
   Progress: undefined;
   Reports: undefined;
   Notifications: undefined;
+  Profile: undefined;
 };
 
 export type AppStackParamList = {

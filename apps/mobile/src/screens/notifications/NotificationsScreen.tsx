@@ -1,11 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listStudentFeed, markNotificationRead, type MobileFeedItem } from '../../services/notifications';
 
 export default function NotificationsScreen() {
+  const insets = useSafeAreaInsets();
   const [feed, setFeed] = useState<MobileFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,26 +42,46 @@ export default function NotificationsScreen() {
     }
   };
 
+  const handleMarkAllRead = async () => {
+    const unreadAlerts = feed.filter(f => f.type === 'notification' && f.status === 'unread');
+    for (const item of unreadAlerts) {
+      await markNotificationRead(item.id);
+    }
+    setFeed(prev => prev.map(f => ({ ...f, status: 'read' })));
+  };
+
   const filteredFeed = feed.filter(item => {
     if (filter === 'announcements') return item.type === 'announcement';
     if (filter === 'alerts') return item.type === 'notification';
     return true;
   });
 
+  const unreadCount = feed.filter(f => f.type === 'notification' && f.status === 'unread').length;
+
   if (loading) {
     return (
       <View style={s.center}>
-        <ActivityIndicator size="large" color="#0f766e" />
+        <ActivityIndicator size="large" color="#0A3D24" />
       </View>
     );
   }
 
   return (
-    <View style={s.root}>
+    <View style={[s.root, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={s.header}>
-        <Text style={s.title}>Notifications</Text>
-        <Text style={s.subtitle}>Announcements & Status Updates</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={s.headerKicker}>Colegio de Montalban OJT</Text>
+            <Text style={s.title}>Notices & Alerts</Text>
+          </View>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={handleMarkAllRead} style={s.markAllBtn}>
+              <Text style={s.markAllText}>Mark all read</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <Text style={s.subtitle}>Coordinator Announcements & Verification Updates</Text>
 
         {/* Filter Pills */}
         <View style={s.filterRow}>
@@ -68,7 +90,7 @@ export default function NotificationsScreen() {
             style={[s.filterPill, filter === 'all' && s.filterPillActive]}
           >
             <Text style={[s.filterText, filter === 'all' && s.filterTextActive]}>
-              All
+              All ({feed.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -84,7 +106,7 @@ export default function NotificationsScreen() {
             style={[s.filterPill, filter === 'alerts' && s.filterPillActive]}
           >
             <Text style={[s.filterText, filter === 'alerts' && s.filterTextActive]}>
-              🔔 Direct Alerts
+              🔔 Direct Alerts {unreadCount > 0 ? `(${unreadCount})` : ''}
             </Text>
           </TouchableOpacity>
         </View>
@@ -92,7 +114,7 @@ export default function NotificationsScreen() {
 
       {!!error && (
         <View style={s.alertError}>
-          <Text style={s.alertErrorText}>⚠ {error}</Text>
+          <Text style={s.alertErrorText}>⚠️ {error}</Text>
         </View>
       )}
 
@@ -101,13 +123,13 @@ export default function NotificationsScreen() {
         data={filteredFeed}
         keyExtractor={(item) => item.id}
         contentContainerStyle={s.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0f766e']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
         ListEmptyComponent={
           <View style={s.emptyBox}>
             <Text style={{ fontSize: 36, marginBottom: 8 }}>🔔</Text>
-            <Text style={s.emptyTitle}>No notifications</Text>
+            <Text style={s.emptyTitle}>No notifications yet</Text>
             <Text style={s.emptySub}>
-              You're all caught up with your OJT coordinator and supervisor updates.
+              You are all caught up with your OJT coordinator and supervisor updates.
             </Text>
           </View>
         }
@@ -123,10 +145,11 @@ export default function NotificationsScreen() {
             >
               <View style={s.cardTop}>
                 <View style={s.tagRow}>
-                  <Text style={{ fontSize: 14 }}>{isAnnouncement ? '📢' : '🔔'}</Text>
+                  <Text style={{ fontSize: 13 }}>{isAnnouncement ? '📢' : '🔔'}</Text>
                   <Text style={s.tagText}>
                     {isAnnouncement ? 'ANNOUNCEMENT' : 'DIRECT NOTICE'}
                   </Text>
+                  {isUnread && <View style={s.unreadDot} />}
                 </View>
                 <Text style={s.dateText}>
                   {new Date(item.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
@@ -144,26 +167,30 @@ export default function NotificationsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f8fafc' },
-  center: { flex: 1, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' },
-  header: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 },
-  title: { fontSize: 26, fontWeight: '800', color: '#0f172a' },
-  subtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
-  filterRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
-  filterPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#e2e8f0' },
-  filterPillActive: { backgroundColor: '#0f766e', borderColor: '#0f766e' },
-  filterText: { fontSize: 12, fontWeight: '600', color: '#475569' },
-  filterTextActive: { color: '#ffffff' },
-  alertError: { marginHorizontal: 24, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12 },
+  root: { flex: 1, backgroundColor: '#f4f6f9' },
+  center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center' },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14 },
+  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
+  title: { fontSize: 24, fontWeight: '900', color: '#062415' },
+  subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  markAllBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(10,61,36,0.08)' },
+  markAllText: { fontSize: 11, fontWeight: '700', color: '#0A3D24' },
+  filterRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  filterPill: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ffffff', borderWidth: 1.5, borderColor: '#e2e8f0' },
+  filterPillActive: { backgroundColor: '#0A3D24', borderColor: '#0A3D24' },
+  filterText: { fontSize: 12, fontWeight: '700', color: '#475569' },
+  filterTextActive: { color: '#FFCC00' },
+  alertError: { marginHorizontal: 20, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12 },
   alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
-  listContent: { paddingHorizontal: 24, paddingBottom: 32, gap: 12 },
-  feedCard: { backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
-  feedCardUnread: { backgroundColor: '#f0fdfa', borderColor: '#99f6e4' },
+  listContent: { paddingHorizontal: 20, paddingBottom: 32, gap: 12 },
+  feedCard: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  feedCardUnread: { backgroundColor: 'rgba(10,61,36,0.04)', borderColor: '#0A3D24' },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tagText: { fontSize: 11, fontWeight: '800', color: '#0f766e', letterSpacing: 0.5 },
+  tagText: { fontSize: 11, fontWeight: '800', color: '#0A3D24', letterSpacing: 0.5 },
+  unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFCC00' },
   dateText: { fontSize: 11, color: '#94a3b8' },
-  feedTitle: { fontSize: 15, fontWeight: '700', color: '#0f172a', marginBottom: 4 },
+  feedTitle: { fontSize: 15, fontWeight: '800', color: '#062415', marginBottom: 4 },
   feedMessage: { fontSize: 13, color: '#475569', lineHeight: 18 },
   emptyBox: { alignItems: 'center', paddingVertical: 48 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#334155' },

@@ -19,14 +19,14 @@ export async function listStudentFeed(): Promise<AppResult<MobileFeedItem[]>> {
   // 1. Fetch announcements
   const { data: announcements, error: annErr } = await supabase
     .from('announcements')
-    .select('*')
+    .select('announcement_id, title, content, created_at')
     .order('created_at', { ascending: false })
     .limit(20);
 
   // 2. Fetch personal notifications
   const { data: notifications, error: notifErr } = await supabase
     .from('notifications')
-    .select('*')
+    .select('notification_id, message, notification_date, status')
     .eq('receiver_user_id', user.id)
     .order('notification_date', { ascending: false })
     .limit(20);
@@ -37,7 +37,7 @@ export async function listStudentFeed(): Promise<AppResult<MobileFeedItem[]>> {
 
   const feed: MobileFeedItem[] = [];
 
-  (announcements ?? []).forEach((a: DbAnnouncement) => {
+  (announcements ?? []).forEach((a) => {
     feed.push({
       id: a.announcement_id,
       type: 'announcement',
@@ -47,14 +47,14 @@ export async function listStudentFeed(): Promise<AppResult<MobileFeedItem[]>> {
     });
   });
 
-  (notifications ?? []).forEach((n: DbNotification) => {
+  (notifications ?? []).forEach((n) => {
     feed.push({
       id: n.notification_id,
       type: 'notification',
       title: 'Personal Notification',
       message: n.message,
       date: n.notification_date,
-      status: n.status,
+      status: n.status as 'unread' | 'read',
     });
   });
 

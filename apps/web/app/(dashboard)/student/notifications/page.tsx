@@ -17,7 +17,7 @@ export default async function StudentNotificationsPage() {
   ] = await Promise.all([
     supabase
       .from('notifications')
-      .select('*')
+      .select('notification_id, message, notification_date, status')
       .eq('receiver_user_id', user.id)
       .order('notification_date', { ascending: false }),
     listAnnouncements(),

@@ -11,17 +11,17 @@ export default function PendingScreen({ navigation }: Props) {
         <View style={s.iconWrapper}>
           <Text style={{ fontSize: 32 }}>⏳</Text>
         </View>
-        <Text style={s.title}>Registration Submitted</Text>
+        <Text style={s.title}>Registration Under Review</Text>
         <Text style={s.subtitle}>
-          Your account is pending review and approval by the OJT Coordinator. You will be able to sign in once approved.
+          Your 4th-year trainee registration has been submitted and is awaiting validation by the OJT Coordinator.
         </Text>
 
         <View style={s.infoBox}>
-          <Text style={s.infoTitle}>What happens next?</Text>
+          <Text style={s.infoTitle}>Verification Steps</Text>
           {[
-            'Your registration details are validated by the Coordinator',
-            'You will be notified once your account is active',
-            'Sign in after approval to access your OJT dashboard',
+            'Coordinator verifies student number & 4th-year standing (ICS / IBE)',
+            'Training company and supervisor assignment will be linked',
+            'Sign in to access your attendance and rendered hours dashboard',
           ].map((item, i) => (
             <View key={i} style={s.stepRow}>
               <Text style={s.check}>✓</Text>
@@ -30,8 +30,8 @@ export default function PendingScreen({ navigation }: Props) {
           ))}
         </View>
 
-        <TouchableOpacity style={s.btn} onPress={() => navigation.navigate('SignIn')}>
-          <Text style={s.btnText}>Back to Sign In</Text>
+        <TouchableOpacity style={s.btn} onPress={() => navigation.navigate('SignIn')} activeOpacity={0.85}>
+          <Text style={s.btnText}>← Return to Sign In</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -39,16 +39,52 @@ export default function PendingScreen({ navigation }: Props) {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#042f2e', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
-  card: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 },
-  iconWrapper: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#f0fdfa', borderWidth: 2, borderColor: '#99f6e4', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  title: { fontSize: 22, fontWeight: '700', color: '#0f172a', marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 13, color: '#64748b', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  infoBox: { width: '100%', backgroundColor: '#f0fdfa', borderWidth: 1, borderColor: '#ccfbf1', borderRadius: 16, padding: 16, marginBottom: 24 },
-  infoTitle: { fontSize: 12, fontWeight: '700', color: '#0f766e', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  root: { flex: 1, backgroundColor: '#062415', justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 40 },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  iconWrapper: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(10,61,36,0.08)',
+    borderWidth: 2,
+    borderColor: '#0A3D24',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  title: { fontSize: 20, fontWeight: '800', color: '#0A3D24', marginBottom: 6, textAlign: 'center' },
+  subtitle: { fontSize: 12, color: '#64748b', textAlign: 'center', lineHeight: 18, marginBottom: 20 },
+  infoBox: {
+    width: '100%',
+    backgroundColor: 'rgba(10,61,36,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(10,61,36,0.15)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  infoTitle: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   stepRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  check: { color: '#0d9488', fontSize: 14, fontWeight: '700' },
-  stepText: { fontSize: 13, color: '#334155', flex: 1, lineHeight: 18 },
-  btn: { width: '100%', backgroundColor: '#0f766e', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  btnText: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
+  check: { color: '#0A3D24', fontSize: 13, fontWeight: '800' },
+  stepText: { fontSize: 12, color: '#334155', flex: 1, lineHeight: 16 },
+  btn: {
+    width: '100%',
+    backgroundColor: '#0A3D24',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,204,0,0.3)',
+  },
+  btnText: { color: '#FFCC00', fontSize: 14, fontWeight: '800' },
 });

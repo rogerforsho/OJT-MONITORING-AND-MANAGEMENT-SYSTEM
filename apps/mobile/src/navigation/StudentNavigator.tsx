@@ -6,11 +6,12 @@ import AttendanceHistoryScreen from '../screens/attendance/AttendanceHistoryScre
 import ProgressScreen from '../screens/progress/ProgressScreen';
 import ReportsScreen from '../screens/reports/ReportsScreen';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<StudentTabParamList>();
 
 function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
-  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{icon}</Text>;
+  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.6 }}>{icon}</Text>;
 }
 
 export default function StudentNavigator() {
@@ -19,15 +20,16 @@ export default function StudentNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#042f2e',
-          borderTopColor: '#0f766e33',
+          backgroundColor: '#062415',
+          borderTopColor: 'rgba(255,204,0,0.2)',
+          borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 8,
           height: 64,
         },
-        tabBarActiveTintColor: '#14b8a6',
-        tabBarInactiveTintColor: '#5eead4',
-        tabBarLabelStyle: { fontSize: 11, marginTop: 2 },
+        tabBarActiveTintColor: '#FFCC00',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 2 },
       }}
     >
       <Tab.Screen
@@ -54,6 +56,11 @@ export default function StudentNavigator() {
         name="Notifications"
         component={NotificationsScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🔔" focused={focused} />, title: 'Alerts' }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="👤" focused={focused} />, title: 'Account' }}
       />
     </Tab.Navigator>
   );

@@ -3,10 +3,12 @@ import {
   View, Text, FlatList, RefreshControl,
   ActivityIndicator, StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchOwnAttendance } from '../../services/attendance';
 import type { DbAttendance } from '@ojt/shared';
 
 export default function AttendanceHistoryScreen() {
+  const insets = useSafeAreaInsets();
   const [records, setRecords] = useState<DbAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,14 +38,15 @@ export default function AttendanceHistoryScreen() {
   if (loading) {
     return (
       <View style={s.center}>
-        <ActivityIndicator size="large" color="#0f766e" />
+        <ActivityIndicator size="large" color="#0A3D24" />
       </View>
     );
   }
 
   return (
-    <View style={s.root}>
+    <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.header}>
+        <Text style={s.headerKicker}>Colegio de Montalban OJT</Text>
         <Text style={s.title}>Attendance History</Text>
         <Text style={s.subtitle}>{records.length} logged session{records.length !== 1 ? 's' : ''}</Text>
       </View>
@@ -58,7 +61,7 @@ export default function AttendanceHistoryScreen() {
         data={records}
         keyExtractor={(item) => item.attendance_id}
         contentContainerStyle={s.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0f766e']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
         ListEmptyComponent={
           <View style={s.emptyContainer}>
             <Text style={{ fontSize: 36, marginBottom: 8 }}>📅</Text>
@@ -74,12 +77,12 @@ export default function AttendanceHistoryScreen() {
               </Text>
               <View style={[
                 s.badge,
-                item.verification_status === 'verified' ? s.badgeTeal :
+                item.verification_status === 'verified' ? s.badgeGreen :
                 item.verification_status === 'rejected' ? s.badgeRed : s.badgeAmber
               ]}>
                 <Text style={[
                   s.badgeText,
-                  item.verification_status === 'verified' ? s.badgeTextTeal :
+                  item.verification_status === 'verified' ? s.badgeTextGreen :
                   item.verification_status === 'rejected' ? s.badgeTextRed : s.badgeTextAmber
                 ]}>
                   {item.verification_status}
@@ -104,7 +107,7 @@ export default function AttendanceHistoryScreen() {
               </View>
               <View style={s.timeCol}>
                 <Text style={s.timeLabel}>Punctuality</Text>
-                <Text style={[s.timeValue, item.late_status === 'late' ? s.textRed : s.textTeal]}>
+                <Text style={[s.timeValue, item.late_status === 'late' ? s.textRed : s.textGreen]}>
                   {item.late_status.replace('_', ' ')}
                 </Text>
               </View>
@@ -117,32 +120,33 @@ export default function AttendanceHistoryScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f8fafc' },
-  center: { flex: 1, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' },
-  header: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12 },
-  title: { fontSize: 26, fontWeight: '800', color: '#0f172a' },
-  subtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
-  alertError: { marginHorizontal: 24, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12 },
+  root: { flex: 1, backgroundColor: '#f4f6f9' },
+  center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center' },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
+  title: { fontSize: 24, fontWeight: '900', color: '#062415' },
+  subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  alertError: { marginHorizontal: 20, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12 },
   alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
-  listContent: { paddingHorizontal: 24, paddingBottom: 24, gap: 12 },
-  card: { backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 24, gap: 12 },
+  card: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  dateText: { fontSize: 14, fontWeight: '700', color: '#0f172a' },
+  dateText: { fontSize: 14, fontWeight: '800', color: '#062415' },
   badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
-  badgeTeal: { backgroundColor: '#ccfbf1' },
-  badgeTextTeal: { color: '#0f766e', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  badgeGreen: { backgroundColor: 'rgba(10,61,36,0.1)' },
+  badgeTextGreen: { color: '#0A3D24', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
   badgeRed: { backgroundColor: '#fee2e2' },
-  badgeTextRed: { color: '#dc2626', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  badgeTextRed: { color: '#dc2626', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
   badgeAmber: { backgroundColor: '#fef3c7' },
-  badgeTextAmber: { color: '#d97706', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  badgeTextAmber: { color: '#d97706', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
   badgeText: { fontSize: 11, fontWeight: '600' },
-  timeGrid: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#f8fafc', borderRadius: 12, padding: 12 },
+  timeGrid: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#f8fafc', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#f1f5f9' },
   timeCol: { alignItems: 'flex-start' },
   timeLabel: { fontSize: 11, color: '#64748b', marginBottom: 2, fontWeight: '500' },
-  timeValue: { fontSize: 13, fontWeight: '700', color: '#0f172a', textTransform: 'capitalize' },
+  timeValue: { fontSize: 13, fontWeight: '800', color: '#0f172a', textTransform: 'capitalize' },
   textMuted: { color: '#f59e0b' },
   textRed: { color: '#dc2626' },
-  textTeal: { color: '#0f766e' },
+  textGreen: { color: '#0A3D24' },
   emptyContainer: { alignItems: 'center', paddingVertical: 48 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#334155' },
   emptySub: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4, paddingHorizontal: 20 },

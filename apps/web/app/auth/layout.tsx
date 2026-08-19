@@ -1,20 +1,74 @@
+import Image from 'next/image';
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-950 via-teal-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo / Brand */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-teal-500/20 border border-teal-400/30 mb-4">
-            <svg className="w-7 h-7 text-teal-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-            </svg>
+    <div className="min-h-screen flex flex-col lg:flex-row w-full bg-slate-900 overflow-hidden">
+      {/* ─── LEFT SIDE (60% Width): The Identity & Culture Zone ─── */}
+      <div className="lg:w-[58%] xl:w-[60%] relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-gradient-to-br from-[#062415] via-[#0A3D24] to-[#041a0f] text-white min-h-[360px] lg:min-h-screen overflow-hidden select-none">
+        {/* Ambient Glows */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#0A3D24]/80 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Top Left: Single Prominent Brand Heading */}
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1 border-2 border-[#FFCC00] shadow-xl shadow-black/40 flex items-center justify-center shrink-0">
+            <Image
+              src="/logo.png"
+              alt="Colegio de Montalban Seal"
+              width={72}
+              height={72}
+              className="w-full h-full object-contain rounded-full"
+              priority
+            />
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">OJT Monitoring System</h1>
-          <p className="text-teal-300/70 text-sm mt-1">Colegio de Montalban</p>
+          <div>
+            <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#FFCC00] block mb-0.5">
+              Official Practicum Portal
+            </span>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#FFCC00] font-serif uppercase tracking-wider">
+              Colegio de Montalban
+            </h1>
+            <p className="text-xs sm:text-sm font-medium text-slate-200 tracking-wide mt-0.5">
+              Institute of Computing Studies &bull; IBE
+            </p>
+          </div>
         </div>
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl shadow-black/30 p-8">
+
+        {/* Center: Inspiring Academic Statement */}
+        <div className="relative z-10 my-8 lg:my-auto max-w-lg space-y-3">
+          <div className="w-12 h-1 bg-[#FFCC00] rounded-full" />
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight font-serif">
+            Empowering the Next Generation of Industry Leaders
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+            A unified management platform designed to monitor, verify, and evaluate student internship milestones.
+          </p>
+        </div>
+
+        {/* Bottom Left: Academic Period */}
+        <div className="relative z-10 pt-4 border-t border-[#0A3D24]/80 text-xs text-slate-400 font-medium flex items-center justify-between">
+          <span>Rodriguez, Rizal</span>
+          <span className="text-[#FFCC00] font-bold">Academic Year 2024–2025</span>
+        </div>
+      </div>
+
+      {/* ─── RIGHT SIDE (40% Width): The Action Zone ─── */}
+      <div className="lg:w-[42%] xl:w-[40%] bg-white flex flex-col justify-between p-6 sm:p-10 lg:p-12 min-h-[500px] lg:min-h-screen relative z-10 shadow-2xl">
+        {/* Top Right Access Badge */}
+        <div className="hidden lg:flex justify-end">
+          <span className="text-[10px] font-bold text-[#0A3D24] uppercase tracking-wider bg-[#0A3D24]/10 px-3 py-1 rounded-full border border-[#0A3D24]/20">
+            Secure Portal Access
+          </span>
+        </div>
+
+        {/* Centered Form Component */}
+        <div className="w-full max-w-sm mx-auto my-auto py-4">
           {children}
+        </div>
+
+        {/* System Footnote at Bottom Right */}
+        <div className="pt-4 border-t border-slate-100 text-right text-[11px] text-slate-400 font-medium">
+          ISO/IEC 25010:2023 Evaluated &bull; Version 1.0
         </div>
       </div>
     </div>

@@ -37,7 +37,7 @@ export async function listAnnouncements(): Promise<AppResult<DbAnnouncement[]>> 
 
   const { data, error } = await supabase
     .from('announcements')
-    .select('*')
+    .select('announcement_id, author_user_id, title, content, target_role, target_department, created_at')
     .order('created_at', { ascending: false });
 
   if (error)

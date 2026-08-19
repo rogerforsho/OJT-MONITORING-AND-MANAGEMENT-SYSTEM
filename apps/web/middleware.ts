@@ -4,6 +4,16 @@ import { createServerClient } from '@supabase/ssr';
 const PUBLIC_PATHS = ['/auth/sign-in', '/auth/register', '/auth/pending', '/auth/reset-password', '/auth/callback'];
 
 export async function middleware(request: NextRequest) {
+  // 1. Force HTTPS in production
+  if (
+    process.env.NODE_ENV === 'production' &&
+    request.headers.get('x-forwarded-proto') === 'http'
+  ) {
+    const httpsUrl = new URL(request.url);
+    httpsUrl.protocol = 'https:';
+    return NextResponse.redirect(httpsUrl, 301);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

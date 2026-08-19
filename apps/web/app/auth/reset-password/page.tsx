@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
       setMessage(result.error.message);
     } else {
       setIsError(false);
-      setMessage('Password updated successfully.');
+      setMessage('Password updated successfully. Redirecting to sign in...');
       setTimeout(() => router.push('/auth/sign-in'), 1500);
     }
   }
@@ -39,14 +39,32 @@ export default function ResetPasswordPage() {
   return (
     <>
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-slate-900">Set new password</h2>
-        <p className="text-sm text-slate-500 mt-1">Choose a strong password for your account.</p>
+        <h2 className="text-xl font-black text-[#0A3D24] font-serif">Set New Password</h2>
+        <p className="text-xs text-slate-500 mt-1">
+          Create a secure password for your Colegio de Montalban OJT account.
+        </p>
       </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Input label="New Password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required />
-        <Input label="Confirm Password" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Re-enter password" required />
+        <Input
+          label="New Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Min. 8 characters"
+          required
+        />
+        <Input
+          label="Confirm New Password"
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder="Re-enter password"
+          required
+        />
         {message && <Alert type={isError ? 'error' : 'success'} message={message} />}
-        <Button type="submit" loading={loading} className="w-full mt-1">Update Password</Button>
+        <Button type="submit" loading={loading} className="w-full mt-1">
+          Save New Password
+        </Button>
       </form>
     </>
   );

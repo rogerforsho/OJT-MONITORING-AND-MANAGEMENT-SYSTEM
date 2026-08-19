@@ -10,7 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (user.account_status !== 'active') redirect('/auth/sign-in');
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-[#F4F6F9] overflow-hidden">
       <Sidebar user={user} />
       <main className="flex-1 overflow-y-auto">
         {children}
