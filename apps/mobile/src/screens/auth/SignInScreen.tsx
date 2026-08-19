@@ -1,20 +1,24 @@
-import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Image,
+  ActivityIndicator, StyleSheet, ScrollView,
+  KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
-import { signIn, requestPasswordReset } from '../../services/auth';
+import { signIn } from '../../services/auth';
+import NetworkToast from '../../components/NetworkToast';
 
-type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'SignIn'> };
+type Props = NativeStackScreenProps<AuthStackParamList, 'SignIn'>;
 
 export default function SignInScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSlow, setIsSlow] = useState(false);
   const [error, setError] = useState('');
+
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
@@ -23,17 +27,37 @@ export default function SignInScreen({ navigation }: Props) {
   async function handleSignIn() {
     setError('');
     setLoading(true);
+    setIsSlow(false);
+
+    const timer = setTimeout(() => {
+      setIsSlow(true);
+    }, 2500);
+
     const result = await signIn({ email, password });
+    clearTimeout(timer);
+    setIsSlow(false);
     setLoading(false);
-    if (result.error) { setError(result.error.message); return; }
+
+    if (result.error) {
+      setError(result.error.message);
+    }
   }
 
   async function handleReset() {
-    setResetMsg('');
+    if (!resetEmail.trim()) {
+      setResetMsg('Please enter your institutional email.');
+      return;
+    }
     setResetLoading(true);
-    const result = await requestPasswordReset(resetEmail);
+    setResetMsg('');
+    const { requestPasswordReset } = await import('../../services/auth');
+    const res = await requestPasswordReset(resetEmail);
     setResetLoading(false);
-    setResetMsg(result.error ? result.error.message : 'If that email is registered, a password reset link has been dispatched to your inbox.');
+    if (res.error) {
+      setResetMsg(res.error.message);
+    } else {
+      setResetMsg('If that email is registered, a password recovery link has been dispatched.');
+    }
   }
 
   if (showForgot) {
@@ -41,9 +65,9 @@ export default function SignInScreen({ navigation }: Props) {
       <View style={s.root}>
         <View style={s.inner}>
           <View style={s.card}>
-            <Text style={s.title}>Reset Password</Text>
+            <Text style={s.title}>Password Recovery</Text>
             <Text style={s.subtitle}>Enter your institutional email to receive a recovery link.</Text>
-            
+
             <Text style={s.label}>Institutional Email</Text>
             <TextInput
               style={s.input}
@@ -90,7 +114,7 @@ export default function SignInScreen({ navigation }: Props) {
             <Text style={s.brandTitle}>Colegio de Montalban</Text>
             <Text style={s.brandSub}>OJT Monitoring & Management System</Text>
             <View style={s.badge}>
-              <Text style={s.badgeText}>ICS &bull; IBE Trainee Portal</Text>
+              <Text style={s.badgeText}>ICS • IBE Trainee Portal</Text>
             </View>
           </View>
 
@@ -116,7 +140,7 @@ export default function SignInScreen({ navigation }: Props) {
                 style={s.passwordInput}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="••••••••"
+                placeholder="••••••••••••"
                 placeholderTextColor="#94a3b8"
                 secureTextEntry={!showPassword}
               />
@@ -134,7 +158,16 @@ export default function SignInScreen({ navigation }: Props) {
             )}
 
             <TouchableOpacity style={s.btn} onPress={handleSignIn} disabled={loading} activeOpacity={0.85}>
-              {loading ? <ActivityIndicator color="#FFCC00" /> : <Text style={s.btnText}>Sign In</Text>}
+              {loading ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <ActivityIndicator size="small" color="#FFCC00" />
+                  <Text style={s.btnText}>
+                    {isSlow ? 'Connecting to CdM servers...' : 'Authenticating...'}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={s.btnText}>Sign In</Text>
+              )}
             </TouchableOpacity>
 
             <View style={s.row}>
@@ -148,9 +181,10 @@ export default function SignInScreen({ navigation }: Props) {
           </View>
 
           {/* System Evaluation Footnote */}
-          <Text style={s.footnote}>ISO/IEC 25010:2023 Evaluated &bull; Version 1.0</Text>
+          <Text style={s.footnote}>ISO/IEC 25010:2023 Evaluated • Version 1.0</Text>
         </View>
       </ScrollView>
+      <NetworkToast isSlow={isSlow} />
     </KeyboardAvoidingView>
   );
 }

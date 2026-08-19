@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('Signing in...');
   const [error, setError] = useState('');
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -24,12 +25,30 @@ export default function SignInPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setLoadingText('Authenticating credentials...');
+
+    // Slow connection detector timer
+    const slowTimer = setTimeout(() => {
+      setLoadingText('Connecting to CdM servers...');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ojt-slow-connection', { detail: { slow: true } }));
+      }
+    }, 2500);
+
     const result = await signIn({ email, password });
+    clearTimeout(slowTimer);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ojt-slow-connection', { detail: { slow: false } }));
+    }
+
     setLoading(false);
     if (result.error) {
       setError(result.error.message);
       return;
     }
+
+    setLoadingText('Redirecting to dashboard...');
     router.push('/dashboard');
     router.refresh();
   }
@@ -50,10 +69,10 @@ export default function SignInPage() {
 
   if (showForgot) {
     return (
-      <>
+      <div className="page-fade-in">
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">🔐</span>
+            <span className="text-xl">🔑</span>
             <h2 className="text-xl font-black text-[#0A3D24] font-serif">Reset Password</h2>
           </div>
           <p className="text-xs text-slate-500">
@@ -86,12 +105,12 @@ export default function SignInPage() {
             ← Back to Sign In
           </button>
         </form>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="page-fade-in">
       <div className="mb-6">
         <h2 className="text-2xl font-black text-[#0A3D24] font-serif tracking-tight">Sign In</h2>
         <p className="text-xs text-slate-500 mt-1">
@@ -118,7 +137,7 @@ export default function SignInPage() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="••••••••••••"
               required
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pr-11 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:ring-2 focus:ring-[#0A3D24] focus:border-[#0A3D24] hover:border-slate-300"
             />
@@ -151,7 +170,7 @@ export default function SignInPage() {
           loading={loading}
           className="w-full mt-1.5 py-3 shadow-md shadow-[#0A3D24]/30 hover:shadow-lg transition-all text-sm font-extrabold"
         >
-          Sign In
+          {loading ? loadingText : 'Sign In'}
         </Button>
 
         {/* Action Links with Clear Hover Underlines */}
@@ -171,6 +190,6 @@ export default function SignInPage() {
           </button>
         </div>
       </form>
-    </>
+    </div>
   );
 }

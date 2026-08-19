@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+﻿import { supabase } from '../lib/supabase';
 import type { AppResult, RegisterStudentInput, SignInInput, AuthUser } from '@ojt/shared';
 
 export async function registerStudent(input: RegisterStudentInput): Promise<AppResult<null>> {
@@ -16,8 +16,6 @@ export async function registerStudent(input: RegisterStudentInput): Promise<AppR
   if (!input.year_level || input.year_level < 1 || input.year_level > 4)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Valid year level is required.' } };
 
-  // Mobile registration goes through a server-side endpoint to use service role
-  // Direct Supabase signUp creates auth user; student profile created server-side
   const { data, error } = await supabase.auth.signUp({
     email: input.email.trim(),
     password: input.password,
@@ -35,11 +33,13 @@ export async function registerStudent(input: RegisterStudentInput): Promise<AppR
   if (error) {
     if (error.message?.includes('already registered'))
       return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email already registered.' } };
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Registration failed. Please try again.' } };
+    if (error.message?.includes('rate limit'))
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Email rate limit exceeded. Please turn off "Confirm email" in Supabase Auth settings.' } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: error.message || 'Registration failed. Please try again.' } };
   }
 
   if (!data.user)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Registration failed. Please try again.' } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Registration submitted. Please check if email confirmation is required.' } };
 
   return { data: null, error: null };
 }
