@@ -172,7 +172,6 @@ export async function recordTimeIn(
       attendance_date: today,
       time_in: capturedAt,
       time_in_selfie_path: selfieResult.data!.path,
-      qr_validation_status: 'valid',
       verification_status: 'pending',
       late_status,
       sync_status: 'synced',
@@ -309,7 +308,7 @@ export async function fetchOwnAttendance(
   try {
     const { data, error, count } = await supabase
       .from('attendance')
-      .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, qr_validation_status, verification_status, late_status, sync_status, created_at, updated_at', { count: 'exact' })
+      .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, verification_status, late_status, sync_status, created_at, updated_at', { count: 'exact' })
       .eq('student_id', student.student_id)
       .order('attendance_date', { ascending: false })
       .range(from, to);
@@ -341,7 +340,7 @@ export async function getTodayAttendance(): Promise<DbAttendance | null> {
   try {
     const { data } = await supabase
       .from('attendance')
-      .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, qr_validation_status, verification_status, late_status, sync_status, created_at, updated_at')
+      .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, verification_status, late_status, sync_status, created_at, updated_at')
       .eq('student_id', student.student_id)
       .eq('attendance_date', today)
       .maybeSingle();
@@ -363,7 +362,6 @@ export async function getTodayAttendance(): Promise<DbAttendance | null> {
       time_out: null,
       time_in_selfie_path: offlineItem.local_photo_uri,
       time_out_selfie_path: null,
-      qr_validation_status: 'valid',
       verification_status: 'pending',
       late_status: 'unknown',
       sync_status: 'pending_sync',

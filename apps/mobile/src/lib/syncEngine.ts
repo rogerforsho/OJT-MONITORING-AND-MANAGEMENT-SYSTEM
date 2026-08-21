@@ -81,7 +81,6 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
             attendance_date: item.attendance_date,
             time_in: item.captured_at,
             time_in_selfie_path: storagePath,
-            qr_validation_status: 'valid',
             verification_status: 'pending',
             late_status: 'unknown',
             sync_status: 'synced',

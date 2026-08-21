@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
@@ -50,62 +50,92 @@ export default async function DashboardPage() {
       };
     }
   } else if (user.role === 'Coordinator') {
-    const [{ count: pendingCount }, { count: studentCount }, { count: companyCount }, { count: reportCount }] = await Promise.all([
-      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'Student').eq('account_status', 'pending'),
+    const [
+      { count: pendingApprovals },
+      { count: activeStudents },
+      { count: totalCompanies },
+      { count: atRiskCount },
+    ] = await Promise.all([
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'pending'),
       supabase.from('students').select('*', { count: 'exact', head: true }),
-      supabase.from('companies').select('*', { count: 'exact', head: true }),
-      supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'submitted'),
+      supabase.from('companies').select('*', { count: 'exact', head: true }).eq('is_active', true),
+      supabase.from('internship_progress').select('*', { count: 'exact', head: true }).lt('completed_hours', 150),
     ]);
 
     stats = {
-      pendingApprovals: pendingCount || 0,
-      totalStudents: studentCount || 0,
-      totalCompanies: companyCount || 0,
-      pendingReports: reportCount || 0,
+      pendingApprovals: pendingApprovals || 0,
+      activeStudents: activeStudents || 0,
+      totalCompanies: totalCompanies || 0,
+      atRiskCount: atRiskCount || 0,
     };
   } else if (user.role === 'Supervisor') {
     const { data: supervisor } = await supabase
       .from('supervisors')
-      .select('supervisor_id, company_id, companies(company_name)')
+      .select('supervisor_id, companies(company_name)')
       .eq('user_id', user.user_id)
       .maybeSingle();
 
     if (supervisor) {
-      const [{ count: traineeCount }, { count: pendingAttendanceCount }] = await Promise.all([
+      const [
+        { count: assignedStudents },
+        { count: pendingAttendance },
+        { count: completedEvaluations },
+      ] = await Promise.all([
         supabase.from('student_assignments').select('*', { count: 'exact', head: true }).eq('supervisor_id', supervisor.supervisor_id).eq('assignment_status', 'active'),
-        supabase.from('attendance').select('*, student_assignments!inner(supervisor_id)', { count: 'exact', head: true }).eq('student_assignments.supervisor_id', supervisor.supervisor_id).eq('verification_status', 'pending'),
+        supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
+        supabase.from('evaluations').select('*', { count: 'exact', head: true }).eq('supervisor_id', supervisor.supervisor_id),
       ]);
 
       stats = {
         supervisor,
-        traineeCount: traineeCount || 0,
-        pendingAttendanceCount: pendingAttendanceCount || 0,
+        assignedStudents: assignedStudents || 0,
+        pendingAttendance: pendingAttendance || 0,
+        completedEvaluations: completedEvaluations || 0,
       };
     }
   } else if (user.role === 'ProgramHead') {
-    const [{ count: totalStudents }, { count: totalCompanies }] = await Promise.all([
-      supabase.from('students').select('*', { count: 'exact', head: true }),
-      supabase.from('companies').select('*', { count: 'exact', head: true }),
+    const [
+      { count: totalICS },
+      { count: totalIBE },
+      { count: totalCompanies },
+    ] = await Promise.all([
+      supabase.from('students').select('*', { count: 'exact', head: true }).in('course', ['BS Information Technology', 'BS Computer Science']),
+      supabase.from('students').select('*', { count: 'exact', head: true }).in('course', ['BS Business Administration', 'BS Accountancy', 'BS Hospitality Management']),
+      supabase.from('companies').select('*', { count: 'exact', head: true }).eq('is_active', true),
     ]);
 
     stats = {
-      totalStudents: totalStudents || 0,
+      totalICS: totalICS || 0,
+      totalIBE: totalIBE || 0,
       totalCompanies: totalCompanies || 0,
     };
   } else if (user.role === 'Admin') {
-    const [{ count: userCount }, { count: pendingCount }] = await Promise.all([
+    const [
+      { count: totalUsers },
+      { count: pendingUsers },
+      { count: activeUsers },
+    ] = await Promise.all([
       supabase.from('users').select('*', { count: 'exact', head: true }),
       supabase.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'pending'),
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'active'),
     ]);
 
     stats = {
-      totalUsers: userCount || 0,
-      pendingUsers: pendingCount || 0,
+      totalUsers: totalUsers || 0,
+      pendingUsers: pendingUsers || 0,
+      activeUsers: activeUsers || 0,
     };
   }
 
+  // Fetch Latest Broadcast Announcements
+  const { data: latestAnnouncements } = await supabase
+    .from('announcements')
+    .select('announcement_id, title, content, target_department, created_at')
+    .order('created_at', { ascending: false })
+    .limit(2);
+
   return (
-    <div className="p-6 sm:p-8 space-y-8 max-w-7xl">
+    <div className="p-6 sm:p-8 space-y-7 max-w-7xl page-fade-in">
       {/* Welcome Banner */}
       <div className="rounded-3xl bg-gradient-to-r from-[#062415] via-[#0A3D24] to-[#041a0f] p-6 sm:p-8 text-white shadow-xl shadow-black/15 border border-[#FFCC00]/30 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none" />
@@ -123,14 +153,16 @@ export default async function DashboardPage() {
               />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs uppercase font-extrabold tracking-wider text-[#FFCC00] bg-[#062415]/80 px-2.5 py-0.5 rounded-full border border-[#FFCC00]/40">
-                  {user.role} Portal
-                </span>
-                <span className="text-xs text-slate-300 font-medium">
-                  Colegio de Montalban
-                </span>
-              </div>
+              {user.role !== 'Admin' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase font-extrabold tracking-wider text-[#FFCC00] bg-[#062415]/80 px-2.5 py-0.5 rounded-full border border-[#FFCC00]/40">
+                    {user.role} Portal
+                  </span>
+                  <span className="text-xs text-slate-300 font-medium">
+                    Colegio de Montalban
+                  </span>
+                </div>
+              )}
               <h1 className="text-2xl sm:text-3xl font-black text-white font-serif mt-1 tracking-tight">
                 Welcome back, {user.full_name}
               </h1>
@@ -149,6 +181,50 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Campus Announcements Banner */}
+      {latestAnnouncements && latestAnnouncements.length > 0 && (
+        <div className="space-y-3">
+          {latestAnnouncements.map((annc) => (
+            <div
+              key={annc.announcement_id}
+              className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 sm:p-5 text-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:bg-amber-500/15"
+            >
+              <div className="flex items-start gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] border border-[#FFCC00]/40 flex items-center justify-center shrink-0 font-bold text-base shadow-sm">
+                  📢
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
+                      Official Broadcast
+                    </span>
+                    {annc.target_department !== 'All' && (
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        {annc.target_department} Dept
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-500 font-medium">
+                      {new Date(annc.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 mt-1 truncate">{annc.title}</h2>
+                  <p className="text-xs text-slate-600 mt-0.5 line-clamp-2 leading-relaxed">{annc.content}</p>
+                </div>
+              </div>
+
+              {user.role === 'Student' && (
+                <Link
+                  href="/student/notifications"
+                  className="shrink-0 text-xs font-bold text-[#0A3D24] bg-white hover:bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm inline-flex items-center gap-1 transition-all"
+                >
+                  View All &rarr;
+                </Link>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* STUDENT DASHBOARD VIEW */}
       {user.role === 'Student' && (
@@ -179,89 +255,71 @@ export default async function DashboardPage() {
                 />
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                {Number(stats.progress?.remaining_hours || 486).toFixed(1)} hours remaining to complete graduation requirements.
+                {Math.max(0, 486 - Number(stats.progress?.completed_hours || 0)).toFixed(1)} hours remaining to complete graduation requirements.
               </p>
             </div>
 
-            {/* Today's Attendance Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-3">
+            {/* Today's Status */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-4">
               <span className="text-xs font-extrabold text-[#0A3D24] uppercase tracking-wider block">
-                Today&apos;s Attendance Status
+                Today&apos;s Attendance
               </span>
               {stats.todayAttendance ? (
-                <div className="space-y-2 pt-1 text-xs">
-                  <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                    <span className="text-slate-500 font-medium">Time In:</span>
-                    <span className="font-bold text-slate-900">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-500">Time In:</span>
+                    <span className="font-bold text-slate-900 font-mono">
                       {new Date(stats.todayAttendance.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                    <span className="text-slate-500 font-medium">Time Out:</span>
-                    <span className="font-bold text-slate-900">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-500">Time Out:</span>
+                    <span className="font-bold text-slate-900 font-mono">
                       {stats.todayAttendance.time_out
                         ? new Date(stats.todayAttendance.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : 'Pending Time Out'}
+                        : 'Pending'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center pt-1">
-                    <span className="text-slate-500 font-medium">Supervisor Verification:</span>
-                    <span className="font-bold text-emerald-700 uppercase">
-                      {stats.todayAttendance.verification_status}
+                  <div className="flex justify-between items-center text-sm pt-1">
+                    <span className="text-slate-500">Status:</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${stats.todayAttendance.late_status === 'late' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {stats.todayAttendance.late_status?.replace('_', ' ') || 'On Time'}
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="py-3 text-center">
-                  <p className="text-xs text-slate-500">No attendance recorded yet for today.</p>
-                  <Link
-                    href="/student/attendance"
-                    className="inline-block mt-3 px-4 py-2 bg-[#0A3D24] text-[#FFCC00] rounded-xl text-xs font-bold hover:bg-[#062415] transition-all"
-                  >
-                    Log Time In Now
+                  <p className="text-xs text-slate-500 font-medium">No attendance recorded today yet.</p>
+                  <Link href="/student/attendance" className="inline-block mt-2 text-xs font-bold text-[#0A3D24] hover:underline">
+                    Go to Camera Attendance &rarr;
                   </Link>
                 </div>
               )}
             </div>
 
-            {/* Host Company Card */}
+            {/* Placement Info */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-3">
               <span className="text-xs font-extrabold text-[#0A3D24] uppercase tracking-wider block">
-                Host Training Establishment
+                Company Assignment
               </span>
-              <div className="pt-1">
-                <p className="text-base font-bold text-slate-900">
-                  {(stats.assignment as any)?.companies?.company_name || 'Assignment Pending'}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Supervisor: {(stats.assignment as any)?.supervisors?.full_name || 'Designated by Host Company'}
-                </p>
-              </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-medium">Practicum Year:</span>
-                <span className="text-[#0A3D24] font-bold">4th Year Graduating</span>
-              </div>
+              {stats.assignment ? (
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-[11px] text-slate-400 uppercase font-semibold block">Host Training Establishment</span>
+                    <p className="text-sm font-bold text-slate-900">{stats.assignment.companies?.company_name}</p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 uppercase font-semibold block">Supervisor</span>
+                    <p className="text-xs font-semibold text-slate-700">{stats.assignment.supervisors?.full_name || 'Designated Supervisor'}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-3 text-center">
+                  <p className="text-xs text-slate-500">No active company assignment found.</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Please coordinate with your OJT Coordinator.</p>
+                </div>
+              )}
             </div>
-          </div>
-
-          {/* Student Quick Links */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Link href="/student/attendance" className="bg-white p-4 rounded-xl border border-slate-200 hover:border-[#0A3D24] hover:shadow-md transition-all text-center group">
-              <span className="text-2xl block mb-1 group-hover:scale-110 transition-transform">📋</span>
-              <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Attendance Logs</span>
-            </Link>
-            <Link href="/student/progress" className="bg-white p-4 rounded-xl border border-slate-200 hover:border-[#0A3D24] hover:shadow-md transition-all text-center group">
-              <span className="text-2xl block mb-1 group-hover:scale-110 transition-transform">📈</span>
-              <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Rendered Hours</span>
-            </Link>
-            <Link href="/student/reports" className="bg-white p-4 rounded-xl border border-slate-200 hover:border-[#0A3D24] hover:shadow-md transition-all text-center group">
-              <span className="text-2xl block mb-1 group-hover:scale-110 transition-transform">📁</span>
-              <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Digital Reports</span>
-            </Link>
-            <Link href="/student/notifications" className="bg-white p-4 rounded-xl border border-slate-200 hover:border-[#0A3D24] hover:shadow-md transition-all text-center group">
-              <span className="text-2xl block mb-1 group-hover:scale-110 transition-transform">🔔</span>
-              <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Alerts & Notices</span>
-            </Link>
           </div>
         </div>
       )}
@@ -270,32 +328,36 @@ export default async function DashboardPage() {
       {user.role === 'Coordinator' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 block">Pending Registrations</span>
-              <span className="text-3xl font-black text-rose-600 font-serif mt-2 block">{stats.pendingApprovals}</span>
-              <Link href="/coordinator/approvals" className="text-xs text-[#0A3D24] font-bold hover:underline mt-2 inline-block">
-                Review pending &rarr;
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
+              <span className="text-xs font-bold text-slate-500 block uppercase">Pending Registrations</span>
+              <span className="text-3xl font-black text-rose-600 font-serif">{stats.pendingApprovals}</span>
+              <p className="text-xs text-slate-500">Student & supervisor accounts requiring verification.</p>
+              <Link href="/coordinator/approvals" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
+                Review pending list &rarr;
               </Link>
             </div>
-            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 block">Total Trainees (ICS/IBE)</span>
-              <span className="text-3xl font-black text-[#0A3D24] font-serif mt-2 block">{stats.totalStudents}</span>
-              <Link href="/coordinator/students" className="text-xs text-[#0A3D24] font-bold hover:underline mt-2 inline-block">
-                View student roster &rarr;
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
+              <span className="text-xs font-bold text-slate-500 block uppercase">Active Trainees</span>
+              <span className="text-3xl font-black text-[#0A3D24] font-serif">{stats.activeStudents}</span>
+              <p className="text-xs text-slate-500">4th-Year ICS & IBE graduating students enrolled in practicum.</p>
+              <Link href="/coordinator/students" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
+                View student cohort &rarr;
               </Link>
             </div>
-            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 block">Partner Companies</span>
-              <span className="text-3xl font-black text-[#0A3D24] font-serif mt-2 block">{stats.totalCompanies}</span>
-              <Link href="/coordinator/companies" className="text-xs text-[#0A3D24] font-bold hover:underline mt-2 inline-block">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
+              <span className="text-xs font-bold text-slate-500 block uppercase">Partner Establishments</span>
+              <span className="text-3xl font-black text-[#0A3D24] font-serif">{stats.totalCompanies}</span>
+              <p className="text-xs text-slate-500">Accredited host training companies with active MOA status.</p>
+              <Link href="/coordinator/companies" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
                 Manage companies &rarr;
               </Link>
             </div>
-            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm">
-              <span className="text-xs font-bold text-slate-500 block">Reports to Grade</span>
-              <span className="text-3xl font-black text-amber-600 font-serif mt-2 block">{stats.pendingReports}</span>
-              <Link href="/coordinator/submissions" className="text-xs text-[#0A3D24] font-bold hover:underline mt-2 inline-block">
-                Review submissions &rarr;
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
+              <span className="text-xs font-bold text-slate-500 block uppercase">At-Risk Interns (&lt;150h)</span>
+              <span className="text-3xl font-black text-amber-600 font-serif">{stats.atRiskCount}</span>
+              <p className="text-xs text-slate-500">Trainees needing intervention to complete 486 required hours.</p>
+              <Link href="/coordinator/progress" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
+                Monitor hour milestones &rarr;
               </Link>
             </div>
           </div>
@@ -305,21 +367,29 @@ export default async function DashboardPage() {
       {/* SUPERVISOR DASHBOARD VIEW */}
       {user.role === 'Supervisor' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 block uppercase">Assigned Interns</span>
-              <span className="text-3xl font-black text-[#0A3D24] font-serif">{stats.traineeCount}</span>
-              <p className="text-xs text-slate-500">4th-Year Colegio de Montalban student interns assigned to your training station.</p>
+              <span className="text-xs font-bold text-slate-500 block uppercase">Assigned Trainees</span>
+              <span className="text-3xl font-black text-[#0A3D24] font-serif">{stats.assignedStudents}</span>
+              <p className="text-xs text-slate-500">Active student interns under your direct company mentorship.</p>
               <Link href="/supervisor/students" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
-                Manage assigned trainees &rarr;
+                View assigned interns &rarr;
               </Link>
             </div>
             <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 block uppercase">Pending Attendance Verifications</span>
-              <span className="text-3xl font-black text-amber-600 font-serif">{stats.pendingAttendanceCount}</span>
-              <p className="text-xs text-slate-500">Verify trainee selfie evidence and daily rendered timestamps.</p>
+              <span className="text-xs font-bold text-slate-500 block uppercase">Pending Attendance Logs</span>
+              <span className="text-3xl font-black text-amber-600 font-serif">{stats.pendingAttendance}</span>
+              <p className="text-xs text-slate-500">Daily selfie logs awaiting supervisor verification.</p>
               <Link href="/supervisor/attendance" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
                 Verify daily logs &rarr;
+              </Link>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
+              <span className="text-xs font-bold text-slate-500 block uppercase">Evaluations Completed</span>
+              <span className="text-3xl font-black text-[#0A3D24] font-serif">{stats.completedEvaluations}</span>
+              <p className="text-xs text-slate-500">Midterm and final performance evaluations submitted.</p>
+              <Link href="/supervisor/evaluations" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
+                Conduct evaluations &rarr;
               </Link>
             </div>
           </div>
@@ -332,7 +402,16 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
               <span className="text-xs font-bold text-slate-500 block uppercase">Department Trainees</span>
-              <span className="text-3xl font-black text-[#0A3D24] font-serif">{stats.totalStudents}</span>
+              <div className="flex gap-4 items-baseline pt-1">
+                <div>
+                  <span className="text-2xl font-black text-[#0A3D24] font-serif">{stats.totalICS}</span>
+                  <span className="text-xs text-slate-400 block font-semibold">ICS Cohort</span>
+                </div>
+                <div className="border-l border-slate-200 pl-4">
+                  <span className="text-2xl font-black text-[#0A3D24] font-serif">{stats.totalIBE}</span>
+                  <span className="text-xs text-slate-400 block font-semibold">IBE Cohort</span>
+                </div>
+              </div>
               <p className="text-xs text-slate-500">Institute of Computing Studies & Institute of Business and Entrepreneurship.</p>
               <Link href="/program-head/reports" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
                 View department analytics &rarr;
@@ -357,7 +436,7 @@ export default async function DashboardPage() {
             <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-2">
               <span className="text-xs font-bold text-slate-500 block uppercase">Total System Accounts</span>
               <span className="text-3xl font-black text-[#0A3D24] font-serif">{stats.totalUsers}</span>
-              <p className="text-xs text-slate-500">Students, Coordinators, Supervisors, Program Heads, and Administrators.</p>
+              <p className="text-xs text-slate-500">Students, Coordinators, Supervisors, and Program Heads.</p>
               <Link href="/admin" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block pt-2">
                 Manage user accounts &rarr;
               </Link>

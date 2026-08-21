@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,32 +8,33 @@ import { signOut } from '@/src/services/auth';
 
 const NAV_ITEMS: Record<string, { label: string; href: string; icon: string }[]> = {
   Student: [
-    { label: 'Dashboard', href: '/dashboard', icon: '⊞' },
-    { label: 'Attendance', href: '/student/attendance', icon: '📋' },
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Attendance', href: '/student/attendance', icon: '📅' },
     { label: 'Progress', href: '/student/progress', icon: '📈' },
-    { label: 'Reports', href: '/student/reports', icon: '📁' },
+    { label: 'Reports', href: '/student/reports', icon: '📝' },
     { label: 'Notifications', href: '/student/notifications', icon: '🔔' },
   ],
   Coordinator: [
-    { label: 'Dashboard', href: '/dashboard', icon: '⊞' },
-    { label: 'Approvals', href: '/coordinator/approvals', icon: '✅' },
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Approvals', href: '/coordinator/approvals', icon: '✓' },
     { label: 'Students', href: '/coordinator/students', icon: '👥' },
     { label: 'Companies', href: '/coordinator/companies', icon: '🏢' },
-    { label: 'Supervisors', href: '/coordinator/supervisors', icon: '👩‍🏫' },
-    { label: 'Assignments', href: '/coordinator/assignments', icon: '🔗' },
-    { label: 'Submissions', href: '/coordinator/submissions', icon: '📁' },
+    { label: 'Supervisors', href: '/coordinator/supervisors', icon: '👔' },
+    { label: 'Assignments', href: '/coordinator/assignments', icon: '📋' },
+    { label: 'Submissions', href: '/coordinator/submissions', icon: '📑' },
     { label: 'Progress', href: '/coordinator/progress', icon: '📈' },
   ],
   Supervisor: [
     { label: 'My Students', href: '/supervisor/students', icon: '👥' },
-    { label: 'Attendance', href: '/supervisor/attendance', icon: '📋' },
+    { label: 'Attendance', href: '/supervisor/attendance', icon: '📅' },
     { label: 'Evaluations', href: '/supervisor/evaluations', icon: '⭐' },
   ],
   ProgramHead: [
-    { label: 'Dashboard', href: '/dashboard', icon: '⊞' },
-    { label: 'Reports', href: '/program-head/reports', icon: '📊' },
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Reports', href: '/program-head/reports', icon: '📄' },
   ],
   Admin: [
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
     { label: 'Administration', href: '/admin', icon: '⚙️' },
   ],
 };
@@ -83,15 +84,30 @@ export default function Sidebar({ user }: Props) {
 
       {/* User info card */}
       <div className="px-5 py-3.5 border-b border-[#0A3D24]/60 bg-[#062415]">
-        <p className="text-white text-sm font-bold truncate leading-snug">{user.full_name}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <span className={`inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border ${badge.bg} ${badge.text} ${badge.border}`}>
-            {user.role}
-          </span>
-          <span className="text-[10px] text-slate-400 font-medium truncate">
-            {user.role === 'Student' ? '4th-Year ICS/IBE' : 'Faculty / Staff'}
-          </span>
-        </div>
+        {user.role === 'Admin' ? (
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-300 shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <span className={`inline-block text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-md border ${badge.bg} ${badge.text} ${badge.border}`}>
+              ADMIN
+            </span>
+          </div>
+        ) : (
+          <>
+            <p className="text-white text-sm font-bold truncate leading-snug">{user.full_name}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border ${badge.bg} ${badge.text} ${badge.border}`}>
+                {user.role}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium truncate">
+                {user.role === 'Student' ? '4th-Year ICS/IBE' : 'Faculty / Staff'}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Navigation Links */}
