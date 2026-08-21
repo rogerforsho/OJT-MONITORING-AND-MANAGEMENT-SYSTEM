@@ -1,5 +1,11 @@
-import { supabase } from '../lib/supabase';
+﻿import { supabase } from '../lib/supabase';
 import { decodeBase64ToArrayBuffer } from '../lib/base64';
+import { isNetworkAvailable } from '../lib/syncEngine';
+import {
+  saveImageToSandbox,
+  enqueueOfflineAttendance,
+  getOfflineAttendanceForToday,
+} from '../lib/offlineQueue';
 import type { AppResult, DbAttendance } from '@ojt/shared';
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
@@ -45,27 +51,31 @@ async function determineLateStatus(
   const dayOfWeek = time_in.getDay();
   if (dayOfWeek === 0 || dayOfWeek === 6) return 'unknown';
 
-  const { data: schedule } = await supabase
-    .from('work_schedules')
-    .select('time_in_cutoff')
-    .eq('company_id', company_id)
-    .eq('day_of_week', dayOfWeek)
-    .maybeSingle();
+  try {
+    const { data: schedule } = await supabase
+      .from('work_schedules')
+      .select('time_in_cutoff')
+      .eq('company_id', company_id)
+      .eq('day_of_week', dayOfWeek)
+      .maybeSingle();
 
-  if (!schedule) return 'unknown';
+    if (!schedule) return 'unknown';
 
-  const [cutoffHour, cutoffMin] = schedule.time_in_cutoff.split(':').map(Number);
-  const cutoff = new Date(time_in);
-  cutoff.setHours(cutoffHour, cutoffMin, 0, 0);
+    const [cutoffHour, cutoffMin] = schedule.time_in_cutoff.split(':').map(Number);
+    const cutoff = new Date(time_in);
+    cutoff.setHours(cutoffHour, cutoffMin, 0, 0);
 
-  return time_in > cutoff ? 'late' : 'on_time';
+    return time_in > cutoff ? 'late' : 'on_time';
+  } catch {
+    return 'unknown';
+  }
 }
 
 // ─── Time In ──────────────────────────────────────────────────────────────────
 
 export async function recordTimeIn(
   selfie_uri: string
-): Promise<AppResult<{ attendance_id: string }>> {
+): Promise<AppResult<{ attendance_id: string; isOffline?: boolean }>> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { data: null, error: { code: 'UNAUTHORIZED', message: 'Not authenticated.' } };
@@ -100,7 +110,28 @@ export async function recordTimeIn(
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Attendance is only recorded on weekdays.' } };
   }
 
-  // Duplicate check
+  const online = await isNetworkAvailable();
+  const capturedAt = new Date().toISOString();
+
+  // If OFFLINE: queue locally
+  if (!online) {
+    try {
+      const savedPath = await saveImageToSandbox(selfie_uri, `time_in_${Date.now()}.jpg`);
+      await enqueueOfflineAttendance({
+        type: 'time_in',
+        student_id: student.student_id,
+        assignment_id: assignment.assignment_id,
+        local_photo_uri: savedPath,
+        captured_at: capturedAt,
+        attendance_date: today,
+      });
+      return { data: { attendance_id: 'offline_pending', isOffline: true }, error: null };
+    } catch {
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to save offline attendance.' } };
+    }
+  }
+
+  // Duplicate check when online
   const { data: existing } = await supabase
     .from('attendance')
     .select('attendance_id')
@@ -112,9 +143,24 @@ export async function recordTimeIn(
     return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'You already have an attendance record for today.' } };
   }
 
-  const capturedAt = new Date().toISOString();
   const selfieResult = await uploadSelfie(selfie_uri, student.student_id, 'time_in');
-  if (selfieResult.error) return { data: null, error: selfieResult.error };
+  if (selfieResult.error) {
+    // Fallback to offline queue if upload fails due to network drop
+    try {
+      const savedPath = await saveImageToSandbox(selfie_uri, `time_in_${Date.now()}.jpg`);
+      await enqueueOfflineAttendance({
+        type: 'time_in',
+        student_id: student.student_id,
+        assignment_id: assignment.assignment_id,
+        local_photo_uri: savedPath,
+        captured_at: capturedAt,
+        attendance_date: today,
+      });
+      return { data: { attendance_id: 'offline_pending', isOffline: true }, error: null };
+    } catch {
+      return { data: null, error: selfieResult.error };
+    }
+  }
 
   const late_status = await determineLateStatus(assignment.company_id, new Date(capturedAt));
 
@@ -138,7 +184,7 @@ export async function recordTimeIn(
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to record Time In.' } };
   }
 
-  return { data: { attendance_id: record.attendance_id }, error: null };
+  return { data: { attendance_id: record.attendance_id, isOffline: false }, error: null };
 }
 
 // ─── Time Out ─────────────────────────────────────────────────────────────────
@@ -146,7 +192,7 @@ export async function recordTimeIn(
 export async function recordTimeOut(
   attendance_id: string,
   selfie_uri: string
-): Promise<AppResult<null>> {
+): Promise<AppResult<{ isOffline?: boolean }>> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { data: null, error: { code: 'UNAUTHORIZED', message: 'Not authenticated.' } };
@@ -160,6 +206,29 @@ export async function recordTimeOut(
 
   if (!student) {
     return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const capturedAt = new Date().toISOString();
+  const online = await isNetworkAvailable();
+
+  // If OFFLINE: queue locally
+  if (!online || attendance_id === 'offline_pending') {
+    try {
+      const savedPath = await saveImageToSandbox(selfie_uri, `time_out_${Date.now()}.jpg`);
+      await enqueueOfflineAttendance({
+        type: 'time_out',
+        student_id: student.student_id,
+        assignment_id: '',
+        attendance_id: attendance_id !== 'offline_pending' ? attendance_id : undefined,
+        local_photo_uri: savedPath,
+        captured_at: capturedAt,
+        attendance_date: today,
+      });
+      return { data: { isOffline: true }, error: null };
+    } catch {
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to save offline Time Out.' } };
+    }
   }
 
   const { data: record } = await supabase
@@ -177,9 +246,24 @@ export async function recordTimeOut(
     return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Time Out has already been recorded for today.' } };
   }
 
-  const capturedAt = new Date().toISOString();
   const selfieResult = await uploadSelfie(selfie_uri, student.student_id, 'time_out');
-  if (selfieResult.error) return { data: null, error: selfieResult.error };
+  if (selfieResult.error) {
+    try {
+      const savedPath = await saveImageToSandbox(selfie_uri, `time_out_${Date.now()}.jpg`);
+      await enqueueOfflineAttendance({
+        type: 'time_out',
+        student_id: student.student_id,
+        assignment_id: '',
+        attendance_id,
+        local_photo_uri: savedPath,
+        captured_at: capturedAt,
+        attendance_date: today,
+      });
+      return { data: { isOffline: true }, error: null };
+    } catch {
+      return { data: null, error: selfieResult.error };
+    }
+  }
 
   const { error } = await supabase
     .from('attendance')
@@ -195,7 +279,7 @@ export async function recordTimeOut(
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to record Time Out.' } };
   }
 
-  return { data: null, error: null };
+  return { data: { isOffline: false }, error: null };
 }
 
 // ─── Fetch own attendance ─────────────────────────────────────────────────────
@@ -222,18 +306,22 @@ export async function fetchOwnAttendance(
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  const { data, error, count } = await supabase
-    .from('attendance')
-    .select('*', { count: 'exact' })
-    .eq('student_id', student.student_id)
-    .order('attendance_date', { ascending: false })
-    .range(from, to);
+  try {
+    const { data, error, count } = await supabase
+      .from('attendance')
+      .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, qr_validation_status, verification_status, late_status, sync_status, created_at, updated_at', { count: 'exact' })
+      .eq('student_id', student.student_id)
+      .order('attendance_date', { ascending: false })
+      .range(from, to);
 
-  if (error) {
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load attendance records.' } };
+    if (error) {
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load attendance records.' } };
+    }
+
+    return { data: { records: (data as DbAttendance[]) ?? [], total: count ?? 0 }, error: null };
+  } catch {
+    return { data: { records: [], total: 0 }, error: null };
   }
-
-  return { data: { records: (data as DbAttendance[]) ?? [], total: count ?? 0 }, error: null };
 }
 
 export async function getTodayAttendance(): Promise<DbAttendance | null> {
@@ -250,12 +338,39 @@ export async function getTodayAttendance(): Promise<DbAttendance | null> {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const { data } = await supabase
-    .from('attendance')
-    .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, qr_validation_status, verification_status, late_status, sync_status, created_at, updated_at')
-    .eq('student_id', student.student_id)
-    .eq('attendance_date', today)
-    .maybeSingle();
+  try {
+    const { data } = await supabase
+      .from('attendance')
+      .select('attendance_id, student_id, assignment_id, attendance_date, time_in, time_out, time_in_selfie_path, time_out_selfie_path, qr_validation_status, verification_status, late_status, sync_status, created_at, updated_at')
+      .eq('student_id', student.student_id)
+      .eq('attendance_date', today)
+      .maybeSingle();
 
-  return data as DbAttendance | null;
+    if (data) return data as DbAttendance;
+  } catch {
+    // Check offline queue
+  }
+
+  // Check offline queue fallback
+  const offlineItem = await getOfflineAttendanceForToday(student.student_id);
+  if (offlineItem) {
+    return {
+      attendance_id: offlineItem.id,
+      student_id: offlineItem.student_id,
+      assignment_id: offlineItem.assignment_id,
+      attendance_date: offlineItem.attendance_date,
+      time_in: offlineItem.captured_at,
+      time_out: null,
+      time_in_selfie_path: offlineItem.local_photo_uri,
+      time_out_selfie_path: null,
+      qr_validation_status: 'valid',
+      verification_status: 'pending',
+      late_status: 'unknown',
+      sync_status: 'pending_sync',
+      created_at: offlineItem.created_at,
+      updated_at: offlineItem.created_at,
+    } as DbAttendance;
+  }
+
+  return null;
 }

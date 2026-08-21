@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -134,6 +134,44 @@ export async function verifyAttendance(
   return { data: null, error: null };
 }
 
+export async function batchVerifyAttendance(): Promise<AppResult<{ verifiedCount: number }>> {
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { data: supervisor } = await supabase
+    .from('supervisors')
+    .select('supervisor_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!supervisor)
+    return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
+
+  const { data: assignments } = await supabase
+    .from('student_assignments')
+    .select('student_id')
+    .eq('supervisor_id', supervisor.supervisor_id)
+    .eq('assignment_status', 'active');
+
+  const studentIds = (assignments ?? []).map((a: { student_id: string }) => a.student_id);
+  if (studentIds.length === 0)
+    return { data: { verifiedCount: 0 }, error: null };
+
+  const service = serviceClient();
+  const { data: updated, error } = await service
+    .from('attendance')
+    .update({ verification_status: 'verified', updated_at: new Date().toISOString() })
+    .in('student_id', studentIds)
+    .eq('verification_status', 'pending')
+    .select('attendance_id');
+
+  if (error)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to batch verify attendance.' } };
+
+  return { data: { verifiedCount: updated?.length ?? 0 }, error: null };
+}
+
 export async function getSelfieUrl(selfie_path: string): Promise<AppResult<{ url: string }>> {
   if (!selfie_path)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Selfie path is required.' } };
@@ -144,7 +182,6 @@ export async function getSelfieUrl(selfie_path: string): Promise<AppResult<{ url
 
   const service = serviceClient();
 
-  // Signed URL — never expose permanent public URLs per SECURITY.md
   const { data, error } = await service.storage
     .from('attendance-selfies')
     .createSignedUrl(selfie_path, 60);

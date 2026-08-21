@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ActivityIndicator,
   ScrollView, StyleSheet,
@@ -6,6 +6,9 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { recordTimeIn, recordTimeOut, getTodayAttendance } from '../../services/attendance';
+import { syncPendingOfflineAttendance, isNetworkAvailable } from '../../lib/syncEngine';
+import { getOfflineQueue, type OfflineQueueItem } from '../../lib/offlineQueue';
+import NetworkToast from '../../components/NetworkToast';
 import type { DbAttendance } from '@ojt/shared';
 
 type Step = 'idle' | 'selfie' | 'submitting';
@@ -16,6 +19,9 @@ export default function AttendanceScreen() {
   const [step, setStep] = useState<Step>('idle');
   const [todayRecord, setTodayRecord] = useState<DbAttendance | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [offlineCount, setOfflineCount] = useState(0);
+  const [isOffline, setIsOffline] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [mode, setMode] = useState<'time_in' | 'time_out'>('time_in');
@@ -23,13 +29,41 @@ export default function AttendanceScreen() {
 
   useEffect(() => {
     loadState();
+    checkOfflineStatus();
   }, []);
+
+  async function checkOfflineStatus() {
+    const online = await isNetworkAvailable();
+    setIsOffline(!online);
+    const queue = await getOfflineQueue();
+    setOfflineCount(queue.length);
+
+    // Auto-sync if online and queue has items
+    if (online && queue.length > 0) {
+      await handleSync();
+    }
+  }
 
   async function loadState() {
     setLoading(true);
     const record = await getTodayAttendance();
     setTodayRecord(record);
+    const queue = await getOfflineQueue();
+    setOfflineCount(queue.length);
     setLoading(false);
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    setError('');
+    const res = await syncPendingOfflineAttendance();
+    setSyncing(false);
+    if (res.syncedCount > 0) {
+      setSuccess(`✅ Successfully synchronized ${res.syncedCount} offline attendance record(s) with CdM servers.`);
+      await loadState();
+    } else if (res.errors.length > 0 && isOffline) {
+      setError(res.errors[0]);
+    }
   }
 
   function startTimeIn() {
@@ -80,11 +114,20 @@ export default function AttendanceScreen() {
       return;
     }
 
-    setSuccess(
-      mode === 'time_in'
-        ? 'Time In recorded successfully with selfie evidence.'
-        : 'Time Out recorded successfully with selfie evidence.'
-    );
+    if (result.data?.isOffline) {
+      setSuccess(
+        mode === 'time_in'
+          ? '📁 Time In recorded offline. Photo and timestamp saved locally and will auto-sync when online.'
+          : '📁 Time Out recorded offline. Photo and timestamp saved locally and will auto-sync when online.'
+      );
+    } else {
+      setSuccess(
+        mode === 'time_in'
+          ? '✅ Time In recorded successfully with selfie evidence.'
+          : '✅ Time Out recorded successfully with selfie evidence.'
+      );
+    }
+
     setStep('idle');
     await loadState();
   }
@@ -128,7 +171,7 @@ export default function AttendanceScreen() {
           </TouchableOpacity>
         </View>
         <TouchableOpacity onPress={() => setStep('idle')} style={[s.backBtn, { top: Math.max(insets.top + 10, 40) }]}>
-          <Text style={s.backBtnText}>✕ Cancel</Text>
+          <Text style={s.backBtnText}>← Cancel</Text>
         </TouchableOpacity>
       </View>
     );
@@ -140,7 +183,7 @@ export default function AttendanceScreen() {
       <View style={s.center}>
         <ActivityIndicator size="large" color="#0A3D24" />
         <Text style={s.submittingText}>
-          Uploading selfie & recording attendance...
+          {isOffline ? 'Saving selfie & recording offline timestamp...' : 'Uploading selfie & recording attendance...'}
         </Text>
       </View>
     );
@@ -158,21 +201,51 @@ export default function AttendanceScreen() {
           </Text>
         </View>
 
+        {/* Offline Queue Banner */}
+        {offlineCount > 0 && (
+          <View style={s.offlineBanner}>
+            <View style={s.offlineBannerTextCol}>
+              <Text style={s.offlineBannerTitle}>📁 {offlineCount} Pending Offline Record(s)</Text>
+              <Text style={s.offlineBannerSub}>Saved locally. Will synchronize automatically once connected.</Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleSync}
+              disabled={syncing}
+              style={s.syncBtn}
+              activeOpacity={0.8}
+            >
+              {syncing ? (
+                <ActivityIndicator size="small" color="#0A3D24" />
+              ) : (
+                <Text style={s.syncBtnText}>Sync Now</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Success / Error Messages */}
         {!!success && (
           <View style={s.alertSuccess}>
-            <Text style={s.alertSuccessText}>✓ {success}</Text>
+            <Text style={s.alertSuccessText}>{success}</Text>
           </View>
         )}
         {!!error && (
           <View style={s.alertError}>
-            <Text style={s.alertErrorText}>⚠ {error}</Text>
+            <Text style={s.alertErrorText}>{error}</Text>
           </View>
         )}
 
         {/* Today's status card */}
         <View style={s.card}>
-          <Text style={s.cardHeading}>Today&apos;s Status</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <Text style={s.cardHeading}>Today&apos;s Status</Text>
+            {todayRecord?.sync_status === 'pending_sync' && (
+              <View style={s.offlineTag}>
+                <Text style={s.offlineTagText}>Offline Stored</Text>
+              </View>
+            )}
+          </View>
+          
           {todayRecord ? (
             <View style={s.statusList}>
               <View style={s.statusRow}>
@@ -227,25 +300,30 @@ export default function AttendanceScreen() {
           {!todayRecord && (
             <TouchableOpacity onPress={startTimeIn} style={s.btnTimeIn} activeOpacity={0.85}>
               <Text style={s.btnTimeInText}>📷 Time In</Text>
-              <Text style={s.btnSubtext}>Front-camera selfie evidence required</Text>
+              <Text style={s.btnSubtext}>
+                {isOffline ? 'Will record offline selfie evidence' : 'Front-camera selfie evidence required'}
+              </Text>
             </TouchableOpacity>
           )}
 
           {todayRecord && !todayRecord.time_out && (
             <TouchableOpacity onPress={startTimeOut} style={s.btnTimeOut} activeOpacity={0.85}>
               <Text style={s.btnTimeOutText}>📷 Time Out</Text>
-              <Text style={s.btnSubtextMuted}>Front-camera selfie evidence required</Text>
+              <Text style={s.btnSubtextMuted}>
+                {isOffline ? 'Will record offline selfie evidence' : 'Front-camera selfie evidence required'}
+              </Text>
             </TouchableOpacity>
           )}
 
           {todayRecord?.time_out && (
             <View style={s.completeCard}>
-              <Text style={s.completeTitle}>✓ Attendance Complete</Text>
+              <Text style={s.completeTitle}>✅ Attendance Complete</Text>
               <Text style={s.completeSub}>Both Time In and Time Out recorded for today</Text>
             </View>
           )}
         </View>
       </ScrollView>
+      <NetworkToast isOffline={isOffline} />
     </View>
   );
 }
@@ -258,12 +336,45 @@ const s = StyleSheet.create({
   headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   headerTitle: { fontSize: 24, fontWeight: '900', color: '#062415' },
   headerDate: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  offlineBanner: {
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fef3c7',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  offlineBannerTextCol: { flex: 1 },
+  offlineBannerTitle: { fontSize: 13, fontWeight: '800', color: '#92400e' },
+  offlineBannerSub: { fontSize: 11, color: '#b45309', marginTop: 2 },
+  syncBtn: {
+    backgroundColor: '#FFCC00',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  syncBtnText: { color: '#062415', fontSize: 12, fontWeight: '800' },
+  offlineTag: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+  offlineTagText: { fontSize: 10, fontWeight: '800', color: '#b45309' },
   alertSuccess: { backgroundColor: 'rgba(10,61,36,0.08)', borderWidth: 1, borderColor: '#0A3D24', borderRadius: 14, padding: 14, marginBottom: 16 },
   alertSuccessText: { color: '#0A3D24', fontSize: 13, fontWeight: '700' },
   alertError: { backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 14, padding: 14, marginBottom: 16 },
   alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
   card: { backgroundColor: '#ffffff', borderRadius: 20, borderWidth: 1, borderColor: '#e2e8f0', padding: 20, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardHeading: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 },
+  cardHeading: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   statusList: { gap: 12 },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   statusLabel: { fontSize: 13, color: '#475569', fontWeight: '500' },
@@ -278,43 +389,55 @@ const s = StyleSheet.create({
   badgeTextAmber: { color: '#d97706', fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
   badgeText: { fontSize: 12, fontWeight: '600' },
   emptyBox: { alignItems: 'center', paddingVertical: 16 },
-  emptyText: { fontSize: 13, color: '#94a3b8' },
-  actionSection: { gap: 14 },
+  emptyText: { fontSize: 13, color: '#94a3b8', fontWeight: '500' },
+  actionSection: { gap: 12 },
   btnTimeIn: {
     backgroundColor: '#0A3D24',
-    borderRadius: 16,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingVertical: 18,
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFCC00',
     shadowColor: '#0A3D24',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.3)',
   },
-  btnTimeInText: { color: '#FFCC00', fontSize: 16, fontWeight: '800' },
-  btnSubtext: { color: '#ffffff', fontSize: 11, marginTop: 2, opacity: 0.8 },
-  btnTimeOut: { backgroundColor: '#1e293b', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 3 },
-  btnTimeOutText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
-  btnSubtextMuted: { color: '#94a3b8', fontSize: 11, marginTop: 2 },
-  completeCard: { backgroundColor: 'rgba(10,61,36,0.06)', borderWidth: 1, borderColor: '#0A3D24', borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
-  completeTitle: { color: '#0A3D24', fontSize: 16, fontWeight: '800' },
-  completeSub: { color: '#062415', fontSize: 11, marginTop: 2 },
-  permissionContainer: { flex: 1, backgroundColor: '#f4f6f9', padding: 24, justifyContent: 'center', alignItems: 'center' },
-  permissionIcon: { fontSize: 48, marginBottom: 16 },
-  permissionTitle: { fontSize: 20, fontWeight: '800', color: '#062415', marginBottom: 8, textAlign: 'center' },
+  btnTimeInText: { color: '#FFCC00', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
+  btnSubtext: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '600', marginTop: 4 },
+  btnTimeOut: {
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    paddingVertical: 18,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0A3D24',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  btnTimeOutText: { color: '#0A3D24', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
+  btnSubtextMuted: { color: '#64748b', fontSize: 11, fontWeight: '600', marginTop: 4 },
+  completeCard: { backgroundColor: 'rgba(10,61,36,0.06)', borderRadius: 18, padding: 18, alignItems: 'center', borderWidth: 1, borderColor: '#0A3D24' },
+  completeTitle: { fontSize: 15, fontWeight: '800', color: '#0A3D24' },
+  completeSub: { fontSize: 12, color: '#475569', marginTop: 3 },
+  submittingText: { fontSize: 13, fontWeight: '700', color: '#0A3D24', marginTop: 8 },
+  permissionContainer: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center', padding: 28 },
+  permissionIcon: { fontSize: 44, marginBottom: 14 },
+  permissionTitle: { fontSize: 20, fontWeight: '900', color: '#062415', marginBottom: 8, textAlign: 'center' },
   permissionText: { fontSize: 13, color: '#64748b', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  btnPrimary: { backgroundColor: '#0A3D24', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 24, width: '100%', alignItems: 'center', marginBottom: 12 },
+  btnPrimary: { backgroundColor: '#0A3D24', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 24, width: '100%', alignItems: 'center', marginBottom: 10 },
   btnPrimaryText: { color: '#FFCC00', fontSize: 14, fontWeight: '800' },
   btnCancel: { paddingVertical: 10, alignItems: 'center' },
-  btnCancelText: { color: '#64748b', fontSize: 13 },
-  cameraContainer: { flex: 1, backgroundColor: '#000' },
-  cameraOverlay: { position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center', gap: 16 },
-  cameraTag: { color: '#ffffff', fontSize: 13, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, fontWeight: '700' },
-  shutterOuter: { width: 76, height: 76, borderRadius: 38, backgroundColor: '#ffffff', borderWidth: 4, borderColor: '#FFCC00', alignItems: 'center', justifyContent: 'center' },
-  shutterInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#0A3D24' },
-  backBtn: { position: 'absolute', left: 20, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  backBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '600' },
-  submittingText: { color: '#475569', fontSize: 13, fontWeight: '600' },
+  btnCancelText: { color: '#64748b', fontSize: 13, fontWeight: '600' },
+  cameraContainer: { flex: 1, backgroundColor: '#000000' },
+  cameraOverlay: { position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center', gap: 20 },
+  cameraTag: { backgroundColor: 'rgba(0,0,0,0.6)', color: '#ffffff', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, fontSize: 12, fontWeight: '700' },
+  shutterOuter: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#FFCC00' },
+  backBtn: { position: 'absolute', left: 20, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
+  backBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
 });
