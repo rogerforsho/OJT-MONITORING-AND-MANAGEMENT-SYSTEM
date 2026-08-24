@@ -1,7 +1,8 @@
-'use server';
+﻿'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { recordAuditEvent } from './audit';
 import type { AppResult, UserRole, AccountStatus, DbUser } from '@ojt/shared';
 
 function serviceClient() {
@@ -78,8 +79,8 @@ export async function updateUserAccountStatus(
   user_id: string,
   status: AccountStatus
 ): Promise<AppResult<null>> {
-  const { authorized } = await assertAdmin();
-  if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Admin access required.' } };
+  const { authorized, user } = await assertAdmin();
+  if (!authorized || !user) return { data: null, error: { code: 'FORBIDDEN', message: 'Admin access required.' } };
 
   if (!['pending', 'active', 'rejected', 'inactive'].includes(status)) {
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid status.' } };
@@ -93,6 +94,15 @@ export async function updateUserAccountStatus(
 
   if (error)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update user status.' } };
+
+  // Log Audit Event for Non-repudiation
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: `ACCOUNT_STATUS_${status.toUpperCase()}`,
+    entity_type: 'user',
+    entity_id: user_id,
+    details: { new_status: status },
+  });
 
   return { data: null, error: null };
 }
@@ -111,17 +121,21 @@ export async function getSystemOverview(): Promise<AppResult<{
   const service = serviceClient();
 
   const [
-    { data: users },
+    { count: totalUsers },
+    { count: activeUsers },
+    { count: pendingUsers },
     { count: companiesCount },
     { count: attendanceCount },
+    { data: users },
   ] = await Promise.all([
-    service.from('users').select('role, account_status'),
-    service.from('companies').select('*', { count: 'exact', head: true }),
+    service.from('users').select('*', { count: 'exact', head: true }),
+    service.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'active'),
+    service.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'pending'),
+    service.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     service.from('attendance').select('*', { count: 'exact', head: true }),
+    service.from('users').select('role'),
   ]);
 
-  let activeUsers = 0;
-  let pendingUsers = 0;
   const roleBreakdown: Record<string, number> = {
     Student: 0,
     Coordinator: 0,
@@ -130,17 +144,17 @@ export async function getSystemOverview(): Promise<AppResult<{
     Admin: 0,
   };
 
-  (users ?? []).forEach((u: any) => {
-    if (u.account_status === 'active') activeUsers++;
-    if (u.account_status === 'pending') pendingUsers++;
-    if (roleBreakdown[u.role] !== undefined) roleBreakdown[u.role]++;
+  (users ?? []).forEach((u: { role: string }) => {
+    if (roleBreakdown[u.role] !== undefined) {
+      roleBreakdown[u.role]++;
+    }
   });
 
   return {
     data: {
-      totalUsers: users?.length ?? 0,
-      activeUsers,
-      pendingUsers,
+      totalUsers: totalUsers ?? 0,
+      activeUsers: activeUsers ?? 0,
+      pendingUsers: pendingUsers ?? 0,
       companiesCount: companiesCount ?? 0,
       attendanceCount: attendanceCount ?? 0,
       roleBreakdown,

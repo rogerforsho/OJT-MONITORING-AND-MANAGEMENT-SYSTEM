@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Image,
@@ -16,6 +16,7 @@ export default function RegisterScreen({ navigation }: Props) {
     full_name: '', email: '', password: '', confirm_password: '',
     student_number: '', course: 'BSIT', year_level: '4',
   });
+  const [dataPrivacyConsent, setDataPrivacyConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,6 +26,10 @@ export default function RegisterScreen({ navigation }: Props) {
 
   async function handleSubmit() {
     setError('');
+    if (!dataPrivacyConsent) {
+      setError('Please agree to the Data Privacy Notice to register.');
+      return;
+    }
     if (!form.full_name.trim() || !form.email.trim() || !form.student_number.trim()) {
       setError('Please fill in all required fields.');
       return;
@@ -143,6 +148,21 @@ export default function RegisterScreen({ navigation }: Props) {
               </View>
             ))}
 
+            {/* RA 10173 Data Privacy Consent */}
+            <TouchableOpacity
+              style={s.consentRow}
+              onPress={() => setDataPrivacyConsent(!dataPrivacyConsent)}
+              activeOpacity={0.8}
+            >
+              <View style={[s.checkbox, dataPrivacyConsent && s.checkboxChecked]}>
+                {dataPrivacyConsent && <Text style={s.checkmark}>✓</Text>}
+              </View>
+              <Text style={s.consentText}>
+                I consent to the collection of my academic & practicum records under the{' '}
+                <Text style={{ fontWeight: '700', color: '#0A3D24' }}>Data Privacy Act (RA 10173)</Text>.
+              </Text>
+            </TouchableOpacity>
+
             {!!error && (
               <View style={s.alertError}><Text style={s.alertErrorText}>{error}</Text></View>
             )}
@@ -203,65 +223,86 @@ const s = StyleSheet.create({
     elevation: 10,
   },
   title: { fontSize: 20, fontWeight: '800', color: '#0A3D24', marginBottom: 2 },
-  subtitle: { fontSize: 11, color: '#64748b', marginBottom: 16 },
-  fieldGroup: { marginBottom: 10 },
-  label: { fontSize: 11, fontWeight: '700', color: '#1e293b', marginBottom: 3 },
+  subtitle: { fontSize: 12, color: '#64748b', marginBottom: 14 },
+  fieldGroup: { marginBottom: 11 },
+  label: { fontSize: 11, fontWeight: '700', color: '#334155', marginBottom: 4 },
   input: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 9,
     fontSize: 13,
     color: '#0f172a',
     backgroundColor: '#f8fafc',
   },
-  pillRow: { flexDirection: 'row', gap: 6, paddingVertical: 2, paddingHorizontal: 4 },
+  pillRow: { flexDirection: 'row', gap: 6, paddingVertical: 2 },
   pill: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 8,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#e2e8f0',
     backgroundColor: '#f8fafc',
   },
-  pillActive: {
-    backgroundColor: '#0A3D24',
-    borderColor: '#0A3D24',
-  },
-  pillText: { fontSize: 11, fontWeight: '700', color: '#475569' },
+  pillActive: { borderColor: '#0A3D24', backgroundColor: '#0A3D24' },
+  pillText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
   pillTextActive: { color: '#FFCC00' },
   fixedPill: {
-    backgroundColor: 'rgba(10,61,36,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(10,61,36,0.3)',
-    borderRadius: 10,
-    paddingVertical: 8,
     paddingHorizontal: 12,
-    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(10,61,36,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(10,61,36,0.2)',
   },
   fixedPillText: { fontSize: 12, fontWeight: '700', color: '#0A3D24' },
-  btn: {
-    backgroundColor: '#0A3D24',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 4,
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    padding: 10,
+    backgroundColor: 'rgba(10,61,36,0.04)',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.3)',
+    borderColor: 'rgba(10,61,36,0.15)',
+    marginVertical: 4,
   },
-  btnText: { color: '#FFCC00', fontWeight: '800', fontSize: 14, letterSpacing: 0.5 },
+  checkbox: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#0A3D24',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  checkboxChecked: { backgroundColor: '#0A3D24' },
+  checkmark: { color: '#FFCC00', fontSize: 10, fontWeight: '900' },
+  consentText: { flex: 1, fontSize: 11, color: '#334155', lineHeight: 15 },
   alertError: {
     backgroundColor: '#fef2f2',
     borderWidth: 1,
     borderColor: '#fecaca',
     borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 10,
+    padding: 9,
+    marginBottom: 8,
   },
-  alertErrorText: { fontSize: 12, color: '#dc2626', fontWeight: '600' },
-  linkCenter: { textAlign: 'center', fontSize: 12, color: '#64748b' },
-  linkBold: { color: '#0A3D24', fontWeight: '700' },
+  alertErrorText: { color: '#b91c1c', fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  btn: {
+    backgroundColor: '#0A3D24',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    marginTop: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  btnText: { color: '#FFCC00', fontSize: 14, fontWeight: '800' },
+  linkCenter: { textAlign: 'center', color: '#64748b', fontSize: 12, marginTop: 14 },
+  linkBold: { color: '#0A3D24', fontWeight: '800' },
 });
