@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [dataPrivacyConsent, setDataPrivacyConsent] = useState(false);
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -38,6 +39,11 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!dataPrivacyConsent) {
+      setError('You must agree to the Data Privacy Notice to register.');
+      return;
+    }
 
     if (form.password !== form.confirm_password) {
       setError('Passwords do not match.');
@@ -107,7 +113,7 @@ export default function RegisterPage() {
             >
               {COURSES.map((c) => (
                 <option key={c.code} value={c.code}>
-                  {c.code} — {c.name}
+                  {c.code} – {c.name}
                 </option>
               ))}
             </select>
@@ -141,6 +147,22 @@ export default function RegisterPage() {
           placeholder="Re-enter password"
           required
         />
+
+        {/* Philippine Data Privacy Act (RA 10173) Consent */}
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-[11px] text-emerald-950">
+          <input
+            id="data-privacy-consent"
+            type="checkbox"
+            checked={dataPrivacyConsent}
+            onChange={(e) => setDataPrivacyConsent(e.target.checked)}
+            required
+            className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-[#0A3D24] focus:ring-[#0A3D24] cursor-pointer"
+          />
+          <label htmlFor="data-privacy-consent" className="cursor-pointer leading-tight select-none">
+            I consent to the collection and processing of my academic and practicum records in accordance with the{' '}
+            <span className="font-bold text-[#0A3D24]">Philippine Data Privacy Act of 2012 (RA 10173)</span> for official OJT monitoring.
+          </label>
+        </div>
 
         {error && <Alert type="error" message={error} />}
 

@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -31,11 +31,12 @@ export interface AnnouncementInput {
 }
 
 export async function listAnnouncements(): Promise<AppResult<DbAnnouncement[]>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getAuthUserWithRole();
   if (!user || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data, error } = await supabase
+  const service = serviceClient();
+  const { data, error } = await service
     .from('announcements')
     .select('announcement_id, author_user_id, title, content, target_role, target_department, created_at')
     .order('created_at', { ascending: false });
@@ -57,20 +58,43 @@ export async function createAnnouncement(input: AnnouncementInput): Promise<AppR
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const service = serviceClient();
+  const targetRole = input.target_role?.trim() || 'All';
+  const targetDept = input.target_department?.trim() || 'All';
+
   const { data, error } = await service
     .from('announcements')
     .insert({
       author_user_id: user.id,
       title: input.title.trim(),
       content: input.content.trim(),
-      target_role: input.target_role?.trim() || 'All',
-      target_department: input.target_department?.trim() || 'All',
+      target_role: targetRole,
+      target_department: targetDept,
     })
     .select()
     .single();
 
   if (error)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to publish announcement.' } };
+
+  // Fan out individual notification alerts to active recipients
+  try {
+    let usersQuery = service.from('users').select('user_id, role').eq('account_status', 'active');
+    if (targetRole !== 'All') {
+      usersQuery = usersQuery.eq('role', targetRole);
+    }
+    const { data: targetUsers } = await usersQuery;
+    if (targetUsers && targetUsers.length > 0) {
+      const notifPayload = targetUsers.map((u) => ({
+        receiver_user_id: u.user_id,
+        message: `📢 [Announcement] ${input.title.trim()}: ${input.content.trim().slice(0, 100)}${input.content.length > 100 ? '...' : ''}`,
+        notification_date: new Date().toISOString(),
+        status: 'unread',
+      }));
+      await service.from('notifications').insert(notifPayload);
+    }
+  } catch {
+    // Non-blocking notification dispatch
+  }
 
   return { data: data as DbAnnouncement, error: null };
 }

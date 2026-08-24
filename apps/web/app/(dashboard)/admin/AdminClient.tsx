@@ -1,6 +1,10 @@
 ﻿'use client';
 
+<<<<<<< HEAD
 import { useState } from 'react';
+=======
+import { useState, useEffect } from 'react';
+>>>>>>> production-ready
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
@@ -9,6 +13,7 @@ import { Input } from '@/src/components/ui/Input';
 import { Users, Shield, Building, Clock, Megaphone, Check, X, AlertCircle } from '@/src/components/ui/Icons';
 import { updateUserAccountStatus, type UserManagementItem } from '@/src/services/admin';
 import { createAnnouncement } from '@/src/services/announcements';
+import { listAuditLogs, type AuditLogItem } from '@/src/services/audit';
 import type { AccountStatus } from '@ojt/shared';
 
 interface Props {
@@ -35,6 +40,23 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
   const [anncDept, setAnncDept] = useState('All');
   const [anncLoading, setAnncLoading] = useState(false);
 
+  // Audit Logs State
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+
+  useEffect(() => {
+    loadAudit();
+  }, []);
+
+  async function loadAudit() {
+    setAuditLoading(true);
+    const res = await listAuditLogs(1, 10);
+    if (res.data?.logs) {
+      setAuditLogs(res.data.logs);
+    }
+    setAuditLoading(false);
+  }
+
   const handleStatusChange = async (userId: string, newStatus: AccountStatus) => {
     setLoadingId(userId);
     setMsg(null);
@@ -48,6 +70,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
         prev.map((u) => (u.user_id === userId ? { ...u, account_status: newStatus } : u))
       );
       setMsg({ type: 'success', text: `User status updated to ${newStatus}.` });
+      loadAudit();
     }
   };
 
@@ -70,7 +93,8 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
     } else {
       setAnncTitle('');
       setAnncContent('');
-      setMsg({ type: 'success', text: 'Announcement broadcasted successfully!' });
+      setMsg({ type: 'success', text: 'Announcement broadcasted and alerts dispatched successfully!' });
+      loadAudit();
     }
   };
 
@@ -300,6 +324,75 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Institutional Audit Trail (ISO/IEC 25010:2023) */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#0A3D24]" />
+            <h2 className="text-lg font-bold text-slate-900">Institutional Audit Trail</h2>
+            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
+              ISO/IEC 25010:2023 Traceability
+            </Badge>
+          </div>
+          <Button size="sm" variant="outline" onClick={loadAudit} disabled={auditLoading} className="text-xs h-7">
+            Refresh Trail
+          </Button>
+        </div>
+
+        <Card className="border-slate-200/80 shadow-sm overflow-hidden">
+          <CardContent className="p-0">
+            {auditLoading ? (
+              <div className="p-8 text-center text-xs text-slate-400">Loading audit records...</div>
+            ) : auditLogs.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-500">
+                <p className="font-semibold text-slate-700">No security audit events recorded yet.</p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Administrative actions (account approvals, status changes, announcements) are automatically logged.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-600 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-4 py-3">Timestamp</th>
+                      <th className="px-4 py-3">Actor</th>
+                      <th className="px-4 py-3">Security Action</th>
+                      <th className="px-4 py-3">Target Entity</th>
+                      <th className="px-4 py-3">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-mono">
+                    {auditLogs.map((log) => (
+                      <tr key={log.log_id} className="hover:bg-slate-50/50">
+                        <td className="px-4 py-2.5 text-slate-500 whitespace-nowrap">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2.5 font-sans">
+                          <span className="font-semibold text-slate-800">{log.actor_name}</span>
+                          <span className="text-[10px] text-slate-400 block">{log.actor_role}</span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200 font-bold">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-600">
+                          {log.entity_type} {log.entity_id ? `(${log.entity_id.slice(0, 8)}...)` : ''}
+                        </td>
+                        <td className="px-4 py-2.5 text-slate-500 max-w-xs truncate font-sans">
+                          {JSON.stringify(log.details)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
