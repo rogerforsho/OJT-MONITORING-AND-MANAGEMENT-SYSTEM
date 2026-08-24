@@ -7,7 +7,7 @@ import { createClient } from '@/src/lib/supabase/server';
 export default async function DashboardPage() {
   const user = await getAuthUser();
   if (!user) redirect('/auth/sign-in');
-
+  //check if its working
   const supabase = await createClient();
 
   // Role-specific stats query
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
       {/* Welcome Banner */}
       <div className="rounded-3xl bg-gradient-to-r from-[#062415] via-[#0A3D24] to-[#041a0f] p-6 sm:p-8 text-white shadow-xl shadow-black/15 border border-[#FFCC00]/30 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-white p-1 border-2 border-[#FFCC00] shadow-md flex items-center justify-center shrink-0">
