@@ -1,18 +1,18 @@
 ﻿'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Button from '@/src/components/ui/Button';
-import Input from '@/src/components/ui/Input';
 import Alert from '@/src/components/ui/Alert';
 import Modal from '@/src/components/ui/Modal';
 import Badge from '@/src/components/ui/Badge';
 import {
-  listStudentReports, submitReport, STANDARD_REPORT_TYPES, type ReportInput
+  listStudentReports, submitReport, STANDARD_REPORT_TYPES
 } from '@/src/services/reports';
+import { uploadPrivateDocument } from '@/src/services/storage';
 import type { DbReport } from '@ojt/shared';
 
 const PAGE_SIZE = 20;
-const EMPTY_FORM: ReportInput = { report_type: 'weekly_journal', file_path: '', remarks: '' };
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export default function StudentReportsPage() {
   const [reports, setReports] = useState<DbReport[]>([]);
@@ -21,9 +21,14 @@ export default function StudentReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<ReportInput>(EMPTY_FORM);
+
+  // Form State
+  const [reportType, setReportType] = useState('weekly_journal');
+  const [remarks, setRemarks] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -39,18 +44,77 @@ export default function StudentReportsPage() {
     load(page);
   }, [page, load]);
 
-  async function handleSave() {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormError('');
-    if (!form.file_path.trim()) {
-      setFormError('Please enter a valid document file path or URL.');
+    const file = e.target.files?.[0];
+    if (!file) {
+      setSelectedFile(null);
       return;
     }
+
+    // 1. File Size Checker
+    if (file.size > MAX_FILE_SIZE) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      setFormError(`File size (${sizeMB} MB) exceeds the 10 MB limit. Please choose a smaller file.`);
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // 2. File Format Whitelist Checker
+    const validExts = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png'];
+    const name = file.name.toLowerCase();
+    const isValid = validExts.some(ext => name.endsWith(ext));
+
+    if (!isValid) {
+      setFormError(`Invalid file format ("${file.name}"). Only PDF, Word Documents (.docx), and Images (JPG/PNG) are accepted.`);
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setSelectedFile(file);
+  }
+
+  async function handleSave() {
+    setFormError('');
+    if (!selectedFile) {
+      setFormError('Please select an official document file to upload.');
+      return;
+    }
+
     setSaving(true);
-    const result = await submitReport(form);
+
+    // 1. Upload to secure private storage
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('report_type', reportType);
+
+    const uploadRes = await uploadPrivateDocument(formData);
+    if (uploadRes.error || !uploadRes.data) {
+      setSaving(false);
+      setFormError(uploadRes.error?.message || 'Failed to upload document.');
+      return;
+    }
+
+    // 2. Record report submission in database
+    const submitRes = await submitReport({
+      report_type: reportType,
+      file_path: uploadRes.data.filePath,
+      remarks: remarks.trim() || undefined,
+    });
+
     setSaving(false);
-    if (result.error) { setFormError(result.error.message); return; }
+    if (submitRes.error) {
+      setFormError(submitRes.error.message);
+      return;
+    }
+
     setModalOpen(false);
-    setForm(EMPTY_FORM);
+    setSelectedFile(null);
+    setRemarks('');
+    setReportType('weekly_journal');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     load(page);
   }
 
@@ -64,7 +128,10 @@ export default function StudentReportsPage() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Practicum Document Clearance</h1>
           <p className="text-sm text-slate-500 mt-0.5">Submit required institutional reports, journals, and clearance documents.</p>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold">
+        <Button
+          onClick={() => { setFormError(''); setSelectedFile(null); setRemarks(''); setModalOpen(true); }}
+          className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+        >
           + Upload Requirement
         </Button>
       </div>
@@ -151,14 +218,14 @@ export default function StudentReportsPage() {
         </div>
       )}
 
-      {/* Upload Requirement Modal */}
+      {/* Upload Requirement Modal with File Validation */}
       <Modal title="Submit Practicum Requirement" open={modalOpen} onClose={() => setModalOpen(false)}>
         <div className="space-y-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-slate-700">Official Requirement Category</label>
             <select
-              value={form.report_type}
-              onChange={e => setForm(f => ({ ...f, report_type: e.target.value }))}
+              value={reportType}
+              onChange={e => setReportType(e.target.value)}
               className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
             >
               {STANDARD_REPORT_TYPES.map(t => (
@@ -167,21 +234,44 @@ export default function StudentReportsPage() {
             </select>
           </div>
 
-          <Input
-            label="Document Storage File Path or Storage Key"
-            placeholder="e.g. reports/student_123_weekly_journal_1.pdf"
-            value={form.file_path}
-            onChange={e => setForm(f => ({ ...f, file_path: e.target.value }))}
-            required
-          />
+          {/* Secure File Picker with Format and Size Checks */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700">Document File (Max 10 MB)</label>
+            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-[#0A3D24] transition-colors bg-slate-50/50">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.doc,.jpg,.jpeg,.png"
+                onChange={handleFileChange}
+                className="hidden"
+                id="doc-file-upload"
+              />
+              <label htmlFor="doc-file-upload" className="cursor-pointer block space-y-1">
+                <span className="text-2xl block">📁</span>
+                <span className="text-xs font-bold text-[#0A3D24] hover:underline block">
+                  {selectedFile ? 'Change Selected File' : 'Click to Browse File'}
+                </span>
+                <span className="text-[11px] text-slate-400 block">
+                  Accepted: PDF, Word (DOCX), Scans (JPG, PNG) • Up to 10 MB
+                </span>
+              </label>
+
+              {selectedFile && (
+                <div className="mt-3 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+                  <span className="font-semibold truncate max-w-xs">📎 {selectedFile.name}</span>
+                  <span className="font-mono font-bold">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-slate-700">Submission Notes / Remarks (Optional)</label>
             <textarea
-              className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] min-h-[80px]"
+              className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] min-h-[70px]"
               placeholder="Add any notes for your OJT Coordinator regarding this submission..."
-              value={form.remarks ?? ''}
-              onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))}
+              value={remarks}
+              onChange={e => setRemarks(e.target.value)}
             />
           </div>
 
@@ -189,8 +279,8 @@ export default function StudentReportsPage() {
 
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">Cancel</Button>
-            <Button onClick={handleSave} loading={saving} className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold">
-              Submit Document
+            <Button onClick={handleSave} loading={saving} disabled={!selectedFile} className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold">
+              Upload & Submit
             </Button>
           </div>
         </div>
