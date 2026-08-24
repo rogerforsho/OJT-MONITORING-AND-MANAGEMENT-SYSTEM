@@ -2,6 +2,9 @@
 
 export type { UserRole, AccountStatus };
 
+export type StudentStatus = 'active' | 'completed' | 'dropped' | 'failed' | 'withdrawn';
+export type AssignmentStatus = 'active' | 'completed' | 'terminated' | 'reassigned';
+
 export interface DbUser {
   user_id: string;
   full_name: string;
@@ -19,7 +22,7 @@ export interface DbStudent {
   course: string;
   year_level: number;
   required_hours: number | null;
-  status: string;
+  status: StudentStatus;
   users?: DbUser;
 }
 
@@ -68,7 +71,7 @@ export interface DbStudentAssignment {
   supervisor_id: string;
   start_date: string;
   end_date: string | null;
-  assignment_status: string;
+  assignment_status: AssignmentStatus;
   created_at: string;
 }
 
