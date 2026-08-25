@@ -237,4 +237,6 @@ export async function listAssignedStudentsForEvaluation(): Promise<AppResult<{ s
   };
 }
 
-export const listAssignedStudents = listAssignedStudentsForEvaluation;
+export async function listAssignedStudents() {
+  return listAssignedStudentsForEvaluation();
+}
