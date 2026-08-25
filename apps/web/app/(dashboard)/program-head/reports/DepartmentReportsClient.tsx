@@ -1,11 +1,22 @@
 ﻿'use client';
 
-import { isICSCourse, isIBECourse } from '@/src/lib/departments';
-
 import { useState } from 'react';
+import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
-import { Users, Building, GraduationCap, Clock, Search, FileSpreadsheet } from '@/src/components/ui/Icons';
+import {
+  Users,
+  Building2,
+  GraduationCap,
+  Timer,
+  Search,
+  FileSpreadsheet,
+  Printer,
+  Laptop,
+  Cpu,
+  Briefcase,
+  TrendingUp,
+} from '@/src/components/ui/Icons';
 import {
   type StudentProgressDetail,
   type DepartmentSummaryData,
@@ -164,7 +175,8 @@ export default function DepartmentReportsClient({
             onClick={handlePrint}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-all cursor-pointer"
           >
-            🖨️ Print Report
+            <Printer className="w-4 h-4 text-slate-600" />
+            Print Report
           </button>
           <button
             onClick={exportCSV}
@@ -187,7 +199,7 @@ export default function DepartmentReportsClient({
               <p className="text-2xl font-bold text-slate-900 mt-1">{deptMetrics.total}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Active senior cohort</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#0A3D24] flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
           </CardContent>
@@ -202,8 +214,8 @@ export default function DepartmentReportsClient({
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">Assigned to Partner Companies</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
-              <Building className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center">
+              <Building2 className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
@@ -215,7 +227,7 @@ export default function DepartmentReportsClient({
               <p className="text-2xl font-bold text-emerald-600 mt-1">{deptMetrics.completed}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Reached 486.0 Target Hours</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-emerald-700 flex items-center justify-center">
               <GraduationCap className="w-5 h-5" />
             </div>
           </CardContent>
@@ -228,8 +240,8 @@ export default function DepartmentReportsClient({
               <p className="text-2xl font-bold text-slate-900 mt-1">{deptMetrics.hours.toFixed(1)}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Verified Industry Hours</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center">
+              <Timer className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
@@ -243,13 +255,18 @@ export default function DepartmentReportsClient({
             <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-base font-bold text-slate-900">
-                      BS Information Technology (BSIT)
-                    </CardTitle>
-                    <p className="text-xs text-slate-400 mt-0.5">Software & Systems Practicum</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                      <Laptop className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold text-slate-900">
+                        BS Information Technology (BSIT)
+                      </CardTitle>
+                      <p className="text-xs text-slate-400 mt-0.5">Software & Systems Practicum</p>
+                    </div>
                   </div>
-                  <Badge className="bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs">
+                  <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-xs font-bold">
                     {summary.ics.bsit.total} Students
                   </Badge>
                 </div>
@@ -274,13 +291,18 @@ export default function DepartmentReportsClient({
             <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-base font-bold text-slate-900">
-                      BS Computer Engineering (BS-CPE)
-                    </CardTitle>
-                    <p className="text-xs text-slate-400 mt-0.5">Hardware & Embedded Systems Practicum</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                      <Cpu className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold text-slate-900">
+                        BS Computer Engineering (BS-CPE)
+                      </CardTitle>
+                      <p className="text-xs text-slate-400 mt-0.5">Hardware & Embedded Systems Practicum</p>
+                    </div>
                   </div>
-                  <Badge className="bg-blue-50 text-blue-800 border-blue-200 text-xs">
+                  <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-xs font-bold">
                     {summary.ics.bscpe.total} Students
                   </Badge>
                 </div>
@@ -307,13 +329,18 @@ export default function DepartmentReportsClient({
             <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-base font-bold text-slate-900">
-                      BSBA Human Resource Management (BSBA-HRM)
-                    </CardTitle>
-                    <p className="text-xs text-slate-400 mt-0.5">Human Resource & Corporate Practicum</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold text-slate-900">
+                        BSBA Human Resource Management (BSBA-HRM)
+                      </CardTitle>
+                      <p className="text-xs text-slate-400 mt-0.5">Human Resource & Corporate Practicum</p>
+                    </div>
                   </div>
-                  <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-xs">
+                  <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-xs font-bold">
                     {summary.ibe.bsbaHrm.total} Students
                   </Badge>
                 </div>
@@ -338,13 +365,18 @@ export default function DepartmentReportsClient({
             <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-base font-bold text-slate-900">
-                      BS Entrepreneurship (BSEntrep)
-                    </CardTitle>
-                    <p className="text-xs text-slate-400 mt-0.5">Enterprise & Commercial Practicum</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold text-slate-900">
+                        BS Entrepreneurship (BSEntrep)
+                      </CardTitle>
+                      <p className="text-xs text-slate-400 mt-0.5">Enterprise & Commercial Practicum</p>
+                    </div>
                   </div>
-                  <Badge className="bg-teal-50 text-teal-800 border-teal-200 text-xs">
+                  <Badge className="bg-slate-100 text-slate-700 border-slate-200 text-xs font-bold">
                     {summary.ibe.bsEntrep.total} Students
                   </Badge>
                 </div>

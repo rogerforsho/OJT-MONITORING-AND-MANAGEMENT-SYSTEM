@@ -4,6 +4,23 @@ import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import {
+  Timer,
+  Hourglass,
+  Building2,
+  CalendarCheck,
+  UserCheck,
+  Users,
+  AlertTriangle,
+  Star,
+  Laptop,
+  Cpu,
+  Briefcase,
+  TrendingUp,
+  Settings,
+  ShieldAlert,
+  Megaphone,
+} from '@/src/components/ui/Icons';
 
 function serviceClient() {
   return createServiceClient(
@@ -273,7 +290,9 @@ export default async function DashboardPage() {
               key={annc.announcement_id}
               className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-[#FFCC00]/30 flex items-start gap-3.5 shadow-sm"
             >
-              <span className="text-2xl mt-0.5">📢</span>
+              <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0 mt-0.5">
+                <Megaphone className="w-4 h-4 text-[#0A3D24]" />
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider">
@@ -294,24 +313,24 @@ export default async function DashboardPage() {
       {/* Role-Specific Metric Cards */}
       {user.role === 'Student' && stats.student && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-bold">
-              ⏱️
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Timer className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rendered Hours</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">
                 {stats.progress.completed_hours} <span className="text-xs font-normal text-slate-500">/ {stats.student.required_hours || 486} hrs</span>
               </h3>
-              <p className="text-xs text-emerald-600 font-medium mt-0.5">
+              <p className="text-xs text-emerald-700 font-semibold mt-0.5">
                 {Math.min(100, Math.round((stats.progress.completed_hours / (stats.student.required_hours || 486)) * 100))}% completed
               </p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl font-bold">
-              ⏳
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Hourglass className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Remaining Hours</p>
@@ -322,9 +341,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl font-bold">
-              🏢
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assigned Company</p>
@@ -337,9 +356,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-xl font-bold">
-              📅
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <CalendarCheck className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Today&apos;s Status</p>
@@ -356,9 +375,9 @@ export default async function DashboardPage() {
 
       {user.role === 'Coordinator' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl font-bold">
-              🛡️
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <UserCheck className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Approvals</p>
@@ -369,9 +388,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-xl font-bold">
-              👥
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Students</p>
@@ -380,9 +399,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl font-bold">
-              🏢
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
@@ -391,9 +410,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center text-xl font-bold">
-              ⚠️
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-rose-600 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Behind Schedule</p>
@@ -406,9 +425,9 @@ export default async function DashboardPage() {
 
       {user.role === 'Supervisor' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-xl font-bold">
-              👥
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assigned Interns</p>
@@ -417,9 +436,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl font-bold">
-              ⏱️
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Timer className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Attendance</p>
@@ -430,9 +449,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-xl font-bold">
-              ⭐
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Star className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Evaluations</p>
@@ -447,9 +466,9 @@ export default async function DashboardPage() {
 
       {user.role === 'ProgramHead' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-bold">
-              {stats.dept === 'ICS' ? '💻' : '👔'}
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              {stats.dept === 'ICS' ? <Laptop className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -462,9 +481,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl font-bold">
-              {stats.dept === 'ICS' ? '⚙️' : '📈'}
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              {stats.dept === 'ICS' ? <Cpu className="w-5 h-5" /> : <TrendingUp className="w-5 h-5" />}
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -477,9 +496,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-xl font-bold">
-              🏢
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner HTE Companies</p>
@@ -494,9 +513,9 @@ export default async function DashboardPage() {
 
       {user.role === 'Admin' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center text-xl font-bold">
-              👥
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Users</p>
@@ -505,9 +524,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl font-bold">
-              🛡️
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Accounts</p>
@@ -516,9 +535,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#0A3D24]/10 text-[#0A3D24] flex items-center justify-center text-xl font-bold">
-              ⚙️
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Settings className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">System Administration</p>

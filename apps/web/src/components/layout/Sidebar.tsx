@@ -1,42 +1,66 @@
 ﻿'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { AuthUser } from '@ojt/shared';
 import { signOut } from '@/src/services/auth';
+import {
+  LayoutDashboard,
+  Clock,
+  BarChart3,
+  FileText,
+  Award,
+  Bell,
+  UserCheck,
+  Users,
+  Building2,
+  FileSignature,
+  ClipboardCheck,
+  Star,
+  Settings,
+  LogOut,
+  type IconProps,
+} from '@/src/components/ui/Icons';
 
-const NAV_ITEMS: Record<string, { label: string; href: string; icon: string }[]> = {
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<IconProps>;
+}
+
+const NAV_ITEMS: Record<string, NavItem[]> = {
   Student: [
-    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Attendance', href: '/student/attendance', icon: '⏱️' },
-    { label: 'Progress', href: '/student/progress', icon: '📈' },
-    { label: 'Reports', href: '/student/reports', icon: '📄' },
-    { label: 'Certificate', href: '/student/certificate', icon: '🎓' },
-    { label: 'Notifications', href: '/student/notifications', icon: '🔔' },
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Attendance', href: '/student/attendance', icon: Clock },
+    { label: 'Progress', href: '/student/progress', icon: BarChart3 },
+    { label: 'Reports', href: '/student/reports', icon: FileText },
+    { label: 'Certificate', href: '/student/certificate', icon: Award },
+    { label: 'Notifications', href: '/student/notifications', icon: Bell },
   ],
   Coordinator: [
-    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Approvals', href: '/coordinator/approvals', icon: '🛡️' },
-    { label: 'Students', href: '/coordinator/students', icon: '👥' },
-    { label: 'Companies', href: '/coordinator/companies', icon: '🏢' },
-    { label: 'Supervisors', href: '/coordinator/supervisors', icon: '👔' },
-    { label: 'Assignments', href: '/coordinator/assignments', icon: '📋' },
-    { label: 'Submissions', href: '/coordinator/submissions', icon: '📥' },
-    { label: 'Progress', href: '/coordinator/progress', icon: '📈' },
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Approvals', href: '/coordinator/approvals', icon: UserCheck },
+    { label: 'Students', href: '/coordinator/students', icon: Users },
+    { label: 'Companies', href: '/coordinator/companies', icon: Building2 },
+    { label: 'Supervisors', href: '/coordinator/supervisors', icon: UserCheck },
+    { label: 'Assignments', href: '/coordinator/assignments', icon: FileSignature },
+    { label: 'Submissions', href: '/coordinator/submissions', icon: ClipboardCheck },
+    { label: 'Progress', href: '/coordinator/progress', icon: BarChart3 },
   ],
   Supervisor: [
-    { label: 'My Students', href: '/supervisor/students', icon: '👥' },
-    { label: 'Attendance', href: '/supervisor/attendance', icon: '⏱️' },
-    { label: 'Evaluations', href: '/supervisor/evaluations', icon: '⭐' },
+    { label: 'My Students', href: '/supervisor/students', icon: Users },
+    { label: 'Attendance', href: '/supervisor/attendance', icon: Clock },
+    { label: 'Evaluations', href: '/supervisor/evaluations', icon: Star },
   ],
   ProgramHead: [
-    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Reports', href: '/program-head/reports', icon: '📑' },
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Reports', href: '/program-head/reports', icon: BarChart3 },
   ],
   Admin: [
-    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Administration', href: '/admin', icon: '⚙️' },
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Administration', href: '/admin', icon: Settings },
   ],
 };
 
@@ -99,6 +123,7 @@ export default function Sidebar({ user }: Props) {
       {/* Navigation Items */}
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         {items.map((item) => {
+          const IconComponent = item.icon;
           const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
@@ -110,7 +135,7 @@ export default function Sidebar({ user }: Props) {
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span className="text-base flex-shrink-0">{item.icon}</span>
+              <IconComponent className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#FFCC00]' : 'text-slate-400'}`} />
               <span className="truncate">{item.label}</span>
             </Link>
           );
@@ -124,7 +149,7 @@ export default function Sidebar({ user }: Props) {
             type="submit"
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:text-rose-100 hover:bg-rose-950/40 border border-transparent hover:border-rose-800/40 transition-all duration-150 cursor-pointer"
           >
-            <span className="text-base">🚪</span>
+            <LogOut className="w-4 h-4 text-rose-300 shrink-0" />
             <span>Sign Out</span>
           </button>
         </form>
