@@ -1,7 +1,8 @@
-'use server';
+﻿'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
-import type { AppResult, DbStudentAssignment } from '@ojt/shared';
+import { recordAuditEvent } from './audit';
+import type { AppResult, DbStudentAssignment, AssignmentStatus, StudentStatus } from '@ojt/shared';
 
 export interface AssignmentInput {
   student_id: string;
@@ -12,7 +13,7 @@ export interface AssignmentInput {
 }
 
 export interface AssignmentDetail extends DbStudentAssignment {
-  students: { student_number: string; course: string; year_level: number; users: { full_name: string; email: string } };
+  students: { student_number: string; course: string; year_level: number; status: StudentStatus; users: { full_name: string; email: string } };
   companies: { company_name: string };
   supervisors: { position: string; users: { full_name: string; email: string } };
 }
@@ -20,13 +21,17 @@ export interface AssignmentDetail extends DbStudentAssignment {
 async function assertCoordinator() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, authorized: false };
+  if (!user) return { supabase, user: null, authorized: false };
   const { data } = await supabase
     .from('users')
     .select('role, account_status')
     .eq('user_id', user.id)
     .single();
-  return { supabase, authorized: data?.role === 'Coordinator' && data?.account_status === 'active' };
+  return {
+    supabase,
+    user,
+    authorized: ['Coordinator', 'Admin'].includes(data?.role ?? '') && data?.account_status === 'active',
+  };
 }
 
 export async function listAssignments(
@@ -44,7 +49,7 @@ export async function listAssignments(
     .select(`
       *,
       students (
-        student_number, course, year_level,
+        student_number, course, year_level, status,
         users ( full_name, email )
       ),
       companies ( company_name ),
@@ -66,8 +71,8 @@ export async function createAssignment(input: AssignmentInput): Promise<AppResul
   if (!input.supervisor_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Supervisor is required.' } };
   if (!input.start_date) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Start date is required.' } };
 
-  const { supabase, authorized } = await assertCoordinator();
-  if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  const { supabase, user, authorized } = await assertCoordinator();
+  if (!authorized || !user) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   // Check for existing active assignment for this student
   const { data: existing } = await supabase
@@ -104,17 +109,27 @@ export async function createAssignment(input: AssignmentInput): Promise<AppResul
     .single();
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to create assignment.' } };
+
+  // Log Audit Trail
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: 'STUDENT_ASSIGNED',
+    entity_type: 'student_assignment',
+    entity_id: data.assignment_id,
+    details: { student_id: input.student_id, company_id: input.company_id, supervisor_id: input.supervisor_id },
+  });
+
   return { data: data as DbStudentAssignment, error: null };
 }
 
 export async function updateAssignmentStatus(
   assignment_id: string,
-  assignment_status: 'active' | 'completed' | 'cancelled'
+  assignment_status: AssignmentStatus
 ): Promise<AppResult<null>> {
   if (!assignment_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Assignment ID is required.' } };
 
-  const { supabase, authorized } = await assertCoordinator();
-  if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  const { supabase, user, authorized } = await assertCoordinator();
+  if (!authorized || !user) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const { error } = await supabase
     .from('student_assignments')
@@ -122,18 +137,100 @@ export async function updateAssignmentStatus(
     .eq('assignment_id', assignment_id);
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update assignment.' } };
+
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: `ASSIGNMENT_${assignment_status.toUpperCase()}`,
+    entity_type: 'student_assignment',
+    entity_id: assignment_id,
+    details: { status: assignment_status },
+  });
+
   return { data: null, error: null };
 }
 
-export async function listStudentsForAssignment(): Promise<AppResult<{ student_id: string; student_number: string; full_name: string; course: string }[]>> {
+export async function updateStudentStatus(
+  student_id: string,
+  status: StudentStatus
+): Promise<AppResult<null>> {
+  if (!student_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
+
+  const { supabase, user, authorized } = await assertCoordinator();
+  if (!authorized || !user) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { error } = await supabase
+    .from('students')
+    .update({ status })
+    .eq('student_id', student_id);
+
+  if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update student status.' } };
+
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: `STUDENT_STATUS_${status.toUpperCase()}`,
+    entity_type: 'student',
+    entity_id: student_id,
+    details: { status },
+  });
+
+  return { data: null, error: null };
+}
+
+export async function reassignStudent(
+  student_id: string,
+  new_company_id: string,
+  new_supervisor_id: string,
+  start_date: string
+): Promise<AppResult<DbStudentAssignment>> {
+  const { supabase, user, authorized } = await assertCoordinator();
+  if (!authorized || !user) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  // 1. Mark current active assignment as 'reassigned'
+  await supabase
+    .from('student_assignments')
+    .update({
+      assignment_status: 'reassigned',
+      end_date: new Date().toISOString().split('T')[0],
+    })
+    .eq('student_id', student_id)
+    .eq('assignment_status', 'active');
+
+  // 2. Create new active assignment
+  const { data: newAssignment, error } = await supabase
+    .from('student_assignments')
+    .insert({
+      student_id,
+      company_id: new_company_id,
+      supervisor_id: new_supervisor_id,
+      start_date,
+      assignment_status: 'active',
+    })
+    .select()
+    .single();
+
+  if (error || !newAssignment) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to reassign student.' } };
+  }
+
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: 'STUDENT_REASSIGNED',
+    entity_type: 'student_assignment',
+    entity_id: newAssignment.assignment_id,
+    details: { student_id, new_company_id, new_supervisor_id },
+  });
+
+  return { data: newAssignment as DbStudentAssignment, error: null };
+}
+
+export async function listStudentsForAssignment(): Promise<AppResult<{ student_id: string; student_number: string; full_name: string; course: string; status: string }[]>> {
   const { supabase, authorized } = await assertCoordinator();
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  // Only active students without an active assignment
   const { data, error } = await supabase
     .from('students')
     .select(`
-      student_id, student_number, course,
+      student_id, student_number, course, status,
       users!inner ( full_name, account_status )
     `)
     .eq('users.account_status', 'active');
@@ -144,6 +241,7 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
     student_id: string;
     student_number: string;
     course: string;
+    status: string;
     users: { full_name: string; account_status: string } | { full_name: string; account_status: string }[];
   }
 
@@ -155,6 +253,7 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
         student_number: s.student_number,
         full_name: user?.full_name ?? '',
         course: s.course,
+        status: s.status,
       };
     }),
     error: null,

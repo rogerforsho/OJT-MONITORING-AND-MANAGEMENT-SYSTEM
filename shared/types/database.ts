@@ -1,6 +1,9 @@
-import type { UserRole, AccountStatus } from './roles';
+﻿import type { UserRole, AccountStatus } from './roles';
 
 export type { UserRole, AccountStatus };
+
+export type StudentStatus = 'active' | 'completed' | 'dropped' | 'failed' | 'withdrawn';
+export type AssignmentStatus = 'active' | 'completed' | 'terminated' | 'reassigned';
 
 export interface DbUser {
   user_id: string;
@@ -19,7 +22,8 @@ export interface DbStudent {
   course: string;
   year_level: number;
   required_hours: number | null;
-  status: string;
+  status: StudentStatus;
+  users?: DbUser;
 }
 
 export interface DbCoordinator {
@@ -33,6 +37,8 @@ export interface DbSupervisor {
   user_id: string;
   company_id: string;
   position: string;
+  users?: DbUser;
+  companies?: DbCompany;
 }
 
 export interface DbProgramHead {
@@ -65,7 +71,7 @@ export interface DbStudentAssignment {
   supervisor_id: string;
   start_date: string;
   end_date: string | null;
-  assignment_status: string;
+  assignment_status: AssignmentStatus;
   created_at: string;
 }
 
@@ -83,7 +89,7 @@ export interface DbAttendance {
   time_out: string | null;
   time_in_selfie_path: string;
   time_out_selfie_path: string | null;
-  qr_validation_status: QrValidationStatus;
+  qr_validation_status?: QrValidationStatus;
   verification_status: VerificationStatus;
   late_status: LateStatus;
   sync_status: SyncStatus;

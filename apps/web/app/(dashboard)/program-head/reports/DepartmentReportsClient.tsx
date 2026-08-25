@@ -4,29 +4,58 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Users, Building, GraduationCap, Clock, Search, FileSpreadsheet } from '@/src/components/ui/Icons';
-import type { StudentProgressDetail } from '@/src/services/progress';
+import {
+  type StudentProgressDetail,
+  type DepartmentSummaryData,
+  isICSCourse,
+  isIBECourse,
+} from '@/src/services/progress';
 
 interface Props {
-  summary: {
-    totalStudents: number;
-    activeTrainees: number;
-    completedTrainees: number;
-    totalRenderedHours: number;
-    departmentCounts: Record<string, { total: number; completed: number; hours: number }>;
-  };
+  summary: DepartmentSummaryData;
   initialStudents: StudentProgressDetail[];
+  userDepartment: string;
+  userRole: string;
 }
 
-export default function DepartmentReportsClient({ summary, initialStudents }: Props) {
-  const [filterDept, setFilterDept] = useState<'ALL' | 'ICS' | 'IBE'>('ALL');
+export default function DepartmentReportsClient({
+  summary,
+  initialStudents,
+  userDepartment,
+  userRole,
+}: Props) {
+  const isDedicatedProgramHead = userRole === 'ProgramHead';
+  const initialDept = isDedicatedProgramHead
+    ? (userDepartment === 'IBE' ? 'IBE' : 'ICS')
+    : (userDepartment === 'IBE' ? 'IBE' : 'ICS');
+
+  const [activeDept, setActiveDept] = useState<'ICS' | 'IBE'>(initialDept as 'ICS' | 'IBE');
+  const [courseFilter, setCourseFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
+  // Filter trainees strictly for the active department
   const filteredStudents = initialStudents.filter((s) => {
-    const isICS = ['BSIT', 'BSCS'].includes(s.course);
-    if (filterDept === 'ICS' && !isICS) return false;
-    if (filterDept === 'IBE' && isICS) return false;
+    const isICS = isICSCourse(s.course);
+    const isIBE = isIBECourse(s.course);
+
+    // 1. Department Boundary Check
+    if (activeDept === 'ICS' && !isICS) return false;
+    if (activeDept === 'IBE' && !isIBE) return false;
+
+    // 2. Specific Course Filter
+    if (courseFilter !== 'ALL') {
+      const c = s.course.toUpperCase();
+      if (courseFilter === 'BSIT' && !(c.includes('BSIT') || c.includes('INFORMATION TECHNOLOGY'))) return false;
+      if (courseFilter === 'BS-CPE' && !(c.includes('BS-CPE') || c.includes('BSCPE') || c.includes('COMPUTER ENGINEERING'))) return false;
+      if (courseFilter === 'BSBA-HRM' && !(c.includes('BSBA-HRM') || c.includes('BSBA-HR') || c.includes('HUMAN RESOURCE'))) return false;
+      if (courseFilter === 'BSENTREP' && !(c.includes('BSENTREP') || c.includes('ENTREPRENEURSHIP'))) return false;
+    }
+
+    // 3. Status Filter
     if (statusFilter !== 'ALL' && s.progress_status !== statusFilter) return false;
+
+    // 4. Search Filter
     if (search.trim()) {
       const q = search.toLowerCase();
       const matchesName = s.full_name.toLowerCase().includes(q);
@@ -35,12 +64,26 @@ export default function DepartmentReportsClient({ summary, initialStudents }: Pr
       const matchesCourse = s.course.toLowerCase().includes(q);
       if (!matchesName && !matchesNum && !matchesCompany && !matchesCourse) return false;
     }
+
     return true;
   });
 
+  const deptMetrics = activeDept === 'ICS' ? summary.ics : summary.ibe;
+  const isICSView = activeDept === 'ICS';
+
   function exportCSV() {
-    const headers = ['Student Number', 'Student Name', 'Course', 'Host Company', 'Target Hours', 'Completed Hours', 'Remaining Hours', 'Status', 'Completion %'];
-    const rows = filteredStudents.map(s => [
+    const headers = [
+      'Student Number',
+      'Student Name',
+      'Course',
+      'Host Training Establishment',
+      'Target Hours',
+      'Completed Hours',
+      'Remaining Hours',
+      'Progress Status',
+      'Completion %',
+    ];
+    const rows = filteredStudents.map((s) => [
       `"${s.student_number}"`,
       `"${s.full_name}"`,
       `"${s.course}"`,
@@ -52,11 +95,16 @@ export default function DepartmentReportsClient({ summary, initialStudents }: Pr
       `"${s.percentage}%"`,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CdM_OJT_${filterDept}_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      'download',
+      `CdM_OJT_${activeDept}_Report_${new Date().toISOString().split('T')[0]}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -67,23 +115,60 @@ export default function DepartmentReportsClient({ summary, initialStudents }: Pr
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8">
+    <div className="p-4 sm:p-8 space-y-7 page-fade-in max-w-7xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Academic Department Analytics & Reports</h1>
-          <p className="text-sm text-slate-500 mt-1">High-level institutional monitoring for the Institute of Computing Studies & Institute of Business and Entrepreneurship.</p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase font-extrabold tracking-wider text-[#FFCC00] bg-[#0A3D24] px-2.5 py-0.5 rounded-full border border-[#FFCC00]/40">
+              {isICSView ? 'ICS Department' : 'IBE Department'}
+            </span>
+            <span className="text-xs text-slate-500 font-medium">Academic Practicum Analytics</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 font-serif tracking-tight mt-1">
+            {isICSView
+              ? 'Institute of Computing Studies (ICS)'
+              : 'Institute of Business and Entrepreneurship (IBE)'}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            {isICSView
+              ? 'Practicum cohort reporting for BS in Information Technology (BSIT) & BS in Computer Engineering (BS-CPE).'
+              : 'Practicum cohort reporting for BSBA in Human Resource Management (BSBA-HRM) & BS in Entrepreneurship (BSEntrep).'}
+          </p>
         </div>
+
         <div className="flex items-center gap-2">
+          {/* Allow Admin / Coordinator to switch views if needed */}
+          {!isDedicatedProgramHead && (
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold mr-2">
+              <button
+                onClick={() => { setActiveDept('ICS'); setCourseFilter('ALL'); }}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  activeDept === 'ICS' ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                ICS
+              </button>
+              <button
+                onClick={() => { setActiveDept('IBE'); setCourseFilter('ALL'); }}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  activeDept === 'IBE' ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                IBE
+              </button>
+            </div>
+          )}
+
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-all cursor-pointer"
           >
             🖨️ Print Report
           </button>
           <button
             onClick={exportCSV}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-[#0A3D24] text-white hover:bg-[#062415] shadow-sm transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-[#0A3D24] text-white hover:bg-[#062415] shadow-sm transition-all cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4 text-[#FFCC00]" />
             Export CSV
@@ -91,130 +176,270 @@ export default function DepartmentReportsClient({ summary, initialStudents }: Pr
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards for Selected Department Only */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-slate-200/80 shadow-sm bg-white rounded-2xl">
+        <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Enrolled Interns</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{summary.totalStudents}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">4th Year ICS & IBE</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                {activeDept} Enrolled Trainees
+              </p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{deptMetrics.total}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Active senior cohort</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-[#0A3D24] flex items-center justify-center">
-              <Users className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#0A3D24] flex items-center justify-center">
+              <Users className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm bg-white rounded-2xl">
+        <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active in Field</p>
-              <p className="text-2xl font-bold text-[#0A3D24] mt-1">{summary.activeTrainees}</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active In Field</p>
+              <p className="text-2xl font-bold text-[#0A3D24] mt-1">
+                {deptMetrics.total - deptMetrics.completed}
+              </p>
               <p className="text-[11px] text-slate-400 mt-0.5">Assigned to Partner Companies</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
-              <Building className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+              <Building className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm bg-white rounded-2xl">
+        <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Completed Practicum</p>
-              <p className="text-2xl font-bold text-emerald-600 mt-1">{summary.completedTrainees}</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Completed Practicum</p>
+              <p className="text-2xl font-bold text-emerald-600 mt-1">{deptMetrics.completed}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Reached 486.0 Target Hours</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <GraduationCap className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <GraduationCap className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm bg-white rounded-2xl">
+        <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Rendered Hours</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{summary.totalRenderedHours.toFixed(1)}</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Rendered Hours</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{deptMetrics.hours.toFixed(1)}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Verified Industry Hours</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Clock className="w-5 h-5" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Institute Comparison Breakdown */}
+      {/* Course Breakdown Cards (Specific to Active Department Only) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
-        <Card className="border-slate-200/80 shadow-sm bg-white rounded-2xl">
-          <CardHeader className="p-5 pb-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-base font-bold text-slate-900">Institute of Computing Studies (ICS)</CardTitle>
-                <p className="text-xs text-slate-400 mt-0.5">BSIT & BSCS Practicum Trainees</p>
-              </div>
-              <Badge className="bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs">
-                {summary.departmentCounts?.ICS?.total ?? 0} Students
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="p-5 pt-0 space-y-3">
-            <div className="flex justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
-              <span>Completed Target:</span>
-              <span className="font-semibold text-slate-900">{summary.departmentCounts?.ICS?.completed ?? 0}</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-600">
-              <span>Aggregate Hours:</span>
-              <span className="font-semibold text-slate-900">{summary.departmentCounts?.ICS?.hours?.toFixed(1) ?? 0} hrs</span>
-            </div>
-          </CardContent>
-        </Card>
+        {isICSView ? (
+          <>
+            {/* BSIT Breakdown */}
+            <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
+              <CardHeader className="p-5 pb-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-base font-bold text-slate-900">
+                      BS Information Technology (BSIT)
+                    </CardTitle>
+                    <p className="text-xs text-slate-400 mt-0.5">Software & Systems Practicum</p>
+                  </div>
+                  <Badge className="bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs">
+                    {summary.ics.bsit.total} Students
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5 pt-0 space-y-2.5">
+                <div className="flex justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
+                  <span>Graduation Target Completed:</span>
+                  <span className="font-bold text-emerald-700">{summary.ics.bsit.completed} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Active in Field:</span>
+                  <span className="font-semibold text-slate-900">{summary.ics.bsit.active} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Aggregate Verified Hours:</span>
+                  <span className="font-mono font-bold text-slate-900">{summary.ics.bsit.hours.toFixed(1)} hrs</span>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card className="border-slate-200/80 shadow-sm bg-white rounded-2xl">
-          <CardHeader className="p-5 pb-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-base font-bold text-slate-900">Institute of Business and Entrepreneurship (IBE)</CardTitle>
-                <p className="text-xs text-slate-400 mt-0.5">BSBA & BSA Practicum Trainees</p>
-              </div>
-              <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-xs">
-                {summary.departmentCounts?.IBE?.total ?? 0} Students
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="p-5 pt-0 space-y-3">
-            <div className="flex justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
-              <span>Completed Target:</span>
-              <span className="font-semibold text-slate-900">{summary.departmentCounts?.IBE?.completed ?? 0}</span>
-            </div>
-            <div className="flex justify-between text-xs text-slate-600">
-              <span>Aggregate Hours:</span>
-              <span className="font-semibold text-slate-900">{summary.departmentCounts?.IBE?.hours?.toFixed(1) ?? 0} hrs</span>
-            </div>
-          </CardContent>
-        </Card>
+            {/* BS-CPE Breakdown */}
+            <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
+              <CardHeader className="p-5 pb-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-base font-bold text-slate-900">
+                      BS Computer Engineering (BS-CPE)
+                    </CardTitle>
+                    <p className="text-xs text-slate-400 mt-0.5">Hardware & Embedded Systems Practicum</p>
+                  </div>
+                  <Badge className="bg-blue-50 text-blue-800 border-blue-200 text-xs">
+                    {summary.ics.bscpe.total} Students
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5 pt-0 space-y-2.5">
+                <div className="flex justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
+                  <span>Graduation Target Completed:</span>
+                  <span className="font-bold text-emerald-700">{summary.ics.bscpe.completed} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Active in Field:</span>
+                  <span className="font-semibold text-slate-900">{summary.ics.bscpe.active} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Aggregate Verified Hours:</span>
+                  <span className="font-mono font-bold text-slate-900">{summary.ics.bscpe.hours.toFixed(1)} hrs</span>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            {/* BSBA-HRM Breakdown */}
+            <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
+              <CardHeader className="p-5 pb-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-base font-bold text-slate-900">
+                      BSBA Human Resource Management (BSBA-HRM)
+                    </CardTitle>
+                    <p className="text-xs text-slate-400 mt-0.5">Human Resource & Corporate Practicum</p>
+                  </div>
+                  <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-xs">
+                    {summary.ibe.bsbaHrm.total} Students
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5 pt-0 space-y-2.5">
+                <div className="flex justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
+                  <span>Graduation Target Completed:</span>
+                  <span className="font-bold text-emerald-700">{summary.ibe.bsbaHrm.completed} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Active in Field:</span>
+                  <span className="font-semibold text-slate-900">{summary.ibe.bsbaHrm.active} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Aggregate Verified Hours:</span>
+                  <span className="font-mono font-bold text-slate-900">{summary.ibe.bsbaHrm.hours.toFixed(1)} hrs</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* BSEntrep Breakdown */}
+            <Card className="border-slate-200/80 shadow-xs bg-white rounded-2xl">
+              <CardHeader className="p-5 pb-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-base font-bold text-slate-900">
+                      BS Entrepreneurship (BSEntrep)
+                    </CardTitle>
+                    <p className="text-xs text-slate-400 mt-0.5">Enterprise & Commercial Practicum</p>
+                  </div>
+                  <Badge className="bg-teal-50 text-teal-800 border-teal-200 text-xs">
+                    {summary.ibe.bsEntrep.total} Students
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5 pt-0 space-y-2.5">
+                <div className="flex justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
+                  <span>Graduation Target Completed:</span>
+                  <span className="font-bold text-emerald-700">{summary.ibe.bsEntrep.completed} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Active in Field:</span>
+                  <span className="font-semibold text-slate-900">{summary.ibe.bsEntrep.active} students</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>Aggregate Verified Hours:</span>
+                  <span className="font-mono font-bold text-slate-900">{summary.ibe.bsEntrep.hours.toFixed(1)} hrs</span>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Trainee Roster and Filters */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
-          {/* Department Filter Tabs */}
-          <div className="flex items-center gap-1.5">
-            {(['ALL', 'ICS', 'IBE'] as const).map((dept) => (
-              <button
-                key={dept}
-                onClick={() => setFilterDept(dept)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  filterDept === dept
-                    ? 'bg-[#062415] text-[#FFCC00] shadow-sm'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {dept === 'ALL' ? 'All Institutes' : dept}
-              </button>
-            ))}
+          {/* Program Quick Filter Tabs */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {isICSView ? (
+              <>
+                <button
+                  onClick={() => setCourseFilter('ALL')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    courseFilter === 'ALL'
+                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  All ICS Trainees ({summary.ics.total})
+                </button>
+                <button
+                  onClick={() => setCourseFilter('BSIT')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    courseFilter === 'BSIT'
+                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  BSIT ({summary.ics.bsit.total})
+                </button>
+                <button
+                  onClick={() => setCourseFilter('BS-CPE')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    courseFilter === 'BS-CPE'
+                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  BS-CPE ({summary.ics.bscpe.total})
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setCourseFilter('ALL')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    courseFilter === 'ALL'
+                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  All IBE Trainees ({summary.ibe.total})
+                </button>
+                <button
+                  onClick={() => setCourseFilter('BSBA-HRM')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    courseFilter === 'BSBA-HRM'
+                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  BSBA-HRM ({summary.ibe.bsbaHrm.total})
+                </button>
+                <button
+                  onClick={() => setCourseFilter('BSENTREP')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    courseFilter === 'BSENTREP'
+                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  BSEntrep ({summary.ibe.bsEntrep.total})
+                </button>
+              </>
+            )}
           </div>
 
           {/* Search and Status Filters */}
@@ -243,83 +468,73 @@ export default function DepartmentReportsClient({ summary, initialStudents }: Pr
         </div>
 
         {/* Detailed Table */}
-        <Card className="border-slate-200/80 shadow-sm overflow-hidden bg-white rounded-2xl">
+        <Card className="border-slate-200/80 shadow-xs overflow-hidden bg-white rounded-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50/80 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-5">Student</th>
-                  <th className="py-3.5 px-4">Program</th>
-                  <th className="py-3.5 px-4">Host Company</th>
-                  <th className="py-3.5 px-4">Rendered / Target</th>
-                  <th className="py-3.5 px-4 w-48">Progress</th>
-                  <th className="py-3.5 px-5 text-right">Status</th>
+                  <th className="px-5 py-3.5">Student Details</th>
+                  <th className="px-5 py-3.5">Course</th>
+                  <th className="px-5 py-3.5">Assigned Establishment</th>
+                  <th className="px-5 py-3.5">Rendered Hours</th>
+                  <th className="px-5 py-3.5">Clearance Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center text-slate-400">
-                      <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-                      <p className="font-medium text-slate-600">No student records match the selected criteria.</p>
+                    <td colSpan={5} className="px-5 py-12 text-center text-slate-400 text-xs">
+                      No {activeDept} student trainees match the current filters.
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((s) => {
-                    const isDone = s.progress_status === 'completed';
-                    return (
-                      <tr key={s.student_id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-4 px-5">
-                          <div className="font-semibold text-slate-900">{s.full_name}</div>
-                          <div className="text-xs text-slate-400 font-mono mt-0.5">{s.student_number}</div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge variant="outline" className="text-xs font-semibold bg-slate-50">
-                            {s.course}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="text-xs font-medium text-slate-700 max-w-[200px] truncate">
-                            {s.company_name || 'Unassigned'}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="text-xs font-bold text-slate-900">
-                            {s.completed_hours} <span className="text-slate-400 font-normal">/ {s.required_hours} hrs</span>
-                          </div>
-                          <div className="text-[11px] text-slate-400">{s.remaining_hours} hrs remaining</div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-[11px] font-semibold text-slate-700">
-                              <span>{s.percentage}%</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${
-                                  isDone ? 'bg-emerald-500' : 'bg-[#0A3D24]'
-                                }`}
-                                style={{ width: `${Math.min(100, s.percentage)}%` }}
-                              />
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-5 text-right">
-                          <Badge
-                            className={
-                              isDone
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold'
-                                : s.completed_hours > 0
-                                ? 'bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs font-semibold'
-                                : 'bg-slate-100 text-slate-600 border-slate-200 text-xs font-semibold'
-                            }
-                          >
-                            {isDone ? 'Completed' : s.completed_hours > 0 ? 'In Progress' : 'Not Started'}
-                          </Badge>
-                        </td>
-                      </tr>
-                    );
-                  })
+                  filteredStudents.map((s) => (
+                    <tr key={s.student_id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-4">
+                        <p className="font-bold text-slate-900">{s.full_name}</p>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">{s.student_number}</p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <Badge variant="outline" className="text-xs font-bold text-[#0A3D24] bg-emerald-50/50 border-emerald-200">
+                          {s.course}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-4 text-xs font-medium text-slate-700">
+                        {s.company_name || <span className="text-slate-400 italic">Unassigned</span>}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="font-mono font-bold text-slate-900 text-sm">{s.completed_hours.toFixed(1)}</span>
+                          <span className="text-[11px] text-slate-400">/ {s.required_hours} hrs</span>
+                        </div>
+                        <div className="w-24 h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1.5">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              s.percentage >= 100 ? 'bg-emerald-500' : 'bg-[#0A3D24]'
+                            }`}
+                            style={{ width: `${s.percentage}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                            s.progress_status === 'completed'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : s.progress_status === 'in_progress'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-slate-100 text-slate-600 border border-slate-200'
+                          }`}
+                        >
+                          {s.progress_status === 'completed'
+                            ? '🎓 COMPLETED'
+                            : s.progress_status === 'in_progress'
+                            ? '⏳ IN PROGRESS'
+                            : 'NOT STARTED'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

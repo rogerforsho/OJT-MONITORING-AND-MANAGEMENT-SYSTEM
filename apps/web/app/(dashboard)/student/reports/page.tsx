@@ -1,25 +1,34 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Button from '@/src/components/ui/Button';
-import Input from '@/src/components/ui/Input';
 import Alert from '@/src/components/ui/Alert';
 import Modal from '@/src/components/ui/Modal';
-import { listStudentReports, submitReport, type ReportInput } from '@/src/services/reports';
+import Badge from '@/src/components/ui/Badge';
+import {
+  listStudentReports, submitReport, STANDARD_REPORT_TYPES
+} from '@/src/services/reports';
+import { uploadPrivateDocument } from '@/src/services/storage';
+import type { DbReport } from '@ojt/shared';
 
 const PAGE_SIZE = 20;
-const EMPTY_FORM: ReportInput = { report_type: '', file_path: '', remarks: '' };
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export default function StudentReportsPage() {
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<DbReport[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<ReportInput>(EMPTY_FORM);
+
+  // Form State
+  const [reportType, setReportType] = useState('weekly_journal');
+  const [remarks, setRemarks] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -35,56 +44,163 @@ export default function StudentReportsPage() {
     load(page);
   }, [page, load]);
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setFormError('');
+    const file = e.target.files?.[0];
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+
+    // 1. File Size Checker
+    if (file.size > MAX_FILE_SIZE) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      setFormError(`File size (${sizeMB} MB) exceeds the 10 MB limit. Please choose a smaller file.`);
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // 2. File Format Whitelist Checker
+    const validExts = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png'];
+    const name = file.name.toLowerCase();
+    const isValid = validExts.some(ext => name.endsWith(ext));
+
+    if (!isValid) {
+      setFormError(`Invalid file format ("${file.name}"). Only PDF, Word Documents (.docx), and Images (JPG/PNG) are accepted.`);
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setSelectedFile(file);
+  }
+
   async function handleSave() {
     setFormError('');
+    if (!selectedFile) {
+      setFormError('Please select an official document file to upload.');
+      return;
+    }
+
     setSaving(true);
-    const result = await submitReport(form);
+
+    // 1. Upload to secure private storage
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('report_type', reportType);
+
+    const uploadRes = await uploadPrivateDocument(formData);
+    if (uploadRes.error || !uploadRes.data) {
+      setSaving(false);
+      setFormError(uploadRes.error?.message || 'Failed to upload document.');
+      return;
+    }
+
+    // 2. Record report submission in database
+    const submitRes = await submitReport({
+      report_type: reportType,
+      file_path: uploadRes.data.filePath,
+      remarks: remarks.trim() || undefined,
+    });
+
     setSaving(false);
-    if (result.error) { setFormError(result.error.message); return; }
+    if (submitRes.error) {
+      setFormError(submitRes.error.message);
+      return;
+    }
+
     setModalOpen(false);
-    setForm(EMPTY_FORM);
+    setSelectedFile(null);
+    setRemarks('');
+    setReportType('weekly_journal');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     load(page);
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const approvedCount = reports.filter(r => r.status === 'approved').length;
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-8 space-y-6 page-fade-in max-w-6xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Submit internship reports and requirements.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Practicum Document Clearance</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Submit required institutional reports, journals, and clearance documents.</p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>+ New Report</Button>
+        <Button
+          onClick={() => { setFormError(''); setSelectedFile(null); setRemarks(''); setModalOpen(true); }}
+          className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+        >
+          + Upload Requirement
+        </Button>
+      </div>
+
+      {/* Document Clearance Summary Card */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approved Documents</p>
+          <h3 className="text-2xl font-bold text-emerald-700 mt-1">{approvedCount}</h3>
+          <p className="text-xs text-slate-400 mt-0.5">Officially signed off by Coordinator</p>
+        </div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Submissions</p>
+          <h3 className="text-2xl font-bold text-slate-900 mt-1">{total}</h3>
+          <p className="text-xs text-slate-400 mt-0.5">Includes revisions and journals</p>
+        </div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Required Checklist</p>
+          <h3 className="text-2xl font-bold text-[#0A3D24] mt-1">6 Items</h3>
+          <p className="text-xs text-slate-400 mt-0.5">Standard CDM practicum checklist</p>
+        </div>
       </div>
 
       {error && <div className="mb-4"><Alert type="error" message={error} /></div>}
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Loading reports...</div>
+          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Loading submissions...</div>
         ) : reports.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <span className="text-4xl mb-3">📁</span>
-            <p className="text-sm">No reports submitted yet.</p>
+            <span className="text-4xl mb-3">📄</span>
+            <p className="text-sm font-semibold text-slate-600">No reports submitted yet.</p>
+            <p className="text-xs text-slate-400 mt-1">Click "+ Upload Requirement" above to submit your first practicum document.</p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Type</th>
-                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Status</th>
-                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Remarks</th>
-                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Submitted</th>
+                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Document Type</th>
+                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Review Status</th>
+                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Faculty Feedback / Remarks</th>
+                <th className="text-left px-5 py-3.5 font-medium text-slate-500">Submitted Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {reports.map(r => (
                 <tr key={r.report_id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-5 py-4 font-medium text-slate-900">{r.report_type}</td>
-                  <td className="px-5 py-4 text-slate-700">{r.status}</td>
-                  <td className="px-5 py-4 text-slate-700">{r.remarks ?? '—'}</td>
-                  <td className="px-5 py-4 text-slate-700">{new Date(r.submission_date).toLocaleDateString()}</td>
+                  <td className="px-5 py-4 font-semibold text-slate-800 capitalize">
+                    {r.report_type.replace(/_/g, ' ')}
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      r.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                      r.status === 'rejected' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                      'bg-amber-50 text-amber-700 border border-amber-200'
+                    }`}>
+                      {r.status.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-slate-600 text-xs">
+                    {r.remarks ? (
+                      <span className="bg-slate-50 p-1.5 rounded border border-slate-100 block max-w-sm">{r.remarks}</span>
+                    ) : (
+                      <span className="text-slate-400 italic">No remarks yet</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-slate-500 text-xs">
+                    {new Date(r.submission_date).toLocaleDateString()}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -102,14 +218,71 @@ export default function StudentReportsPage() {
         </div>
       )}
 
-      <Modal title="New Report" open={modalOpen} onClose={() => setModalOpen(false)}>
-        <Input label="Report Type" value={form.report_type} onChange={e => setForm(f => ({ ...f, report_type: e.target.value }))} required />
-        <Input label="File Path" value={form.file_path} onChange={e => setForm(f => ({ ...f, file_path: e.target.value }))} required />
-        <Input label="Remarks" value={form.remarks ?? ''} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))} />
-        {formError && <Alert type="error" message={formError} />}
-        <div className="flex gap-3 pt-1">
-          <Button onClick={handleSave} loading={saving} className="flex-1">Submit Report</Button>
-          <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">Cancel</Button>
+      {/* Upload Requirement Modal with File Validation */}
+      <Modal title="Submit Practicum Requirement" open={modalOpen} onClose={() => setModalOpen(false)}>
+        <div className="space-y-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Official Requirement Category</label>
+            <select
+              value={reportType}
+              onChange={e => setReportType(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+            >
+              {STANDARD_REPORT_TYPES.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Secure File Picker with Format and Size Checks */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700">Document File (Max 10 MB)</label>
+            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-[#0A3D24] transition-colors bg-slate-50/50">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.doc,.jpg,.jpeg,.png"
+                onChange={handleFileChange}
+                className="hidden"
+                id="doc-file-upload"
+              />
+              <label htmlFor="doc-file-upload" className="cursor-pointer block space-y-1">
+                <span className="text-2xl block">📁</span>
+                <span className="text-xs font-bold text-[#0A3D24] hover:underline block">
+                  {selectedFile ? 'Change Selected File' : 'Click to Browse File'}
+                </span>
+                <span className="text-[11px] text-slate-400 block">
+                  Accepted: PDF, Word (DOCX), Scans (JPG, PNG) • Up to 10 MB
+                </span>
+              </label>
+
+              {selectedFile && (
+                <div className="mt-3 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+                  <span className="font-semibold truncate max-w-xs">📎 {selectedFile.name}</span>
+                  <span className="font-mono font-bold">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Submission Notes / Remarks (Optional)</label>
+            <textarea
+              className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] min-h-[70px]"
+              placeholder="Add any notes for your OJT Coordinator regarding this submission..."
+              value={remarks}
+              onChange={e => setRemarks(e.target.value)}
+            />
+          </div>
+
+          {formError && <Alert type="error" message={formError} />}
+
+          <div className="flex gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">Cancel</Button>
+            <Button onClick={handleSave} loading={saving} disabled={!selectedFile} className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold">
+              Upload & Submit
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

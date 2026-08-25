@@ -1,17 +1,23 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import Button from '@/src/components/ui/Button';
 import Alert from '@/src/components/ui/Alert';
 import Modal from '@/src/components/ui/Modal';
 import { Badge } from '@/src/components/ui/Badge';
-import { createEvaluation, listAssignedStudentsForEvaluation, listEvaluationsForSupervisor, type EvaluationInput } from '@/src/services/evaluations';
+import {
+  createEvaluation, listAssignedStudentsForEvaluation, listEvaluationsForSupervisor,
+  type EvaluationInput, type EvaluationRubricCriteria
+} from '@/src/services/evaluations';
 
 const PAGE_SIZE = 20;
-const EMPTY_FORM: EvaluationInput = {
-  student_id: '',
-  performance_score: 90,
-  feedback: '',
+
+const DEFAULT_CRITERIA: EvaluationRubricCriteria = {
+  technical_competence: 23, // out of 25
+  productivity_dependability: 18, // out of 20
+  attendance_punctuality: 19, // out of 20
+  communication_skills: 14, // out of 15
+  work_ethics_professionalism: 18, // out of 20
 };
 
 export default function SupervisorEvaluationsPage() {
@@ -21,10 +27,20 @@ export default function SupervisorEvaluationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<EvaluationInput>(EMPTY_FORM);
+  const [studentId, setStudentId] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [criteria, setCriteria] = useState<EvaluationRubricCriteria>(DEFAULT_CRITERIA);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState<{ student_id: string; full_name: string; student_number: string; course: string }[]>([]);
+
+  const computedTotalScore = Math.min(100, Math.max(0,
+    (criteria.technical_competence || 0) +
+    (criteria.productivity_dependability || 0) +
+    (criteria.attendance_punctuality || 0) +
+    (criteria.communication_skills || 0) +
+    (criteria.work_ethics_professionalism || 0)
+  ));
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -50,24 +66,28 @@ export default function SupervisorEvaluationsPage() {
 
   async function handleSave() {
     setFormError('');
-    if (!form.student_id) {
-      setFormError('Please select a student to evaluate.');
+    if (!studentId) {
+      setFormError('Please select a student trainee to evaluate.');
       return;
     }
-    if (!form.feedback?.trim()) {
+    if (!feedback.trim()) {
       setFormError('Please provide qualitative feedback for the trainee.');
       return;
     }
 
     setSaving(true);
     const result = await createEvaluation({
-      ...form,
-      feedback: form.feedback.trim(),
+      student_id: studentId,
+      performance_score: computedTotalScore,
+      feedback: feedback.trim(),
+      criteria,
     });
     setSaving(false);
     if (result.error) { setFormError(result.error.message); return; }
     setModalOpen(false);
-    setForm(EMPTY_FORM);
+    setStudentId('');
+    setFeedback('');
+    setCriteria(DEFAULT_CRITERIA);
     load(page);
   }
 
@@ -75,21 +95,24 @@ export default function SupervisorEvaluationsPage() {
 
   function getScoreBadge(score: number | null) {
     if (score === null) return <span className="text-slate-400">—</span>;
-    if (score >= 90) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-bold">{score}% (Excellent)</Badge>;
+    if (score >= 90) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-bold">{score}% (Outstanding)</Badge>;
     if (score >= 80) return <Badge className="bg-teal-50 text-teal-700 border-teal-200 text-xs font-bold">{score}% (Very Satisfactory)</Badge>;
-    if (score >= 75) return <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-bold">{score}% (Satisfactory)</Badge>;
+    if (score >= 75) return <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-bold">{score}% (Satisfactory - Passed)</Badge>;
     return <Badge className="bg-red-50 text-red-700 border-red-200 text-xs font-bold">{score}% (Needs Improvement)</Badge>;
   }
 
   return (
-    <div className="p-8 space-y-6 max-w-6xl">
+    <div className="p-8 space-y-6 max-w-6xl page-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Trainee Performance Evaluations</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Submit and review performance ratings and competency feedback for your assigned OJT interns.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Trainee Performance Evaluations</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Submit competency ratings using the 5-dimension CHED practicum rubric.</p>
         </div>
-        <Button onClick={() => { setForm(EMPTY_FORM); setFormError(''); setModalOpen(true); }}>
-          + New Evaluation
+        <Button
+          onClick={() => { setStudentId(''); setFeedback(''); setCriteria(DEFAULT_CRITERIA); setFormError(''); setModalOpen(true); }}
+          className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+        >
+          + Rate Assigned Trainee
         </Button>
       </div>
 
@@ -102,7 +125,7 @@ export default function SupervisorEvaluationsPage() {
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <span className="text-4xl mb-3">⭐</span>
             <p className="text-sm font-semibold text-slate-700">No evaluations submitted yet</p>
-            <p className="text-xs text-slate-400 mt-1">Submit performance ratings for your assigned interns.</p>
+            <p className="text-xs text-slate-400 mt-1">Submit competency ratings for your assigned interns.</p>
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -147,17 +170,17 @@ export default function SupervisorEvaluationsPage() {
         </div>
       )}
 
-      {/* New Evaluation Modal */}
-      <Modal title="Trainee Performance Evaluation" open={modalOpen} onClose={() => setModalOpen(false)}>
-        <div className="space-y-4">
+      {/* 5-Dimension Rubric Evaluation Modal */}
+      <Modal title="Trainee Performance Evaluation (5-Dimension Rubric)" open={modalOpen} onClose={() => setModalOpen(false)}>
+        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Assigned Trainee</label>
             <select
-              value={form.student_id}
-              onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+              value={studentId}
+              onChange={e => setStudentId(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
             >
-              <option value="">Select trainee</option>
+              <option value="">Select assigned trainee</option>
               {students.map(s => (
                 <option key={s.student_id} value={s.student_id}>
                   {s.full_name} — {s.student_number} ({s.course})
@@ -166,44 +189,106 @@ export default function SupervisorEvaluationsPage() {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Performance Score (0 - 100)</label>
-            <div className="flex items-center gap-3">
+          {/* Rubric Dimension Sliders / Inputs */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">CHED Practicum Competency Rubric</h4>
+            
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-slate-700">
+                <span>1. Technical Competence & Quality of Output (Max 25 pts)</span>
+                <span className="font-bold text-[#0A3D24]">{criteria.technical_competence} / 25</span>
+              </div>
               <input
-                type="number"
-                min="50"
-                max="100"
-                value={form.performance_score ?? 90}
-                onChange={e => setForm(f => ({ ...f, performance_score: e.target.value ? Number(e.target.value) : null }))}
-                className="w-24 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                type="range" min="10" max="25"
+                value={criteria.technical_competence}
+                onChange={e => setCriteria(c => ({ ...c, technical_competence: Number(e.target.value) }))}
+                className="w-full accent-[#0A3D24]"
               />
-              <span className="text-xs text-slate-500 font-medium">
-                {form.performance_score && form.performance_score >= 90 ? '🌟 Outstanding / Excellent' :
-                 form.performance_score && form.performance_score >= 80 ? '👍 Very Satisfactory' :
-                 form.performance_score && form.performance_score >= 75 ? '✔️ Satisfactory' : '⚠️ Needs Improvement'}
-              </span>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-slate-700">
+                <span>2. Productivity & Dependability (Max 20 pts)</span>
+                <span className="font-bold text-[#0A3D24]">{criteria.productivity_dependability} / 20</span>
+              </div>
+              <input
+                type="range" min="8" max="20"
+                value={criteria.productivity_dependability}
+                onChange={e => setCriteria(c => ({ ...c, productivity_dependability: Number(e.target.value) }))}
+                className="w-full accent-[#0A3D24]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-slate-700">
+                <span>3. Attendance, Punctuality & Discipline (Max 20 pts)</span>
+                <span className="font-bold text-[#0A3D24]">{criteria.attendance_punctuality} / 20</span>
+              </div>
+              <input
+                type="range" min="8" max="20"
+                value={criteria.attendance_punctuality}
+                onChange={e => setCriteria(c => ({ ...c, attendance_punctuality: Number(e.target.value) }))}
+                className="w-full accent-[#0A3D24]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-slate-700">
+                <span>4. Communication & Teamwork (Max 15 pts)</span>
+                <span className="font-bold text-[#0A3D24]">{criteria.communication_skills} / 15</span>
+              </div>
+              <input
+                type="range" min="5" max="15"
+                value={criteria.communication_skills}
+                onChange={e => setCriteria(c => ({ ...c, communication_skills: Number(e.target.value) }))}
+                className="w-full accent-[#0A3D24]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-slate-700">
+                <span>5. Professionalism, Work Ethics & Initiative (Max 20 pts)</span>
+                <span className="font-bold text-[#0A3D24]">{criteria.work_ethics_professionalism} / 20</span>
+              </div>
+              <input
+                type="range" min="8" max="20"
+                value={criteria.work_ethics_professionalism}
+                onChange={e => setCriteria(c => ({ ...c, work_ethics_professionalism: Number(e.target.value) }))}
+                className="w-full accent-[#0A3D24]"
+              />
+            </div>
+
+            {/* Composite Score Card */}
+            <div className="p-3 rounded-lg bg-white border border-slate-200 flex items-center justify-between mt-2">
+              <span className="text-xs font-bold text-slate-800">Overall Calculated Rating:</span>
+              <span className="text-base font-bold text-[#0A3D24]">{computedTotalScore}% ({
+                computedTotalScore >= 90 ? 'Outstanding' :
+                computedTotalScore >= 80 ? 'Very Satisfactory' :
+                computedTotalScore >= 75 ? 'Satisfactory' : 'Needs Improvement'
+              })</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Qualitative Feedback & Remarks</label>
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Qualitative Feedback & Mentor Remarks</label>
             <textarea
-              value={form.feedback}
-              onChange={e => setForm(f => ({ ...f, feedback: e.target.value }))}
-              rows={4}
-              placeholder="Detail the trainee's work ethics, technical competence, and attendance performance..."
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+              value={feedback}
+              onChange={e => setFeedback(e.target.value)}
+              rows={3}
+              placeholder="Detail the trainee's technical strengths, key contributions, and areas for improvement..."
+              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+              required
             />
           </div>
 
           {formError && <Alert type="error" message={formError} />}
 
           <div className="flex gap-3 pt-2">
-            <Button onClick={handleSave} loading={saving} className="flex-1">
-              Submit Evaluation
-            </Button>
             <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">
               Cancel
+            </Button>
+            <Button onClick={handleSave} loading={saving} className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold">
+              Submit Official Evaluation
             </Button>
           </div>
         </div>

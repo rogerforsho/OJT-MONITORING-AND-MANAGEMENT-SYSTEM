@@ -12,6 +12,14 @@ function serviceClient() {
   );
 }
 
+export interface AttendanceWithStudent extends DbAttendance {
+  students: {
+    student_number: string;
+    course: string;
+    users: { full_name: string };
+  };
+}
+
 async function getAuthUserWithRole() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,47 +32,6 @@ async function getAuthUserWithRole() {
   return { supabase, user, profile };
 }
 
-export interface AttendanceWithStudent extends DbAttendance {
-  students: {
-    student_number: string;
-    course: string;
-    users: { full_name: string };
-  };
-}
-
-export async function listOwnAttendance(
-  page = 1,
-  pageSize = 20
-): Promise<AppResult<{ records: DbAttendance[]; total: number }>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
-  if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
-    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
-
-  const { data: student } = await supabase
-    .from('students')
-    .select('student_id')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!student)
-    return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
-
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
-  const { data, error, count } = await supabase
-    .from('attendance')
-    .select('*', { count: 'exact' })
-    .eq('student_id', student.student_id)
-    .order('attendance_date', { ascending: false })
-    .range(from, to);
-
-  if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load attendance records.' } };
-
-  return { data: { records: (data ?? []) as DbAttendance[], total: count ?? 0 }, error: null };
-}
-
 export async function listAttendanceForSupervisor(
   page = 1,
   pageSize = 20,
@@ -74,11 +41,21 @@ export async function listAttendanceForSupervisor(
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data: supervisor } = await supabase
+  const service = serviceClient();
+  let { data: supervisor } = await supabase
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (!supervisor) {
+    const { data: svcSupervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    supervisor = svcSupervisor;
+  }
 
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
@@ -113,21 +90,6 @@ export async function listAttendanceForSupervisor(
   return { data: { records: data as AttendanceWithStudent[], total: count ?? 0 }, error: null };
 }
 
-export async function getSelfieUrl(path: string): Promise<AppResult<{ url: string }>> {
-  if (!path) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Path is required.' } };
-
-  const service = serviceClient();
-  const { data, error } = await service.storage
-    .from('attendance-selfies')
-    .createSignedUrl(path, 300); // 5-minute valid signed URL
-
-  if (error || !data?.signedUrl) {
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to generate selfie URL.' } };
-  }
-
-  return { data: { url: data.signedUrl }, error: null };
-}
-
 export async function verifyAttendance(
   attendance_id: string,
   verification_status: 'verified' | 'rejected'
@@ -139,11 +101,21 @@ export async function verifyAttendance(
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data: supervisor } = await supabase
+  const service = serviceClient();
+  let { data: supervisor } = await supabase
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (!supervisor) {
+    const { data: svcSupervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    supervisor = svcSupervisor;
+  }
 
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
@@ -171,7 +143,6 @@ export async function verifyAttendance(
   if (record.verification_status !== 'pending')
     return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Attendance already verified.' } };
 
-  const service = serviceClient();
   const { error } = await service
     .from('attendance')
     .update({ verification_status, updated_at: new Date().toISOString() })
@@ -188,11 +159,21 @@ export async function batchVerifyAttendance(): Promise<AppResult<{ verifiedCount
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data: supervisor } = await supabase
+  const service = serviceClient();
+  let { data: supervisor } = await supabase
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (!supervisor) {
+    const { data: svcSupervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    supervisor = svcSupervisor;
+  }
 
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
@@ -200,13 +181,13 @@ export async function batchVerifyAttendance(): Promise<AppResult<{ verifiedCount
   const { data: assignments } = await supabase
     .from('student_assignments')
     .select('student_id')
-    .eq('supervisor_id', supervisor.supervisor_id);
+    .eq('supervisor_id', supervisor.supervisor_id)
+    .eq('assignment_status', 'active');
 
   const studentIds = (assignments ?? []).map((a: { student_id: string }) => a.student_id);
   if (studentIds.length === 0)
     return { data: { verifiedCount: 0 }, error: null };
 
-  const service = serviceClient();
   const { data: updated, error } = await service
     .from('attendance')
     .update({ verification_status: 'verified', updated_at: new Date().toISOString() })
@@ -215,43 +196,59 @@ export async function batchVerifyAttendance(): Promise<AppResult<{ verifiedCount
     .select('attendance_id');
 
   if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to batch verify.' } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to batch verify attendance.' } };
 
   return { data: { verifiedCount: updated?.length ?? 0 }, error: null };
 }
 
 /**
  * Coordinator Institutional Override:
- * Allows faculty Coordinators/Admins to verify student logs if an external supervisor is unresponsive before graduation.
+ * Allows OJT Coordinator / Admin to administratively verify pending attendance
+ * if a company supervisor is unresponsive or unavailable before graduation clearance.
  */
 export async function coordinatorOverrideVerifyAttendance(
   attendance_id: string,
   verification_status: 'verified' | 'rejected',
-  remarks?: string
+  override_reason?: string
 ): Promise<AppResult<null>> {
   if (!attendance_id)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Attendance ID is required.' } };
 
   const { user, profile } = await getAuthUserWithRole();
-  if (!user || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile?.role ?? '') || profile?.account_status !== 'active') {
-    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
-  }
+  if (!user || !['Coordinator', 'Admin'].includes(profile?.role ?? '') || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Institutional Coordinator privileges required.' } };
 
   const service = serviceClient();
+
+  const { data: record, error: fetchErr } = await service
+    .from('attendance')
+    .select('attendance_id, student_id, verification_status')
+    .eq('attendance_id', attendance_id)
+    .single();
+
+  if (fetchErr || !record)
+    return { data: null, error: { code: 'NOT_FOUND', message: 'Attendance record not found.' } };
+
   const { error } = await service
     .from('attendance')
     .update({ verification_status, updated_at: new Date().toISOString() })
     .eq('attendance_id', attendance_id);
 
   if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to execute administrative verification.' } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to apply institutional override.' } };
 
+  // Non-repudiation Audit Trail Entry
   await recordAuditEvent({
     actor_user_id: user.id,
     action: `ATTENDANCE_OVERRIDE_${verification_status.toUpperCase()}`,
     entity_type: 'attendance',
     entity_id: attendance_id,
-    details: { verification_status, remarks: remarks || 'Institutional Coordinator Override' },
+    details: {
+      student_id: record.student_id,
+      previous_status: record.verification_status,
+      new_status: verification_status,
+      override_reason: override_reason?.trim() || 'Institutional graduation clearance override by Coordinator.',
+    },
   });
 
   return { data: null, error: null };
@@ -259,21 +256,21 @@ export async function coordinatorOverrideVerifyAttendance(
 
 /**
  * Coordinator Batch Override:
- * Allows faculty to sign off on all pending logs for a graduating trainee.
+ * Administratively verifies all pending attendances for a student.
  */
 export async function coordinatorBatchOverrideForStudent(
   student_id: string,
-  remarks?: string
+  override_reason?: string
 ): Promise<AppResult<{ verifiedCount: number }>> {
   if (!student_id)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
 
   const { user, profile } = await getAuthUserWithRole();
-  if (!user || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile?.role ?? '') || profile?.account_status !== 'active') {
-    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
-  }
+  if (!user || !['Coordinator', 'Admin'].includes(profile?.role ?? '') || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Institutional Coordinator privileges required.' } };
 
   const service = serviceClient();
+
   const { data: updated, error } = await service
     .from('attendance')
     .update({ verification_status: 'verified', updated_at: new Date().toISOString() })
@@ -282,15 +279,97 @@ export async function coordinatorBatchOverrideForStudent(
     .select('attendance_id');
 
   if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to batch verify.' } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to batch override student attendance.' } };
 
-  await recordAuditEvent({
-    actor_user_id: user.id,
-    action: 'ATTENDANCE_BATCH_OVERRIDE',
-    entity_type: 'student',
-    entity_id: student_id,
-    details: { count: updated?.length || 0, remarks: remarks || 'Batch Institutional Sign-off' },
-  });
+  const count = updated?.length ?? 0;
 
-  return { data: { verifiedCount: updated?.length ?? 0 }, error: null };
+  if (count > 0) {
+    await recordAuditEvent({
+      actor_user_id: user.id,
+      action: 'ATTENDANCE_BATCH_OVERRIDE',
+      entity_type: 'student',
+      entity_id: student_id,
+      details: {
+        verified_count: count,
+        override_reason: override_reason?.trim() || 'Faculty institutional override for graduation batch processing.',
+      },
+    });
+  }
+
+  return { data: { verifiedCount: count }, error: null };
+}
+export async function getSelfieUrl(selfie_path: string): Promise<AppResult<{ url: string }>> {
+  if (!selfie_path)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Selfie path is required.' } };
+
+  const { user, profile } = await getAuthUserWithRole();
+  if (!user || !['Supervisor', 'Coordinator', 'Admin'].includes(profile?.role ?? ''))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const service = serviceClient();
+
+  const { data, error } = await service.storage
+    .from('attendance-selfies')
+    .createSignedUrl(selfie_path, 300);
+
+  if (error || !data)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to retrieve selfie.' } };
+
+  return { data: { url: data.signedUrl }, error: null };
+}
+
+export async function listAttendanceForCoordinator(
+  page = 1,
+  pageSize = 20
+): Promise<AppResult<{ records: AttendanceWithStudent[]; total: number }>> {
+  const { supabase, profile } = await getAuthUserWithRole();
+  if (!profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from('attendance')
+    .select(`*, students ( student_number, course, users ( full_name ) )`, { count: 'exact' })
+    .order('attendance_date', { ascending: false })
+    .range(from, to);
+
+  if (error)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load attendance records.' } };
+
+  return { data: { records: data as AttendanceWithStudent[], total: count ?? 0 }, error: null };
+}
+
+export async function listOwnAttendance(
+  page = 1,
+  pageSize = 20
+): Promise<AppResult<{ records: DbAttendance[]; total: number }>> {
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { data: student } = await supabase
+    .from('students')
+    .select('student_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!student)
+    return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from('attendance')
+    .select('*', { count: 'exact' })
+    .eq('student_id', student.student_id)
+    .order('attendance_date', { ascending: false })
+    .range(from, to);
+
+  if (error)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load attendance.' } };
+
+  return { data: { records: data as DbAttendance[], total: count ?? 0 }, error: null };
 }

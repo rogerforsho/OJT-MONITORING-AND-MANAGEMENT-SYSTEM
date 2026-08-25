@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,32 +8,34 @@ import { signOut } from '@/src/services/auth';
 
 const NAV_ITEMS: Record<string, { label: string; href: string; icon: string }[]> = {
   Student: [
-    { label: 'Dashboard', href: '/dashboard', icon: '⊞' },
-    { label: 'Attendance', href: '/student/attendance', icon: '📋' },
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Attendance', href: '/student/attendance', icon: '⏱️' },
     { label: 'Progress', href: '/student/progress', icon: '📈' },
-    { label: 'Reports', href: '/student/reports', icon: '📁' },
+    { label: 'Reports', href: '/student/reports', icon: '📄' },
+    { label: 'Certificate', href: '/student/certificate', icon: '🎓' },
     { label: 'Notifications', href: '/student/notifications', icon: '🔔' },
   ],
   Coordinator: [
-    { label: 'Dashboard', href: '/dashboard', icon: '⊞' },
-    { label: 'Approvals', href: '/coordinator/approvals', icon: '✅' },
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Approvals', href: '/coordinator/approvals', icon: '🛡️' },
     { label: 'Students', href: '/coordinator/students', icon: '👥' },
     { label: 'Companies', href: '/coordinator/companies', icon: '🏢' },
-    { label: 'Supervisors', href: '/coordinator/supervisors', icon: '👩‍🏫' },
-    { label: 'Assignments', href: '/coordinator/assignments', icon: '🔗' },
-    { label: 'Submissions', href: '/coordinator/submissions', icon: '📁' },
+    { label: 'Supervisors', href: '/coordinator/supervisors', icon: '👔' },
+    { label: 'Assignments', href: '/coordinator/assignments', icon: '📋' },
+    { label: 'Submissions', href: '/coordinator/submissions', icon: '📥' },
     { label: 'Progress', href: '/coordinator/progress', icon: '📈' },
   ],
   Supervisor: [
     { label: 'My Students', href: '/supervisor/students', icon: '👥' },
-    { label: 'Attendance', href: '/supervisor/attendance', icon: '📋' },
+    { label: 'Attendance', href: '/supervisor/attendance', icon: '⏱️' },
     { label: 'Evaluations', href: '/supervisor/evaluations', icon: '⭐' },
   ],
   ProgramHead: [
-    { label: 'Dashboard', href: '/dashboard', icon: '⊞' },
-    { label: 'Reports', href: '/program-head/reports', icon: '📊' },
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { label: 'Reports', href: '/program-head/reports', icon: '📑' },
   ],
   Admin: [
+    { label: 'Dashboard', href: '/dashboard', icon: '📊' },
     { label: 'Administration', href: '/admin', icon: '⚙️' },
   ],
 };
@@ -58,72 +60,72 @@ export default function Sidebar({ user }: Props) {
   return (
     <aside className="w-64 bg-[#062415] border-r border-[#FFCC00]/20 flex flex-col h-full shrink-0 select-none shadow-2xl">
       {/* Brand Header */}
-      <div className="px-5 py-5 border-b border-[#0A3D24]/80 bg-[#041a0f]/60">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-white p-0.5 border-1.5 border-[#FFCC00] shadow-md flex items-center justify-center shrink-0 overflow-hidden">
-            <Image
-              src="/logo.png"
-              alt="Colegio de Montalban Seal"
-              width={38}
-              height={38}
-              className="w-full h-full object-contain rounded-full"
-              priority
-            />
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-[#FFCC00] text-xs font-black tracking-wider uppercase font-serif truncate">
-              CdM OJT Portal
-            </p>
-            <p className="text-slate-300 text-[11px] font-medium truncate">
-              Colegio de Montalban
-            </p>
+      <div className="px-6 py-6 border-b border-white/10 flex items-center gap-3.5 bg-gradient-to-b from-black/20 to-transparent">
+        <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-[#FFCC00]/30 shadow-inner flex-shrink-0">
+          <Image
+            src="/logo.png"
+            alt="Colegio de Montalban Seal"
+            width={32}
+            height={32}
+            className="object-contain"
+            priority
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-black text-white tracking-wider uppercase truncate leading-tight font-serif">
+            Colegio de Montalban
+          </h2>
+          <p className="text-[11px] font-bold text-[#FFCC00] tracking-wider uppercase truncate mt-0.5">
+            OJT System
+          </p>
+        </div>
+      </div>
+
+      {/* User Role Card */}
+      <div className="px-4 py-3 mx-3 my-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-[#0A3D24] text-[#FFCC00] border border-[#FFCC00]/30 flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
+          {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-white truncate leading-tight">{user.full_name}</p>
+          <div className="mt-1 flex items-center gap-1.5">
+            <span className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full border uppercase tracking-wider ${badge.bg} ${badge.text} ${badge.border}`}>
+              {user.role}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* User info card */}
-      <div className="px-5 py-3.5 border-b border-[#0A3D24]/60 bg-[#062415]">
-        <p className="text-white text-sm font-bold truncate leading-snug">{user.full_name}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <span className={`inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border ${badge.bg} ${badge.text} ${badge.border}`}>
-            {user.role}
-          </span>
-          <span className="text-[10px] text-slate-400 font-medium truncate">
-            {user.role === 'Student' ? '4th-Year ICS/IBE' : 'Faculty / Staff'}
-          </span>
-        </div>
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      {/* Navigation Items */}
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         {items.map((item) => {
           const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all
-                ${active
-                  ? 'bg-[#0A3D24] text-[#FFCC00] border border-[#FFCC00]/40 shadow-sm shadow-black/20'
-                  : 'text-slate-300 hover:bg-[#0A3D24]/50 hover:text-white'
-                }`}
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
+                active
+                  ? 'bg-[#0A3D24] text-[#FFCC00] shadow-md border border-[#FFCC00]/30'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
             >
-              <span className="text-base leading-none">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="text-base flex-shrink-0">{item.icon}</span>
+              <span className="truncate">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Sign out Action */}
-      <div className="px-3 py-3.5 border-t border-[#0A3D24]/80 bg-[#041a0f]/40">
+      {/* Sign Out Action */}
+      <div className="p-3 border-t border-white/10 bg-black/20">
         <form action={signOut}>
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-300 bg-rose-950/30 border border-rose-900/50 hover:bg-rose-900/40 hover:text-white transition-all cursor-pointer shadow-sm"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:text-rose-100 hover:bg-rose-950/40 border border-transparent hover:border-rose-800/40 transition-all duration-150 cursor-pointer"
           >
-            <span className="text-sm">🚪</span>
-            Sign Out of Portal
+            <span className="text-base">🚪</span>
+            <span>Sign Out</span>
           </button>
         </form>
       </div>
