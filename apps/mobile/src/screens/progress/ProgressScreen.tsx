@@ -1,7 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+﻿import { useState, useEffect, useCallback } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView,
+  ActivityIndicator, RefreshControl, TouchableOpacity,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getOwnStudentProgress, type StudentProgressDetail } from '../../services/progress';
+import { Ionicons } from '@expo/vector-icons';
+import { getOwnStudentProgress } from '../../services/progress';
+import type { StudentProgressDetail } from '../../services/progress';
 
 export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
@@ -12,24 +17,19 @@ export default function ProgressScreen() {
 
   const load = useCallback(async () => {
     setError('');
-    const result = await getOwnStudentProgress();
-    if (result.error) {
-      setError(result.error.message);
-    } else {
-      setProgress(result.data);
-    }
+    const res = await getOwnStudentProgress();
+    if (res.data) setProgress(res.data);
+    else if (res.error) setError(res.error.message || 'Failed to load progress data.');
     setLoading(false);
-    setRefreshing(false);
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    load();
-  };
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   if (loading) {
     return (
@@ -57,7 +57,7 @@ export default function ProgressScreen() {
 
         {!!error && (
           <View style={s.alertError}>
-            <Text style={s.alertErrorText}>⚠ {error}</Text>
+            <Text style={s.alertErrorText}>{error}</Text>
             <TouchableOpacity onPress={load} style={{ marginTop: 6 }}>
               <Text style={s.retryText}>TAP TO RETRY</Text>
             </TouchableOpacity>
@@ -136,11 +136,11 @@ export default function ProgressScreen() {
 
         {/* Info banner */}
         <View style={s.infoBanner}>
-          <Text style={{ fontSize: 24 }}>🎓</Text>
+          <Ionicons name="school-outline" size={26} color="#0A3D24" />
           <View style={{ flex: 1 }}>
-            <Text style={s.infoBannerTitle}>Colegio de Montalban OJT Standard</Text>
+            <Text style={s.infoBannerTitle}>486.0 Hours Target</Text>
             <Text style={s.infoBannerSub}>
-              Rendered hours are calculated automatically upon supervisor selfie attendance verification.
+              Ensure all daily time records are signed off by your company supervisor to count toward final clearance.
             </Text>
           </View>
         </View>
@@ -151,49 +151,77 @@ export default function ProgressScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#f4f6f9' },
-  content: { padding: 20, paddingBottom: 40 },
   center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center' },
-  header: { marginBottom: 20 },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+  header: { marginBottom: 18 },
   headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   title: { fontSize: 24, fontWeight: '900', color: '#062415' },
   subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  alertError: { backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 14, padding: 14, marginBottom: 16 },
-  alertErrorText: { color: '#dc2626', fontSize: 13 },
-  retryText: { color: '#b91c1c', fontSize: 11, fontWeight: '700' },
+  alertError: { backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 16 },
+  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
+  retryText: { color: '#dc2626', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   progressCard: {
-    backgroundColor: '#062415',
+    backgroundColor: '#0A3D24',
     borderRadius: 24,
     padding: 22,
-    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 4,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,204,0,0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
   },
-  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  cardTopLabel: { color: '#FFCC00', fontSize: 11, fontWeight: '800', letterSpacing: 0.8 },
-  statusPill: { backgroundColor: 'rgba(255,204,0,0.15)', borderWidth: 1, borderColor: '#FFCC00', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
-  statusPillText: { color: '#FFCC00', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
-  percentRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 14 },
-  percentNum: { fontSize: 42, fontWeight: '900', color: '#ffffff' },
-  percentLabel: { fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
-  progressBarTrack: { width: '100%', height: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 5, overflow: 'hidden', marginBottom: 18 },
+  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  cardTopLabel: { fontSize: 10, fontWeight: '800', color: '#a7f3d0', letterSpacing: 0.8 },
+  statusPill: {
+    backgroundColor: 'rgba(255,204,0,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,204,0,0.4)',
+  },
+  statusPillText: { fontSize: 10, fontWeight: '800', color: '#FFCC00', textTransform: 'uppercase' },
+  percentRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 16 },
+  percentNum: { fontSize: 44, fontWeight: '900', color: '#FFCC00' },
+  percentLabel: { fontSize: 14, fontWeight: '700', color: '#e2e8f0' },
+  progressBarTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 5, overflow: 'hidden', marginBottom: 18 },
   progressBarFill: { height: '100%', backgroundColor: '#FFCC00', borderRadius: 5 },
-  hoursGrid: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)' },
-  statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 2, fontWeight: '600' },
-  statVal: { fontSize: 16, fontWeight: '900', color: '#ffffff' },
-  profileCard: { backgroundColor: '#ffffff', borderRadius: 20, borderWidth: 1, borderColor: '#e2e8f0', padding: 18, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
-  profileHeading: { fontSize: 11, fontWeight: '800', color: '#0A3D24', letterSpacing: 0.5, marginBottom: 12, textTransform: 'uppercase' },
-  profileList: { gap: 8 },
-  profileRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 2 },
+  hoursGrid: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)', paddingTop: 14 },
+  statLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '600' },
+  statVal: { fontSize: 16, fontWeight: '800', color: '#ffffff', marginTop: 2 },
+  profileCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  profileHeading: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8, marginBottom: 12 },
+  profileList: { gap: 10 },
+  profileRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  pLabel: { fontSize: 13, color: '#64748b', fontWeight: '500' },
+  pVal: { fontSize: 13, fontWeight: '700', color: '#1e293b', flex: 1, textAlign: 'right' },
+  pValGreen: { color: '#0A3D24' },
   divider: { height: 1, backgroundColor: '#f1f5f9' },
-  pLabel: { fontSize: 12, color: '#64748b', fontWeight: '500' },
-  pVal: { fontSize: 13, fontWeight: '700', color: '#0f172a' },
-  pValGreen: { color: '#0A3D24', fontWeight: '800' },
-  infoBanner: { backgroundColor: 'rgba(10,61,36,0.06)', borderWidth: 1, borderColor: 'rgba(10,61,36,0.2)', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  infoBannerTitle: { fontSize: 12, fontWeight: '800', color: '#0A3D24' },
-  infoBannerSub: { fontSize: 11, color: '#062415', marginTop: 2, lineHeight: 16 },
+  infoBanner: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  infoBannerTitle: { fontSize: 13, fontWeight: '800', color: '#0A3D24' },
+  infoBannerSub: { fontSize: 11, color: '#64748b', marginTop: 2, lineHeight: 16 },
 });

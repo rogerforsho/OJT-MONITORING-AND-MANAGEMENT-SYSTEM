@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+﻿import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
 
@@ -9,7 +10,7 @@ export default function PendingScreen({ navigation }: Props) {
     <View style={s.root}>
       <View style={s.card}>
         <View style={s.iconWrapper}>
-          <Text style={{ fontSize: 32 }}>⏳</Text>
+          <Ionicons name="shield-checkmark" size={34} color="#0A3D24" />
         </View>
         <Text style={s.title}>Registration Under Review</Text>
         <Text style={s.subtitle}>
@@ -24,14 +25,17 @@ export default function PendingScreen({ navigation }: Props) {
             'Sign in to access your attendance and rendered hours dashboard',
           ].map((item, i) => (
             <View key={i} style={s.stepRow}>
-              <Text style={s.check}>✓</Text>
+              <Ionicons name="checkmark-circle" size={16} color="#0A3D24" style={{ marginTop: 1 }} />
               <Text style={s.stepText}>{item}</Text>
             </View>
           ))}
         </View>
 
         <TouchableOpacity style={s.btn} onPress={() => navigation.navigate('SignIn')} activeOpacity={0.85}>
-          <Text style={s.btnText}>← Return to Sign In</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Ionicons name="arrow-back" size={16} color="#FFCC00" />
+            <Text style={s.btnText}>Return to Sign In</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -56,8 +60,8 @@ const s = StyleSheet.create({
     height: 68,
     borderRadius: 34,
     backgroundColor: 'rgba(10,61,36,0.08)',
-    borderWidth: 2,
-    borderColor: '#0A3D24',
+    borderWidth: 1.5,
+    borderColor: 'rgba(10,61,36,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -74,8 +78,7 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   infoTitle: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
-  stepRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  check: { color: '#0A3D24', fontSize: 13, fontWeight: '800' },
+  stepRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'flex-start' },
   stepText: { fontSize: 12, color: '#334155', flex: 1, lineHeight: 16 },
   btn: {
     width: '100%',

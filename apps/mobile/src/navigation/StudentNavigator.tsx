@@ -1,5 +1,5 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+﻿import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import type { StudentTabParamList } from './types';
 import AttendanceScreen from '../screens/attendance/AttendanceScreen';
 import AttendanceHistoryScreen from '../screens/attendance/AttendanceHistoryScreen';
@@ -9,10 +9,6 @@ import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<StudentTabParamList>();
-
-function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
-  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.6 }}>{icon}</Text>;
-}
 
 export default function StudentNavigator() {
   return (
@@ -35,32 +31,62 @@ export default function StudentNavigator() {
       <Tab.Screen
         name="Attendance"
         component={AttendanceScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📋" focused={focused} />, title: 'Attendance' }}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'camera' : 'camera-outline'} size={size ?? 22} color={color} />
+          ),
+          title: 'Attendance',
+        }}
       />
       <Tab.Screen
         name="AttendanceHistory"
         component={AttendanceHistoryScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📅" focused={focused} />, title: 'History' }}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'time' : 'time-outline'} size={size ?? 22} color={color} />
+          ),
+          title: 'History',
+        }}
       />
       <Tab.Screen
         name="Progress"
         component={ProgressScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📈" focused={focused} />, title: 'Progress' }}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={size ?? 22} color={color} />
+          ),
+          title: 'Progress',
+        }}
       />
       <Tab.Screen
         name="Reports"
         component={ReportsScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📁" focused={focused} />, title: 'Reports' }}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={size ?? 22} color={color} />
+          ),
+          title: 'Reports',
+        }}
       />
       <Tab.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🔔" focused={focused} />, title: 'Alerts' }}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'notifications' : 'notifications-outline'} size={size ?? 22} color={color} />
+          ),
+          title: 'Alerts',
+        }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="👤" focused={focused} />, title: 'Account' }}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size ?? 22} color={color} />
+          ),
+          title: 'Account',
+        }}
       />
     </Tab.Navigator>
   );
