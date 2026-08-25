@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { signOut } from '../../services/auth';
 
@@ -25,12 +26,20 @@ export default function ProfileScreen() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const { data: assignment } = await supabase
-        .from('student_assignments')
-        .select('*, companies(company_name), supervisors:users!supervisors_user_id_fkey(full_name)')
-        .eq('student_id', student?.student_id)
-        .eq('assignment_status', 'active')
-        .maybeSingle();
+      let assignment = null;
+      if (student?.student_id) {
+        const { data: assignData } = await supabase
+          .from('student_assignments')
+          .select(`
+            *,
+            companies ( company_name ),
+            supervisors ( users ( full_name ) )
+          `)
+          .eq('student_id', student.student_id)
+          .eq('assignment_status', 'active')
+          .maybeSingle();
+        assignment = assignData;
+      }
 
       setProfile({ user, student, assignment });
     } catch (e) {
@@ -66,6 +75,15 @@ export default function ProfileScreen() {
     );
   }
 
+  const course = (profile?.student?.course || '').toUpperCase();
+  const isICS = course.includes('BSIT') || course.includes('BS-CPE') || course.includes('BSCPE') || course.includes('INFORMATION TECHNOLOGY') || course.includes('COMPUTER ENGINEERING');
+  const departmentName = isICS ? 'Institute of Computing Studies (ICS)' : 'Institute of Business and Entrepreneurship (IBE)';
+
+  const supervisorUser = (profile?.assignment?.supervisors as any)?.users;
+  const supervisorName = Array.isArray(supervisorUser)
+    ? supervisorUser[0]?.full_name
+    : supervisorUser?.full_name || 'Designated by Host';
+
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
@@ -100,7 +118,7 @@ export default function ProfileScreen() {
           <View style={s.divider} />
           <View style={s.row}>
             <Text style={s.label}>Department</Text>
-            <Text style={s.value}>Institute of Computing Studies</Text>
+            <Text style={s.value}>{departmentName}</Text>
           </View>
           <View style={s.divider} />
           <View style={s.row}>
@@ -119,13 +137,14 @@ export default function ProfileScreen() {
           <View style={s.divider} />
           <View style={s.row}>
             <Text style={s.label}>Supervisor</Text>
-            <Text style={s.value}>{profile?.assignment?.supervisors?.full_name || 'Designated by Host'}</Text>
+            <Text style={s.value}>{supervisorName}</Text>
           </View>
         </View>
 
-        {/* Technical Standard Notice */}
+        {/* System Status Notice */}
         <View style={s.infoCard}>
-          <Text style={s.infoText}>🛡️ ISO/IEC 25010:2023 Evaluated Enterprise Standard</Text>
+          <Ionicons name="shield-checkmark-outline" size={16} color="#0A3D24" />
+          <Text style={s.infoText}>Colegio de Montalban OJT Practicum Platform</Text>
         </View>
 
         {/* Single Dedicated Sign Out Button */}
@@ -133,7 +152,10 @@ export default function ProfileScreen() {
           {loggingOut ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={s.signOutBtnText}>🚪 Sign Out</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="log-out-outline" size={18} color="#ffffff" />
+              <Text style={s.signOutBtnText}>Sign Out</Text>
+            </View>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -168,59 +190,65 @@ const s = StyleSheet.create({
     borderWidth: 2.5,
     borderColor: '#FFCC00',
     marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logo: { width: '100%', height: '100%', borderRadius: 34 },
-  name: { fontSize: 20, fontWeight: '900', color: '#ffffff', textAlign: 'center' },
-  email: { fontSize: 13, color: '#94a3b8', marginTop: 2 },
+  logo: { width: '100%', height: '100%', borderRadius: 32 },
+  name: { fontSize: 18, fontWeight: '800', color: '#ffffff', textAlign: 'center', marginBottom: 2 },
+  email: { fontSize: 12, color: '#94a3b8', textAlign: 'center', marginBottom: 12 },
   badge: {
-    marginTop: 10,
     backgroundColor: 'rgba(255,204,0,0.15)',
-    borderWidth: 1,
-    borderColor: '#FFCC00',
-    paddingHorizontal: 14,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,204,0,0.4)',
   },
-  badgeText: { fontSize: 12, fontWeight: '800', color: '#FFCC00' },
+  badgeText: { fontSize: 11, fontWeight: '800', color: '#FFCC00', textTransform: 'uppercase', letterSpacing: 0.5 },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 18,
-    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  cardTitle: { fontSize: 13, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
-  divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 6 },
-  label: { fontSize: 12, color: '#64748b', fontWeight: '600' },
-  value: { fontSize: 13, color: '#0f172a', fontWeight: '600' },
-  valueBold: { fontSize: 13, color: '#0A3D24', fontWeight: '800' },
+  cardTitle: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  label: { fontSize: 13, color: '#64748b', fontWeight: '500' },
+  value: { fontSize: 13, fontWeight: '700', color: '#1e293b', flex: 1, textAlign: 'right' },
+  valueBold: { fontSize: 14, fontWeight: '900', color: '#0A3D24' },
+  divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 10 },
   infoCard: {
-    backgroundColor: 'rgba(10,61,36,0.06)',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    marginBottom: 20,
+    backgroundColor: 'rgba(10,61,36,0.05)',
     borderWidth: 1,
     borderColor: 'rgba(10,61,36,0.15)',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-  infoText: { fontSize: 11, color: '#0A3D24', fontWeight: '700' },
+  infoText: { fontSize: 11, color: '#0A3D24', fontWeight: '700', textAlign: 'center' },
   signOutBtn: {
-    backgroundColor: '#dc2626',
+    backgroundColor: '#e11d48',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 4,
+    justifyContent: 'center',
+    shadowColor: '#e11d48',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  signOutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '800', letterSpacing: 0.5 },
+  signOutBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
 });

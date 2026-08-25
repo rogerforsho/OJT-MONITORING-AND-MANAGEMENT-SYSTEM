@@ -1,4 +1,5 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { Ionicons } from '@expo/vector-icons';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ActivityIndicator, StyleSheet, ScrollView,
@@ -149,7 +150,7 @@ export default function SignInScreen({ navigation }: Props) {
                 style={s.eyeButton}
                 activeOpacity={0.7}
               >
-                <Text style={s.eyeIcon}>{showPassword ? '👁️' : '🔒'}</Text>
+                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color='#64748b' />
               </TouchableOpacity>
             </View>
 
