@@ -1,5 +1,6 @@
-﻿import { isICSCourse, isIBECourse } from '@/src/lib/departments';
-'use server';
+﻿'use server';
+
+import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
