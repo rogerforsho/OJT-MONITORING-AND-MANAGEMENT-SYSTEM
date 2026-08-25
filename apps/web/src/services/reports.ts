@@ -4,15 +4,6 @@ import { createClient } from '@/src/lib/supabase/server';
 import { recordAuditEvent } from './audit';
 import type { AppResult, DbReport } from '@ojt/shared';
 
-export const STANDARD_REPORT_TYPES = [
-  { id: 'parent_consent', name: 'Parent/Guardian Consent & Liability Waiver' },
-  { id: 'medical_clearance', name: 'Medical Clearance & Practicum Insurance' },
-  { id: 'endorsement_letter', name: 'MOA & HTE Endorsement Letter' },
-  { id: 'weekly_journal', name: 'Weekly Accomplishment Journal' },
-  { id: 'midterm_report', name: 'Midterm Progress Summary' },
-  { id: 'final_report', name: 'Final Narrative Portfolio & Certificate' },
-] as const;
-
 async function getAuthUserWithRole() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

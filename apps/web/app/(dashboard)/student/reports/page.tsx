@@ -6,8 +6,9 @@ import Alert from '@/src/components/ui/Alert';
 import Modal from '@/src/components/ui/Modal';
 import Badge from '@/src/components/ui/Badge';
 import {
-  listStudentReports, submitReport, STANDARD_REPORT_TYPES
+  listStudentReports, submitReport
 } from '@/src/services/reports';
+import { STANDARD_REPORT_TYPES } from '@/src/lib/constants';
 import { uploadPrivateDocument } from '@/src/services/storage';
 import type { DbReport } from '@ojt/shared';
 
