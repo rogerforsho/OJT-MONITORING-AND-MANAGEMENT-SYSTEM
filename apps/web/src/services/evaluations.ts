@@ -1,6 +1,14 @@
 ﻿'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
+
+function serviceClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 import { recordAuditEvent } from './audit';
 import type { AppResult, DbEvaluation } from '@ojt/shared';
 
@@ -47,11 +55,21 @@ export async function listEvaluationsForSupervisor(
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data: supervisor } = await supabase
+    const service = serviceClient();
+  let { data: supervisor } = await supabase
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (!supervisor) {
+    const { data: svcSupervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    supervisor = svcSupervisor;
+  }
 
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
@@ -80,11 +98,21 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data: supervisor } = await supabase
+    const service = serviceClient();
+  let { data: supervisor } = await supabase
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (!supervisor) {
+    const { data: svcSupervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    supervisor = svcSupervisor;
+  }
 
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
@@ -172,11 +200,21 @@ export async function listAssignedStudentsForEvaluation(): Promise<AppResult<{ s
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { data: supervisor } = await supabase
+    const service = serviceClient();
+  let { data: supervisor } = await supabase
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (!supervisor) {
+    const { data: svcSupervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    supervisor = svcSupervisor;
+  }
 
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };

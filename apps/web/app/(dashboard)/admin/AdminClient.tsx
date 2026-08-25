@@ -6,8 +6,15 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Ca
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
+import Modal from '@/src/components/ui/Modal';
 import { Users, Shield, Building, Clock, Megaphone, Check, X, AlertCircle } from '@/src/components/ui/Icons';
-import { updateUserAccountStatus, type UserManagementItem } from '@/src/services/admin';
+import {
+  updateUserAccountStatus,
+  createSystemUser,
+  listAllUsers,
+  type UserManagementItem,
+  type CreateSystemUserInput,
+} from '@/src/services/admin';
 import { createAnnouncement } from '@/src/services/announcements';
 import { listAuditLogs, type AuditLogItem } from '@/src/services/audit';
 import type { AccountStatus } from '@ojt/shared';
@@ -29,6 +36,18 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
   const [users, setUsers] = useState<UserManagementItem[]>(initialUsers);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Create Staff Modal State
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [staffForm, setStaffForm] = useState<CreateSystemUserInput>({
+    full_name: '',
+    email: '',
+    password: '',
+    role: 'Coordinator',
+    department_or_program: 'ICS',
+  });
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
 
   // Announcement State
   const [anncTitle, setAnncTitle] = useState('');
@@ -53,6 +72,13 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
     setAuditLoading(false);
   }
 
+  async function refreshUsers() {
+    const res = await listAllUsers(1, 50);
+    if (res.data?.users) {
+      setUsers(res.data.users);
+    }
+  }
+
   const handleStatusChange = async (userId: string, newStatus: AccountStatus) => {
     setLoadingId(userId);
     setMsg(null);
@@ -68,6 +94,32 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
       setMsg({ type: 'success', text: `User status updated to ${newStatus}.` });
       loadAudit();
     }
+  };
+
+  const handleCreateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError('');
+    setCreateLoading(true);
+
+    const res = await createSystemUser(staffForm);
+    setCreateLoading(false);
+
+    if (res.error) {
+      setCreateError(res.error.message);
+      return;
+    }
+
+    setCreateModalOpen(false);
+    setStaffForm({
+      full_name: '',
+      email: '',
+      password: '',
+      role: 'Coordinator',
+      department_or_program: 'ICS',
+    });
+    setMsg({ type: 'success', text: `New ${staffForm.role} account created and activated successfully.` });
+    refreshUsers();
+    loadAudit();
   };
 
   const handlePublishAnnouncement = async (e: React.FormEvent) => {
@@ -96,31 +148,33 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
 
   return (
     <div className="space-y-6 max-w-6xl p-8 page-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+      {/* Clean, Non-Redundant Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline mb-2 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline mb-1.5 transition-colors cursor-pointer"
           >
-            ← Return to Dashboard
+            ← Back to Dashboard
           </Link>
-          <h1 className="text-2xl font-bold text-slate-900">System Administration</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage user account statuses, broadcast announcements, and monitor system health.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Administration</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Manage user accounts, provision academic staff, and broadcast campus announcements.
+          </p>
         </div>
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
+        <div>
+          <Button
+            onClick={() => { setCreateError(''); setCreateModalOpen(true); }}
+            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-sm"
           >
-            📊 Return to Dashboard
-          </Link>
-          <Badge className="bg-slate-900 text-white border-0 px-3 py-1.5">Administrator Portal</Badge>
+            + Create Staff Account
+          </Button>
         </div>
       </div>
 
       {msg && (
         <div
-          className={`p-4 rounded-lg text-sm font-medium flex items-center gap-2 ${
+          className={`p-4 rounded-xl text-sm font-medium flex items-center gap-2 ${
             msg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
           }`}
         >
@@ -130,55 +184,55 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
       )}
 
       {/* System Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Card className="border-slate-200/80 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-slate-200/80 shadow-xs">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center flex-shrink-0">
-              <Users className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Users</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Users</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{overview.totalUsers}</h3>
               <p className="text-xs text-slate-400 mt-0.5">{overview.activeUsers} active accounts</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm">
+        <Card className="border-slate-200/80 shadow-xs">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center flex-shrink-0">
-              <Shield className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Users</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{overview.pendingUsers}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Awaiting activation</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Approvals</p>
+              <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{overview.pendingUsers}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Awaiting verification</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm">
+        <Card className="border-slate-200/80 shadow-xs">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0">
-              <Building className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0">
+              <Building className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partner Companies</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{overview.companiesCount}</h3>
               <p className="text-xs text-slate-400 mt-0.5">Active establishments</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 shadow-sm">
+        <Card className="border-slate-200/80 shadow-xs">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center flex-shrink-0">
-              <Clock className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center flex-shrink-0">
+              <Clock className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Logs</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Recorded Shifts</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{overview.attendanceCount}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Recorded attendances</p>
+              <p className="text-xs text-slate-400 mt-0.5">Total verified logs</p>
             </div>
           </CardContent>
         </Card>
@@ -232,7 +286,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
                         {u.account_status === 'pending' && (
                           <Button
                             size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5"
                             onClick={() => handleStatusChange(u.user_id, 'active')}
                             disabled={loadingId === u.user_id}
                           >
@@ -243,7 +297,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="text-xs h-7 px-2"
+                            className="text-xs h-7 px-2.5"
                             onClick={() => handleStatusChange(u.user_id, 'inactive')}
                             disabled={loadingId === u.user_id}
                           >
@@ -254,7 +308,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-xs h-7 px-2"
+                            className="text-xs h-7 px-2.5"
                             onClick={() => handleStatusChange(u.user_id, 'active')}
                             disabled={loadingId === u.user_id}
                           >
@@ -278,7 +332,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
               <form onSubmit={handlePublishAnnouncement} className="space-y-4">
                 <Input
                   label="Announcement Title"
-                  placeholder="e.g. System Maintenance Notice"
+                  placeholder="e.g. Practicum Submission Deadline"
                   value={anncTitle}
                   onChange={(e) => setAnncTitle(e.target.value)}
                   required
@@ -300,7 +354,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Content</label>
                   <textarea
-                    className="w-full p-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:border-slate-900 min-h-[120px]"
+                    className="w-full p-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:border-slate-900 min-h-[110px]"
                     placeholder="Enter the broadcast message for all system users..."
                     value={anncContent}
                     onChange={(e) => setAnncContent(e.target.value)}
@@ -322,18 +376,15 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
         </div>
       </div>
 
-      {/* Institutional Audit Trail (ISO/IEC 25010:2023) */}
+      {/* System Security & Audit Trail */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-[#0A3D24]" />
-            <h2 className="text-lg font-bold text-slate-900">Institutional Audit Trail</h2>
-            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
-              ISO/IEC 25010:2023 Traceability
-            </Badge>
+            <h2 className="text-lg font-bold text-slate-900">System Activity & Security Audit Trail</h2>
           </div>
           <Button size="sm" variant="outline" onClick={loadAudit} disabled={auditLoading} className="text-xs h-7">
-            Refresh Trail
+            Refresh Log
           </Button>
         </div>
 
@@ -378,7 +429,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
                         <td className="px-4 py-2.5 text-slate-600">
                           {log.entity_type} {log.entity_id ? `(${log.entity_id.slice(0, 8)}...)` : ''}
                         </td>
-                        <td className="px-4 py-2.5 text-slate-500 max-w-xs truncate font-sans">
+                        <td className="px-4 py-2.5 text-slate-500 font-sans text-[11px]">
                           {JSON.stringify(log.details)}
                         </td>
                       </tr>
@@ -390,6 +441,83 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal: Create Staff Account */}
+      <Modal title="Provision Academic Staff Account" open={createModalOpen} onClose={() => setCreateModalOpen(false)}>
+        <form onSubmit={handleCreateStaff} className="space-y-4">
+          <Input
+            label="Full Name"
+            placeholder="e.g. Prof. Maria Santos"
+            value={staffForm.full_name}
+            onChange={(e) => setStaffForm({ ...staffForm, full_name: e.target.value })}
+            required
+          />
+
+          <Input
+            label="Institutional Email"
+            type="email"
+            placeholder="e.g. msantos@cdm.edu.ph"
+            value={staffForm.email}
+            onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+            required
+          />
+
+          <Input
+            label="Temporary Password (Min. 8 characters)"
+            type="password"
+            placeholder="••••••••"
+            value={staffForm.password}
+            onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
+            required
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Account Role</label>
+              <select
+                className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:border-slate-900"
+                value={staffForm.role}
+                onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value as any })}
+              >
+                <option value="Coordinator">OJT Coordinator</option>
+                <option value="ProgramHead">Program Head</option>
+                <option value="Admin">System Administrator</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Department / Institute</label>
+              <select
+                className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:border-slate-900"
+                value={staffForm.department_or_program}
+                onChange={(e) => setStaffForm({ ...staffForm, department_or_program: e.target.value })}
+              >
+                <option value="ICS">Institute of Computing Studies (ICS)</option>
+                <option value="IBE">Institute of Business and Entrepreneurship (IBE)</option>
+              </select>
+            </div>
+          </div>
+
+          {createError && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-xs font-medium border border-red-200">
+              {createError}
+            </div>
+          )}
+
+          <div className="flex gap-2.5 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setCreateModalOpen(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              loading={createLoading}
+              className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+            >
+              Create & Activate
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

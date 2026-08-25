@@ -36,6 +36,14 @@ export interface UserManagementItem {
   created_at: string;
 }
 
+export interface CreateSystemUserInput {
+  full_name: string;
+  email: string;
+  password: string;
+  role: 'Coordinator' | 'ProgramHead' | 'Admin';
+  department_or_program?: string;
+}
+
 export async function listAllUsers(
   page = 1,
   pageSize = 20,
@@ -73,6 +81,89 @@ export async function listAllUsers(
     },
     error: null,
   };
+}
+
+export async function createSystemUser(
+  input: CreateSystemUserInput
+): Promise<AppResult<{ user_id: string }>> {
+  const { authorized, user: adminUser } = await assertAdmin();
+  if (!authorized || !adminUser) {
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Admin access required.' } };
+  }
+
+  if (!input.full_name?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Full name is required.' } };
+  if (!input.email?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
+  if (!input.password || input.password.length < 8) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password must be at least 8 characters.' } };
+  if (!['Coordinator', 'ProgramHead', 'Admin'].includes(input.role)) {
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid staff role.' } };
+  }
+
+  const service = serviceClient();
+
+  // 1. Create auth user with pre-confirmed email
+  const { data: authData, error: authError } = await service.auth.admin.createUser({
+    email: input.email.trim(),
+    password: input.password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: input.full_name.trim(),
+      role: input.role,
+    },
+  });
+
+  if (authError || !authData.user) {
+    if (authError?.message?.includes('already registered') || authError?.message?.includes('unique constraint')) {
+      return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email address is already registered.' } };
+    }
+    return { data: null, error: { code: 'SERVER_FAILURE', message: authError?.message || 'Failed to create staff account.' } };
+  }
+
+  const newUserId = authData.user.id;
+  const dept = input.department_or_program || 'ICS';
+
+  // 2. Ensure public.users entry is active
+  await service
+    .from('users')
+    .upsert({
+      user_id: newUserId,
+      full_name: input.full_name.trim(),
+      email: input.email.trim(),
+      role: input.role,
+      account_status: 'active',
+      updated_at: new Date().toISOString(),
+    });
+
+  // 3. Populate corresponding role table
+  if (input.role === 'Coordinator') {
+    await service.from('coordinators').upsert({
+      user_id: newUserId,
+      department: dept,
+    });
+  } else if (input.role === 'ProgramHead') {
+    await service.from('program_heads').upsert({
+      user_id: newUserId,
+      department_or_program: dept,
+    });
+  } else if (input.role === 'Admin') {
+    await service.from('admins').upsert({
+      user_id: newUserId,
+    });
+  }
+
+  // 4. Log Audit Event
+  await recordAuditEvent({
+    actor_user_id: adminUser.id,
+    action: `STAFF_ACCOUNT_CREATED`,
+    entity_type: 'user',
+    entity_id: newUserId,
+    details: {
+      role: input.role,
+      email: input.email.trim(),
+      department: dept,
+    },
+  });
+
+  return { data: { user_id: newUserId }, error: null };
 }
 
 export async function updateUserAccountStatus(
