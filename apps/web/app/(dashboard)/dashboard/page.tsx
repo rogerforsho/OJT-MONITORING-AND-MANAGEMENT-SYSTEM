@@ -52,18 +52,32 @@ export default async function DashboardPage() {
         .eq('attendance_date', today)
         .maybeSingle();
 
-      const { data: assignment } = await supabase
+      const { data: assignment } = await service
         .from('student_assignments')
-        .select('companies(company_name), supervisors:users!supervisors_user_id_fkey(full_name)')
+        .select(`
+          assignment_id,
+          assignment_status,
+          companies ( company_name ),
+          supervisors ( users ( full_name ) )
+        `)
         .eq('student_id', student.student_id)
         .eq('assignment_status', 'active')
         .maybeSingle();
+
+      const companyName = (assignment?.companies as any)?.company_name;
+      const supervisorUser = (assignment?.supervisors as any)?.users;
+      const supervisorName = Array.isArray(supervisorUser)
+        ? supervisorUser[0]?.full_name
+        : supervisorUser?.full_name;
 
       stats = {
         student,
         progress: progress || { completed_hours: 0, remaining_hours: student.required_hours || 486, progress_status: 'not_started' },
         todayAttendance,
-        assignment,
+        assignment: {
+          company_name: companyName,
+          supervisor_name: supervisorName,
+        },
       };
     }
   } else if (user.role === 'Coordinator') {
@@ -315,10 +329,10 @@ export default async function DashboardPage() {
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assigned Company</p>
               <h3 className="text-sm font-bold text-slate-900 mt-1 truncate">
-                {stats.assignment?.companies?.company_name || 'Unassigned'}
+                {stats.assignment?.company_name || 'Unassigned'}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5 truncate">
-                Supervisor: {stats.assignment?.supervisors?.full_name || 'Pending assignment'}
+                Supervisor: {stats.assignment?.supervisor_name || 'Pending assignment'}
               </p>
             </div>
           </div>
