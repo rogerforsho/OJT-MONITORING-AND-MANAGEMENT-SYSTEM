@@ -31,7 +31,7 @@ export default async function DashboardPage() {
       .maybeSingle();
 
     if (student) {
-      const isICS = ['BS Information Technology', 'BS Computer Science', 'BSIT', 'BSCS'].some(c =>
+      const isICS = ['BS Information Technology', 'BS Computer Science', 'BS Computer Engineering', 'BSIT', 'BS-CPE', 'BSCPE'].some(c =>
         (student.course || '').toLowerCase().includes(c.toLowerCase())
       );
       departmentSubtitle = isICS
@@ -132,23 +132,49 @@ export default async function DashboardPage() {
       .eq('user_id', user.user_id)
       .maybeSingle();
 
-    departmentSubtitle = progHead?.department_or_program === 'IBE'
+    const dept = (progHead?.department_or_program || 'ICS').toUpperCase();
+    departmentSubtitle = dept === 'IBE'
       ? 'Institute of Business and Entrepreneurship (IBE)'
       : 'Institute of Computing Studies (ICS)';
 
     const [
-      { count: totalICS },
-      { count: totalIBE },
+      { data: allStudents },
       { count: totalCompanies },
     ] = await Promise.all([
-      service.from('students').select('*', { count: 'exact', head: true }).in('course', ['BS Information Technology', 'BS Computer Science', 'BSIT', 'BSCS']),
-      service.from('students').select('*', { count: 'exact', head: true }).in('course', ['BS Business Administration', 'BS Accountancy', 'BS Hospitality Management', 'BSBA', 'BSA']),
+      service.from('students').select('course, users!inner(account_status)').eq('users.account_status', 'active'),
       service.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     ]);
 
+    let courseCount1 = 0; // BSIT or BSBA-HRM
+    let courseCount2 = 0; // BS-CPE or BSEntrep
+    let totalDepartmentStudents = 0;
+
+    (allStudents ?? []).forEach((s: any) => {
+      const c = (s.course || '').toUpperCase();
+      if (dept === 'ICS') {
+        if (c.includes('BSIT') || c.includes('INFORMATION TECHNOLOGY')) {
+          courseCount1++;
+          totalDepartmentStudents++;
+        } else if (c.includes('BS-CPE') || c.includes('BSCPE') || c.includes('COMPUTER ENGINEERING')) {
+          courseCount2++;
+          totalDepartmentStudents++;
+        }
+      } else {
+        if (c.includes('BSBA-HRM') || c.includes('BSBA-HR') || c.includes('HUMAN RESOURCE') || c.includes('BSBA')) {
+          courseCount1++;
+          totalDepartmentStudents++;
+        } else if (c.includes('BSENTREP') || c.includes('ENTREPRENEURSHIP')) {
+          courseCount2++;
+          totalDepartmentStudents++;
+        }
+      }
+    });
+
     stats = {
-      totalICS: totalICS || 0,
-      totalIBE: totalIBE || 0,
+      dept,
+      courseCount1,
+      courseCount2,
+      totalDepartmentStudents,
       totalCompanies: totalCompanies || 0,
     };
   } else if (user.role === 'Admin') {
@@ -409,23 +435,31 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-bold">
-              💻
+              {stats.dept === 'ICS' ? '💻' : '👔'}
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">ICS Cohort (BSIT/BSCS)</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalICS}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Enrolled Computing Interns</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                {stats.dept === 'ICS' ? 'BSIT Trainees' : 'BSBA-HRM Trainees'}
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.courseCount1}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {stats.dept === 'ICS' ? 'Information Technology' : 'Human Resource Management'}
+              </p>
             </div>
           </div>
 
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl font-bold">
-              💼
+              {stats.dept === 'ICS' ? '⚙️' : '📈'}
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">IBE Cohort (BSBA/BSA)</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalIBE}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Enrolled Business Interns</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                {stats.dept === 'ICS' ? 'BS-CPE Trainees' : 'BSEntrep Trainees'}
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.courseCount2}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {stats.dept === 'ICS' ? 'Computer Engineering' : 'Entrepreneurship'}
+              </p>
             </div>
           </div>
 
@@ -434,9 +468,11 @@ export default async function DashboardPage() {
               🏢
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Partner HTEs</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner HTE Companies</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">MoA compliant companies</p>
+              <Link href="/program-head/reports" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block mt-0.5">
+                View Department Analytics →
+              </Link>
             </div>
           </div>
         </div>
