@@ -1,5 +1,7 @@
 ﻿'use client';
 
+import { isICSCourse, isIBECourse } from '@/src/lib/departments';
+
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
@@ -7,8 +9,6 @@ import { Users, Building, GraduationCap, Clock, Search, FileSpreadsheet } from '
 import {
   type StudentProgressDetail,
   type DepartmentSummaryData,
-  isICSCourse,
-  isIBECourse,
 } from '@/src/services/progress';
 
 interface Props {

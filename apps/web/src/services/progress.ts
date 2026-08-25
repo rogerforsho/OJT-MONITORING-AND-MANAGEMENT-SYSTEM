@@ -1,4 +1,5 @@
-﻿'use server';
+﻿import { isICSCourse, isIBECourse } from '@/src/lib/departments';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -66,15 +67,7 @@ export interface DepartmentSummaryData {
   };
 }
 
-export function isICSCourse(course: string): boolean {
-  const c = (course || '').toUpperCase();
-  return c.includes('BSIT') || c.includes('BS-CPE') || c.includes('BSCPE') || c.includes('INFORMATION TECHNOLOGY') || c.includes('COMPUTER ENGINEERING');
-}
 
-export function isIBECourse(course: string): boolean {
-  const c = (course || '').toUpperCase();
-  return c.includes('BSBA-HRM') || c.includes('BSBA-HR') || c.includes('BSENTREP') || c.includes('ENTREPRENEURSHIP') || c.includes('HUMAN RESOURCE') || c.includes('BSBA') || c.includes('BSA');
-}
 
 export async function listCohortProgress(
   page = 1,
