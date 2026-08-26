@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
@@ -19,7 +19,10 @@ import {
   TrendingUp,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   Megaphone,
+  CheckCircle2,
+  ArrowRight,
 } from '@/src/components/ui/Icons';
 
 function serviceClient() {
@@ -98,26 +101,17 @@ export default async function DashboardPage() {
       };
     }
   } else if (user.role === 'Coordinator') {
-    const { data: coord } = await service
-      .from('coordinators')
-      .select('department')
-      .eq('user_id', user.user_id)
-      .maybeSingle();
-
-    departmentSubtitle = coord?.department === 'IBE'
-      ? 'Institute of Business and Entrepreneurship (IBE)'
-      : 'Institute of Computing Studies (ICS)';
-
+    departmentSubtitle = 'Practicum Management & Coordinator Office';
     const [
       { count: pendingApprovals },
       { count: activeStudents },
       { count: totalCompanies },
       { count: atRiskCount },
     ] = await Promise.all([
-      service.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'pending'),
-      service.from('students').select('*', { count: 'exact', head: true }),
+      service.from('users').select('*', { count: 'exact', head: true }).eq('role', 'Student').eq('account_status', 'pending'),
+      service.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
       service.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      service.from('internship_progress').select('*', { count: 'exact', head: true }).lt('completed_hours', 150),
+      service.from('internship_progress').select('*', { count: 'exact', head: true }).lt('completed_hours', 100),
     ]);
 
     stats = {
@@ -214,16 +208,19 @@ export default async function DashboardPage() {
       { count: totalUsers },
       { count: pendingUsers },
       { count: activeUsers },
+      { count: totalCompanies },
     ] = await Promise.all([
       service.from('users').select('*', { count: 'exact', head: true }),
       service.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'pending'),
       service.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'active'),
+      service.from('companies').select('*', { count: 'exact', head: true }),
     ]);
 
     stats = {
       totalUsers: totalUsers || 0,
       pendingUsers: pendingUsers || 0,
       activeUsers: activeUsers || 0,
+      totalCompanies: totalCompanies || 0,
     };
   }
 
@@ -236,48 +233,70 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-6 sm:p-8 space-y-7 max-w-7xl page-fade-in">
-      {/* Welcome Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#062415] via-[#0A3D24] to-[#041a0f] p-6 sm:p-8 text-white shadow-xl shadow-black/15 border border-[#FFCC00]/30 relative overflow-hidden">
+      {/* Streamlined Welcome Banner */}
+      <div className="rounded-3xl bg-gradient-to-r from-[#062415] via-[#0A3D24] to-[#041a0f] p-6 sm:p-7 text-white shadow-xl shadow-black/15 border border-[#FFCC00]/30 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-white p-1 border-2 border-[#FFCC00] shadow-md flex items-center justify-center shrink-0">
+            <div className="w-13 h-13 rounded-2xl bg-white/10 p-2 border border-[#FFCC00]/40 shadow-md flex items-center justify-center shrink-0">
               <Image
                 src="/logo.png"
                 alt="Colegio de Montalban Seal"
-                width={60}
-                height={60}
-                className="w-full h-full object-contain rounded-full"
+                width={48}
+                height={48}
+                className="w-full h-full object-contain"
                 priority
               />
             </div>
             <div>
-              {user.role !== 'Admin' && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs uppercase font-extrabold tracking-wider text-[#FFCC00] bg-[#062415]/80 px-2.5 py-0.5 rounded-full border border-[#FFCC00]/40">
-                    {user.role} Portal
-                  </span>
-                  <span className="text-xs text-slate-300 font-medium">
-                    Colegio de Montalban
-                  </span>
-                </div>
-              )}
-              <h1 className="text-2xl sm:text-3xl font-black text-white font-serif mt-1 tracking-tight">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FFCC00]">
+                  Colegio de Montalban
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium">•</span>
+                <span className="text-[10px] text-slate-300 font-medium">
+                  {new Date().toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-white font-serif mt-0.5 tracking-tight">
                 Welcome back, {user.full_name}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-0.5 font-medium">
+              <p className="text-xs text-slate-300 mt-0.5 font-medium">
                 {departmentSubtitle}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col items-start sm:items-end gap-1">
-            <span className="text-xs text-slate-400 font-medium">Platform Status</span>
+          <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-3 py-1 rounded-full">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              System Operational
+              System Active
             </span>
+            {user.role === 'Admin' && (
+              <Link
+                href="/admin"
+                className="text-xs font-bold text-[#FFCC00] hover:underline flex items-center gap-1"
+              >
+                Admin Console <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+            {user.role === 'Student' && (
+              <Link
+                href="/student/attendance"
+                className="text-xs font-bold text-[#FFCC00] hover:underline flex items-center gap-1"
+              >
+                Log Attendance <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+            {user.role === 'Coordinator' && (
+              <Link
+                href="/coordinator/approvals"
+                className="text-xs font-bold text-[#FFCC00] hover:underline flex items-center gap-1"
+              >
+                Review Approvals <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -337,7 +356,7 @@ export default async function DashboardPage() {
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">
                 {stats.progress.remaining_hours} <span className="text-xs font-normal text-slate-500">hrs</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Required to graduate</p>
+              <p className="text-xs text-slate-400 mt-0.5">Target: {stats.student.required_hours || 486} hrs</p>
             </div>
           </div>
 
@@ -345,13 +364,13 @@ export default async function DashboardPage() {
             <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
               <Building2 className="w-5 h-5" />
             </div>
-            <div className="min-w-0">
+            <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assigned Company</p>
-              <h3 className="text-sm font-bold text-slate-900 mt-1 truncate">
-                {stats.assignment?.company_name || 'Unassigned'}
+              <h3 className="text-sm font-bold text-slate-900 mt-0.5 truncate max-w-[150px]">
+                {stats.assignment.company_name || 'Not yet assigned'}
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5 truncate">
-                Supervisor: {stats.assignment?.supervisor_name || 'Pending assignment'}
+              <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px]">
+                {stats.assignment.supervisor_name ? `Sup: ${stats.assignment.supervisor_name}` : 'Awaiting Supervisor'}
               </p>
             </div>
           </div>
@@ -362,11 +381,15 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Today&apos;s Status</p>
-              <h3 className="text-sm font-bold text-slate-900 mt-1">
-                {stats.todayAttendance ? (stats.todayAttendance.time_out ? 'Shift Completed' : 'Clocked In') : 'No Attendance Today'}
+              <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+                {stats.todayAttendance?.time_in ? 'Time In Recorded' : 'Not Clocked In'}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                {stats.todayAttendance?.time_in ? `In at ${stats.todayAttendance.time_in}` : 'Use Mobile App to log'}
+                {stats.todayAttendance?.time_out
+                  ? 'Shift Completed'
+                  : stats.todayAttendance?.time_in
+                  ? 'Currently on Shift'
+                  : 'Pending Attendance'}
               </p>
             </div>
           </div>
@@ -376,14 +399,14 @@ export default async function DashboardPage() {
       {user.role === 'Coordinator' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Approvals</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Registrations</p>
               <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingApprovals}</h3>
               <Link href="/coordinator/approvals" className="text-xs text-[#0A3D24] font-bold hover:underline">
-                Review accounts →
+                Review queue →
               </Link>
             </div>
           </div>
@@ -393,9 +416,9 @@ export default async function DashboardPage() {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Students</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Trainees</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.activeStudents}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Enrolled trainees</p>
+              <p className="text-xs text-slate-400 mt-0.5">Deployed across HTEs</p>
             </div>
           </div>
 
@@ -406,18 +429,18 @@ export default async function DashboardPage() {
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Active HTE establishments</p>
+              <p className="text-xs text-slate-400 mt-0.5">MoA Active Establishments</p>
             </div>
           </div>
 
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-rose-600 flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-red-600 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Behind Schedule</p>
-              <h3 className="text-2xl font-bold text-rose-600 mt-0.5">{stats.atRiskCount}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">&lt; 150 hours logged</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Low Progress Alert</p>
+              <h3 className="text-2xl font-bold text-red-600 mt-0.5">{stats.atRiskCount}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">&lt; 100 hrs rendered</p>
             </div>
           </div>
         </div>
@@ -465,7 +488,18 @@ export default async function DashboardPage() {
       )}
 
       {user.role === 'ProgramHead' && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Interns</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalDepartmentStudents}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">{stats.dept} Department Trainees</p>
+            </div>
+          </div>
+
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
               {stats.dept === 'ICS' ? <Laptop className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
@@ -501,51 +535,82 @@ export default async function DashboardPage() {
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner HTE Companies</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner HTEs</p>
               <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
               <Link href="/program-head/reports" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block mt-0.5">
-                View Department Analytics →
+                View Reports →
               </Link>
             </div>
           </div>
         </div>
       )}
 
+      {/* Admin Balanced Full-Width 4-Card Grid & Quick Operations Hub */}
       {user.role === 'Admin' && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
-              <Users className="w-5 h-5" />
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Accounts</p>
+                <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalUsers}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Registered system users</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Users</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalUsers}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">{stats.activeUsers} active accounts</p>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-emerald-700 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Users</p>
+                <h3 className="text-2xl font-bold text-emerald-700 mt-0.5">{stats.activeUsers}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Verified active accounts</p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Approvals</p>
+                <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingUsers}</h3>
+                <Link href="/admin" className="text-xs text-amber-700 font-bold hover:underline inline-block mt-0.5">
+                  Review pending →
+                </Link>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
+                <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Host Training Establishments</p>
+              </div>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
+          {/* Full-Width Quick Management Panel for Admin */}
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Accounts</p>
-              <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingUsers}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Awaiting activation</p>
+              <h3 className="text-base font-bold text-slate-900">Administrative System Console</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Access advanced user controls, staff provisioning, campus broadcasts, and immutable security audit logs.
+              </p>
             </div>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
-              <Settings className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">System Administration</p>
-              <Link href="/admin" className="text-sm font-bold text-[#0A3D24] hover:underline mt-1 inline-block">
-                Open Admin Console →
-              </Link>
-              <p className="text-xs text-slate-400 mt-0.5">Manage users & staff</p>
-            </div>
+            <Link
+              href="/admin"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs shadow-sm transition-all duration-150 shrink-0"
+            >
+              <Settings className="w-4 h-4" />
+              Open System Administration
+            </Link>
           </div>
         </div>
       )}

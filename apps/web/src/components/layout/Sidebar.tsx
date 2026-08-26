@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -83,9 +83,9 @@ export default function Sidebar({ user }: Props) {
 
   return (
     <aside className="w-64 bg-[#062415] border-r border-[#FFCC00]/20 flex flex-col h-full shrink-0 select-none shadow-2xl">
-      {/* Brand Header */}
-      <div className="px-6 py-6 border-b border-white/10 flex items-center gap-3.5 bg-gradient-to-b from-black/20 to-transparent">
-        <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-[#FFCC00]/30 shadow-inner flex-shrink-0">
+      {/* Brand Header without Truncation */}
+      <div className="px-5 py-5 border-b border-white/10 flex items-center gap-3 bg-gradient-to-b from-black/25 to-transparent">
+        <div className="w-10 h-10 rounded-xl bg-white/10 p-1.5 flex items-center justify-center border border-[#FFCC00]/30 shadow-inner flex-shrink-0">
           <Image
             src="/logo.png"
             alt="Colegio de Montalban Seal"
@@ -96,17 +96,17 @@ export default function Sidebar({ user }: Props) {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-black text-white tracking-wider uppercase truncate leading-tight font-serif">
+          <h2 className="text-[13px] font-black text-white leading-tight font-serif tracking-tight">
             Colegio de Montalban
           </h2>
-          <p className="text-[11px] font-bold text-[#FFCC00] tracking-wider uppercase truncate mt-0.5">
-            OJT System
+          <p className="text-[10px] font-extrabold text-[#FFCC00] tracking-widest uppercase mt-0.5">
+            OJT Practicum System
           </p>
         </div>
       </div>
 
       {/* User Role Card */}
-      <div className="px-4 py-3 mx-3 my-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+      <div className="px-3.5 py-2.5 mx-3 my-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-[#0A3D24] text-[#FFCC00] border border-[#FFCC00]/30 flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
           {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
         </div>
