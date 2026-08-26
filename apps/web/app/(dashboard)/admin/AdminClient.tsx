@@ -1,16 +1,32 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
+import { Card, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
 import Modal from '@/src/components/ui/Modal';
-import { Users, Shield, Building, Clock, Megaphone, Check, X, AlertCircle } from '@/src/components/ui/Icons';
+import {
+  Users,
+  Shield,
+  Building,
+  Clock,
+  Megaphone,
+  Check,
+  X,
+  AlertCircle,
+  Search,
+  Filter,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+} from '@/src/components/ui/Icons';
 import {
   updateUserAccountStatus,
   createSystemUser,
+  deleteSystemUser,
   listAllUsers,
   type UserManagementItem,
   type CreateSystemUserInput,
@@ -32,10 +48,32 @@ interface Props {
   };
 }
 
-export default function AdminClient({ initialUsers, totalUsers, overview }: Props) {
+const PAGE_SIZE = 10;
+
+const ROLE_TABS = [
+  { id: 'all', label: 'All Roles' },
+  { id: 'Student', label: 'Students' },
+  { id: 'Supervisor', label: 'Supervisors' },
+  { id: 'Coordinator', label: 'Coordinators' },
+  { id: 'ProgramHead', label: 'Program Heads' },
+  { id: 'Admin', label: 'Admins' },
+] as const;
+
+export default function AdminClient({ initialUsers, totalUsers: initialTotal, overview }: Props) {
   const [users, setUsers] = useState<UserManagementItem[]>(initialUsers);
+  const [totalCount, setTotalCount] = useState(initialTotal);
+  const [page, setPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [tableLoading, setTableLoading] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Delete User Modal State
+  const [deleteTarget, setDeleteTarget] = useState<UserManagementItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Create Staff Modal State
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -59,6 +97,27 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [auditLoading, setAuditLoading] = useState(true);
 
+  const fetchUsers = useCallback(async (
+    targetPage: number,
+    targetRole: string,
+    targetStatus: string,
+    targetSearch: string
+  ) => {
+    setTableLoading(true);
+    const res = await listAllUsers(targetPage, PAGE_SIZE, targetRole, targetStatus, targetSearch);
+    setTableLoading(false);
+
+    if (res.data) {
+      setUsers(res.data.users);
+      setTotalCount(res.data.total);
+    }
+  }, []);
+
+  // Fetch users when filters change
+  useEffect(() => {
+    fetchUsers(page, roleFilter, statusFilter, searchQuery);
+  }, [page, roleFilter, statusFilter, searchQuery, fetchUsers]);
+
   useEffect(() => {
     loadAudit();
   }, []);
@@ -72,12 +131,20 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
     setAuditLoading(false);
   }
 
-  async function refreshUsers() {
-    const res = await listAllUsers(1, 50);
-    if (res.data?.users) {
-      setUsers(res.data.users);
-    }
-  }
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(1);
+  };
+
+  const handleRoleChange = (role: string) => {
+    setRoleFilter(role);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
 
   const handleStatusChange = async (userId: string, newStatus: AccountStatus) => {
     setLoadingId(userId);
@@ -91,15 +158,37 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
       setUsers((prev) =>
         prev.map((u) => (u.user_id === userId ? { ...u, account_status: newStatus } : u))
       );
-      setMsg({ type: 'success', text: `User status updated to ${newStatus}.` });
+      setMsg({ type: 'success', text: `User account status updated to ${newStatus}.` });
       loadAudit();
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+
+    setDeleteLoading(true);
+    setDeleteError('');
+    const res = await deleteSystemUser(deleteTarget.user_id);
+    setDeleteLoading(false);
+
+    if (res.error) {
+      setDeleteError(res.error.message);
+      return;
+    }
+
+    setMsg({
+      type: 'success',
+      text: `Successfully deleted account for ${deleteTarget.full_name} (${deleteTarget.email}).`,
+    });
+    setDeleteTarget(null);
+    fetchUsers(page, roleFilter, statusFilter, searchQuery);
+    loadAudit();
+  };
+
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreateError('');
     setCreateLoading(true);
+    setCreateError('');
 
     const res = await createSystemUser(staffForm);
     setCreateLoading(false);
@@ -109,6 +198,10 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
       return;
     }
 
+    setMsg({
+      type: 'success',
+      text: `Successfully provisioned ${staffForm.role} account for ${staffForm.full_name}.`,
+    });
     setCreateModalOpen(false);
     setStaffForm({
       full_name: '',
@@ -117,8 +210,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
       role: 'Coordinator',
       department_or_program: 'ICS',
     });
-    setMsg({ type: 'success', text: `New ${staffForm.role} account created and activated successfully.` });
-    refreshUsers();
+    fetchUsers(page, roleFilter, statusFilter, searchQuery);
     loadAudit();
   };
 
@@ -146,16 +238,20 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const startIndex = (page - 1) * PAGE_SIZE + 1;
+  const endIndex = Math.min(totalCount, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6 max-w-6xl p-8 page-fade-in">
-      {/* Clean, Non-Redundant Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline mb-1.5 transition-colors cursor-pointer"
           >
-            ← Back to Dashboard
+            Back to Dashboard
           </Link>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Administration</h1>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -165,7 +261,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
         <div>
           <Button
             onClick={() => { setCreateError(''); setCreateModalOpen(true); }}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-sm"
+            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-sm cursor-pointer"
           >
             + Create Staff Account
           </Button>
@@ -174,12 +270,17 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
 
       {msg && (
         <div
-          className={`p-4 rounded-xl text-sm font-medium flex items-center gap-2 ${
+          className={`p-4 rounded-xl text-sm font-medium flex items-center justify-between gap-2 ${
             msg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
           }`}
         >
-          {msg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-          {msg.text}
+          <div className="flex items-center gap-2">
+            {msg.type === 'success' ? <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />}
+            <span>{msg.text}</span>
+          </div>
+          <button onClick={() => setMsg(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -241,11 +342,79 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Management Section */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900">User Management & Status Control</h2>
-            <span className="text-xs font-medium text-slate-500">Showing {users.length} users</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">User Management & Status Control</h2>
+              <p className="text-xs text-slate-500">
+                Search, filter by role/status, activate, or permanently delete accounts.
+              </p>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 self-start sm:self-auto">
+              Total {totalCount} account{totalCount !== 1 ? 's' : ''}
+            </span>
           </div>
 
+          {/* Search and Filter Controls */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full pl-9.5 pr-4 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 outline-none focus:bg-white focus:border-[#0A3D24] focus:ring-1 focus:ring-[#0A3D24] transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => handleSearchChange('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter Dropdown */}
+              <div className="flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => handleStatusFilterChange(e.target.value)}
+                  className="text-xs rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-slate-700 outline-none focus:border-[#0A3D24] transition-colors cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Active Only</option>
+                  <option value="pending">Pending Only</option>
+                  <option value="inactive">Inactive Only</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Role Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              {ROLE_TABS.map((tab) => {
+                const isActive = roleFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleRoleChange(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                      isActive
+                        ? 'bg-[#0A3D24] text-[#FFCC00] shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* User Table */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -258,94 +427,152 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {users.map((u) => (
-                    <tr key={u.user_id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900">{u.full_name}</p>
-                        <p className="text-xs text-slate-400">{u.email}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs">
-                          {u.role}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            u.account_status === 'active'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : u.account_status === 'pending'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-red-50 text-red-700 border border-red-200'
-                          }`}
-                        >
-                          {u.account_status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right space-x-1">
-                        {u.account_status === 'pending' && (
-                          <Button
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5"
-                            onClick={() => handleStatusChange(u.user_id, 'active')}
-                            disabled={loadingId === u.user_id}
-                          >
-                            Approve
-                          </Button>
-                        )}
-                        {u.account_status === 'active' && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="text-xs h-7 px-2.5"
-                            onClick={() => handleStatusChange(u.user_id, 'inactive')}
-                            disabled={loadingId === u.user_id}
-                          >
-                            Deactivate
-                          </Button>
-                        )}
-                        {u.account_status === 'inactive' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-7 px-2.5"
-                            onClick={() => handleStatusChange(u.user_id, 'active')}
-                            disabled={loadingId === u.user_id}
-                          >
-                            Reactivate
-                          </Button>
-                        )}
+                  {tableLoading ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-10 text-center text-xs text-slate-400">
+                        Loading users...
                       </td>
                     </tr>
-                  ))}
+                  ) : users.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-10 text-center text-xs text-slate-500">
+                        <p className="font-semibold text-slate-700">No users match the current criteria.</p>
+                        <p className="text-[11px] text-slate-400 mt-1">Try adjusting your search query or role filter.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((u) => (
+                      <tr key={u.user_id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-slate-900">{u.full_name}</p>
+                          <p className="text-xs text-slate-400">{u.email}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className="text-xs font-semibold">
+                            {u.role}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              u.account_status === 'active'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : u.account_status === 'pending'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}
+                          >
+                            {u.account_status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
+                          {u.account_status === 'pending' && (
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5 cursor-pointer"
+                              onClick={() => handleStatusChange(u.user_id, 'active')}
+                              disabled={loadingId === u.user_id}
+                            >
+                              Approve
+                            </Button>
+                          )}
+                          {u.account_status === 'active' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7 px-2.5 border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
+                              onClick={() => handleStatusChange(u.user_id, 'inactive')}
+                              disabled={loadingId === u.user_id}
+                            >
+                              Deactivate
+                            </Button>
+                          )}
+                          {u.account_status === 'inactive' && (
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5 cursor-pointer"
+                              onClick={() => handleStatusChange(u.user_id, 'active')}
+                              disabled={loadingId === u.user_id}
+                            >
+                              Reactivate
+                            </Button>
+                          )}
+                          <button
+                            title="Delete User"
+                            onClick={() => { setDeleteError(''); setDeleteTarget(u); }}
+                            className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 border border-transparent hover:border-red-200 transition-colors align-middle cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
+
+            {/* Table Pagination Footer */}
+            {totalCount > 0 && (
+              <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+                <span>
+                  Showing <strong className="text-slate-700">{startIndex}</strong> to{' '}
+                  <strong className="text-slate-700">{endIndex}</strong> of{' '}
+                  <strong className="text-slate-700">{totalCount}</strong> users
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">Page {page} of {totalPages}</span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page <= 1 || tableLoading}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="h-7 px-2 border-slate-200 cursor-pointer"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page >= totalPages || tableLoading}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className="h-7 px-2 border-slate-200 cursor-pointer"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* System Announcements */}
+        {/* Broadcast Announcement Section */}
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-900">Broadcast Announcement</h2>
+          <h2 className="text-lg font-bold text-slate-900">Broadcast Campus Announcement</h2>
+
           <Card className="border-slate-200/80 shadow-sm">
             <CardContent className="p-5">
               <form onSubmit={handlePublishAnnouncement} className="space-y-4">
-                <Input
-                  label="Announcement Title"
-                  placeholder="e.g. Practicum Submission Deadline"
-                  value={anncTitle}
-                  onChange={(e) => setAnncTitle(e.target.value)}
-                  required
-                />
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Subject / Title</label>
+                  <Input
+                    placeholder="e.g. Practicum Orientation Schedule"
+                    value={anncTitle}
+                    onChange={(e) => setAnncTitle(e.target.value)}
+                    required
+                  />
+                </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Target Department</label>
+                  <label className="text-xs font-semibold text-slate-700">Target Institute / Program</label>
                   <select
                     className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 outline-none focus:border-slate-900"
                     value={anncDept}
                     onChange={(e) => setAnncDept(e.target.value)}
                   >
-                    <option value="All">All Departments</option>
+                    <option value="All">All Departments (Campus-wide)</option>
                     <option value="ICS">Institute of Computing Studies (ICS)</option>
                     <option value="IBE">Institute of Business and Entrepreneurship (IBE)</option>
                   </select>
@@ -364,7 +591,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
 
                 <Button
                   type="submit"
-                  className="w-full bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+                  className="w-full bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold cursor-pointer"
                   loading={anncLoading}
                 >
                   <Megaphone className="w-4 h-4 mr-2" />
@@ -383,7 +610,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
             <Shield className="w-5 h-5 text-[#0A3D24]" />
             <h2 className="text-lg font-bold text-slate-900">System Activity & Security Audit Trail</h2>
           </div>
-          <Button size="sm" variant="outline" onClick={loadAudit} disabled={auditLoading} className="text-xs h-7">
+          <Button size="sm" variant="outline" onClick={loadAudit} disabled={auditLoading} className="text-xs h-7 cursor-pointer">
             Refresh Log
           </Button>
         </div>
@@ -396,7 +623,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
               <div className="p-8 text-center text-xs text-slate-500">
                 <p className="font-semibold text-slate-700">No security audit events recorded yet.</p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Administrative actions (account approvals, status changes, announcements) are automatically logged.
+                  Administrative actions (account approvals, status changes, announcements, user deletions) are automatically logged.
                 </p>
               </div>
             ) : (
@@ -442,6 +669,77 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
         </Card>
       </div>
 
+      {/* Modal: Delete User Confirmation */}
+      <Modal
+        title="Permanently Delete User Account"
+        open={!!deleteTarget}
+        onClose={() => { if (!deleteLoading) setDeleteTarget(null); }}
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-xs text-red-900">
+            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold">Warning: This action is permanent and irreversible.</p>
+              <p className="text-red-700 leading-relaxed">
+                Deleting this account will permanently revoke their access and remove their identity from Supabase Auth.
+              </p>
+            </div>
+          </div>
+
+          {deleteTarget && (
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">User Name:</span>
+                <span className="font-bold text-slate-900">{deleteTarget.full_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Email Address:</span>
+                <span className="font-mono text-slate-700">{deleteTarget.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Assigned Role:</span>
+                <Badge variant="outline" className="text-[10px] font-bold">
+                  {deleteTarget.role}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Current Status:</span>
+                <span className="font-semibold text-slate-700 uppercase text-[10px]">
+                  {deleteTarget.account_status}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {deleteError && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-xs font-medium border border-red-200">
+              {deleteError}
+            </div>
+          )}
+
+          <div className="flex gap-2.5 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={deleteLoading}
+              onClick={() => setDeleteTarget(null)}
+              className="flex-1 cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              loading={deleteLoading}
+              onClick={handleDeleteUser}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold cursor-pointer"
+            >
+              Permanently Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Modal: Create Staff Account */}
       <Modal title="Provision Academic Staff Account" open={createModalOpen} onClose={() => setCreateModalOpen(false)}>
         <form onSubmit={handleCreateStaff} className="space-y-4">
@@ -465,7 +763,7 @@ export default function AdminClient({ initialUsers, totalUsers, overview }: Prop
           <Input
             label="Temporary Password (Min. 8 characters)"
             type="password"
-            placeholder="••••••••"
+            placeholder="        "
             value={staffForm.password}
             onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
             required

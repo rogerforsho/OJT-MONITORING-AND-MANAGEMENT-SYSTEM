@@ -253,3 +253,75 @@ export async function getSystemOverview(): Promise<AppResult<{
     error: null,
   };
 }
+export async function deleteSystemUser(
+  user_id: string
+): Promise<AppResult<null>> {
+  const { authorized, user: adminUser } = await assertAdmin();
+  if (!authorized || !adminUser) {
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Admin access required.' } };
+  }
+
+  if (adminUser.id === user_id) {
+    return { data: null, error: { code: 'FORBIDDEN', message: 'You cannot delete your own administrator account.' } };
+  }
+
+  const service = serviceClient();
+
+  // 1. Fetch user details for audit logging and role-specific cleanup
+  const { data: targetUser } = await service
+    .from('users')
+    .select('full_name, email, role')
+    .eq('user_id', user_id)
+    .maybeSingle();
+
+  if (!targetUser) {
+    return { data: null, error: { code: 'NOT_FOUND', message: 'User not found.' } };
+  }
+
+  // 2. If user is a supervisor, check/handle assignments to avoid foreign key restrict errors
+  if (targetUser.role === 'Supervisor') {
+    const { data: supervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user_id)
+      .maybeSingle();
+
+    if (supervisor) {
+      await service
+        .from('student_assignments')
+        .delete()
+        .eq('supervisor_id', supervisor.supervisor_id);
+    }
+  }
+
+  // 3. Delete user record in public schema (cascades to students/coordinators/etc)
+  const { error: dbError } = await service
+    .from('users')
+    .delete()
+    .eq('user_id', user_id);
+
+  if (dbError) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: `Database deletion failed: ${dbError.message}` } };
+  }
+
+  // 4. Delete Supabase Auth user identity
+  const { error: authError } = await service.auth.admin.deleteUser(user_id);
+  if (authError) {
+    console.error('Warning: Failed to delete auth user from Supabase Auth:', authError.message);
+  }
+
+  // 5. Audit Log Entry
+  await recordAuditEvent({
+    actor_user_id: adminUser.id,
+    action: 'USER_DELETED',
+    entity_type: 'user',
+    entity_id: user_id,
+    details: {
+      deleted_user_name: targetUser.full_name,
+      deleted_user_email: targetUser.email,
+      deleted_user_role: targetUser.role,
+    },
+  });
+
+  return { data: null, error: null };
+}
