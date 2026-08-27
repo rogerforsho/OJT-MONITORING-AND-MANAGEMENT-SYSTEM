@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { AuthUser } from '@ojt/shared';
 import { signOut } from '@/src/services/auth';
+import { useDesktop } from '@/src/hooks/useDesktop';
 import {
   LayoutDashboard,
   Clock,
@@ -78,12 +79,13 @@ interface Props {
 
 export default function Sidebar({ user }: Props) {
   const pathname = usePathname();
+  const { isDesktop, toggleMiniWidget } = useDesktop();
   const items = NAV_ITEMS[user.role] ?? [];
   const badge = ROLE_BADGES[user.role] ?? ROLE_BADGES.Student;
 
   return (
     <aside className="w-64 bg-[#062415] border-r border-[#FFCC00]/20 flex flex-col h-full shrink-0 select-none shadow-2xl">
-      {/* Brand Header without Truncation */}
+      {/* Brand Header */}
       <div className="px-5 py-5 border-b border-white/10 flex items-center gap-3 bg-gradient-to-b from-black/25 to-transparent">
         <div className="w-10 h-10 rounded-xl bg-white/10 p-1.5 flex items-center justify-center border border-[#FFCC00]/30 shadow-inner flex-shrink-0">
           <Image
@@ -141,6 +143,26 @@ export default function Sidebar({ user }: Props) {
           );
         })}
       </nav>
+
+      {/* Desktop Native Indicator (shown only when running on Desktop) */}
+      {isDesktop && (
+        <div className="px-3 py-2 mx-3 mb-2 rounded-xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-wider">
+              Desktop Mode
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => toggleMiniWidget(true)}
+            title="Toggle Floating Mini-Widget Mode"
+            className="text-[10px] font-extrabold text-[#FFCC00] hover:text-white px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+          >
+            Widget
+          </button>
+        </div>
+      )}
 
       {/* Sign Out Action */}
       <div className="p-3 border-t border-white/10 bg-black/20">
