@@ -10,6 +10,10 @@ export interface ElectronAPI {
   ) => Promise<{ success: boolean; path?: string; error?: string }>;
   minimizeToTray: () => void;
   toggleMiniWidget: (enable: boolean) => void;
+  minimizeWindow: () => void;
+  maximizeWindow: () => void;
+  closeWindow: () => void;
+  isWindowMaximized: () => Promise<boolean>;
 }
 
 declare global {

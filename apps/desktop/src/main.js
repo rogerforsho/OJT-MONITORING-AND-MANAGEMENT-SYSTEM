@@ -71,8 +71,9 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 840,
-    minWidth: 1000,
-    minHeight: 680,
+    minWidth: 980,
+    minHeight: 640,
+    frame: false, // Frameless for custom native titlebar
     backgroundColor: '#062415',
     title: 'Colegio de Montalban - OJT Monitoring and Management System',
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
@@ -110,9 +111,6 @@ function createMainWindow() {
   // Auto-spawn web server if needed
   autoStartWebServerIfNeeded(targetUrl);
 
-  // Hide default menu for clean enterprise look
-  mainWindow.setMenuBarVisibility(false);
-
   // Close to Tray behavior
   mainWindow.on('close', (event) => {
     if (!app.isQuitting) {
@@ -142,6 +140,28 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   createMainWindow();
+
+  // IPC: Native Window Controls for Frameless Titlebar
+  ipcMain.on('window-minimize', () => {
+    if (mainWindow) mainWindow.minimize();
+  });
+
+  ipcMain.on('window-maximize', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+
+  ipcMain.on('window-close', () => {
+    if (mainWindow) mainWindow.close();
+  });
+
+  ipcMain.handle('is-window-maximized', () => {
+    return mainWindow ? mainWindow.isMaximized() : false;
+  });
 
   // IPC: Native OS Notification
   ipcMain.on('show-notification', (_event, { title, body }) => {
@@ -181,7 +201,7 @@ app.whenReady().then(() => {
     if (!mainWindow) return;
     if (enable) {
       mainWindow.setAlwaysOnTop(true, 'floating');
-      mainWindow.setSize(380, 520);
+      mainWindow.setSize(380, 540);
     } else {
       mainWindow.setAlwaysOnTop(false);
       mainWindow.setSize(1280, 840);
