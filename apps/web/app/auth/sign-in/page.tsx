@@ -43,6 +43,7 @@ export default function SignInPage() {
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetStudentNumber, setResetStudentNumber] = useState('');
+  const [resetRole, setResetRole] = useState<'Student' | 'Staff'>('Student');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
 
@@ -161,47 +162,77 @@ export default function SignInPage() {
             <h2 className="text-xl font-black text-[#0A3D24] font-serif">Account Recovery</h2>
           </div>
           <p className="text-xs text-slate-500">
-            Verify your institutional identity to securely receive a password recovery link.
+            Select your account type to securely receive a password recovery link.
           </p>
         </div>
 
-        {/* Institutional Identity Notice Box */}
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs flex items-start gap-2.5">
-          <div className="w-5 h-5 rounded-full bg-amber-200/80 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px] text-amber-800">
-            i
-          </div>
-          <p className="text-[11px] leading-relaxed text-amber-800">
-            <strong>Institutional Verification:</strong> Students must provide their official CdM Student Number to verify account ownership and prevent unauthorized access.
-          </p>
+        {/* Role Selector Tabs (Student vs Faculty/Staff) */}
+        <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <button
+            type="button"
+            onClick={() => { setResetRole('Student'); setResetMessage(''); }}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              resetRole === 'Student'
+                ? 'bg-white text-[#0A3D24] shadow-xs border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            🎓 Student
+          </button>
+          <button
+            type="button"
+            onClick={() => { setResetRole('Staff'); setResetStudentNumber(''); setResetMessage(''); }}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              resetRole === 'Staff'
+                ? 'bg-white text-[#0A3D24] shadow-xs border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            👔 Coordinator / Faculty
+          </button>
         </div>
+
+        {resetRole === 'Student' && (
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs flex items-start gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-amber-200/80 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px] text-amber-800">
+              i
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-800">
+              <strong>Student Verification:</strong> Please provide your official CdM Student Number and registered email to verify ownership.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleResetRequest} className="flex flex-col gap-3.5">
           <Input
-            label="Registered Institutional Email"
+            label={resetRole === 'Student' ? 'Registered Student Email' : 'Registered Faculty/Staff Email'}
             type="email"
             value={resetEmail}
             onChange={(e) => setResetEmail(e.target.value)}
-            placeholder="e.g. dela_cruz.ralph@cdm.edu.ph"
+            placeholder={resetRole === 'Student' ? 'student@cdm.edu.ph' : 'coordinator@cdm.edu.ph'}
             required
           />
 
-          <Input
-            label="Student ID Number (Required for Students)"
-            type="text"
-            value={resetStudentNumber}
-            onChange={(e) => setResetStudentNumber(e.target.value)}
-            placeholder="e.g. 2021-00123-CM (Leave blank if Faculty/Admin)"
-          />
+          {resetRole === 'Student' && (
+            <Input
+              label="CdM Student ID Number"
+              type="text"
+              value={resetStudentNumber}
+              onChange={(e) => setResetStudentNumber(e.target.value)}
+              placeholder="e.g. 2021-00123-CM"
+              required
+            />
+          )}
 
           {resetMessage && (
             <Alert
-              type={resetMessage.includes('dispatched') || resetMessage.includes('verified') ? 'success' : 'error'}
+              type={resetMessage.includes('dispatched') || resetMessage.includes('verified') || resetMessage.includes('Identity verified') ? 'success' : 'error'}
               message={resetMessage}
             />
           )}
 
           <Button type="submit" loading={resetLoading} className="w-full mt-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer">
-            Verify Identity & Send Reset Link
+            {resetRole === 'Student' ? 'Verify Student ID & Send Link' : 'Send Recovery Link'}
           </Button>
 
           <button

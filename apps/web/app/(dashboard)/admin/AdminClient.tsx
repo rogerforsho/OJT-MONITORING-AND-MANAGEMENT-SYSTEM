@@ -588,6 +588,16 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                             </Button>
                           )}
                           <button
+                            type="button"
+                            title="Reset User Password (Direct Override)"
+                            onClick={() => handleOpenResetPasswordModal(u)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-all cursor-pointer shadow-2xs align-middle"
+                          >
+                            <Key className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Reset PW</span>
+                          </button>
+                          <button
+                            type="button"
                             title="Delete User"
                             onClick={() => { setDeleteError(''); setDeleteTarget(u); }}
                             className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 border border-transparent hover:border-red-200 transition-colors align-middle cursor-pointer"
