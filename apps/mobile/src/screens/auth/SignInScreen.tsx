@@ -173,7 +173,7 @@ export default function SignInScreen({ navigation }: Props) {
                 <View style={s.infoNotice}>
                   <Ionicons name="shield-checkmark" size={14} color="#854d0e" />
                   <Text style={s.infoNoticeText}>
-                    <strong>Identity Proofing:</strong> Students must provide their official CdM Student Number to verify account ownership.
+                    <Text style={{ fontWeight: '800' }}>Identity Proofing:</Text> Students must provide their official CdM Student Number to verify account ownership.
                   </Text>
                 </View>
               )}
