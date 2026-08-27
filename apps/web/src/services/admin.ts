@@ -33,6 +33,7 @@ export interface UserManagementItem {
   email: string;
   role: UserRole;
   account_status: AccountStatus;
+  employee_number?: string | null;
   created_at: string;
 }
 
@@ -42,6 +43,7 @@ export interface CreateSystemUserInput {
   password: string;
   role: 'Coordinator' | 'ProgramHead' | 'Admin';
   department_or_program?: string;
+  employee_number?: string;
 }
 
 export async function listAllUsers(
@@ -121,6 +123,8 @@ export async function createSystemUser(
   const newUserId = authData.user.id;
   const dept = input.department_or_program || 'ICS';
 
+  const empNumber = input.employee_number?.trim() || `${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+
   // 2. Ensure public.users entry is active
   await service
     .from('users')
@@ -129,6 +133,7 @@ export async function createSystemUser(
       full_name: input.full_name.trim(),
       email: input.email.trim(),
       role: input.role,
+      employee_number: empNumber,
       account_status: 'active',
       updated_at: new Date().toISOString(),
     });

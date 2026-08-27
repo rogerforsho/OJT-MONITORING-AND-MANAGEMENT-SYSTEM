@@ -47,7 +47,7 @@ export default function SignInScreen({ navigation }: Props) {
   const [resetRole, setResetRole] = useState<'Student' | 'Staff'>('Student');
   const [resetEmail, setResetEmail] = useState('');
   const [resetStudentNumber, setResetStudentNumber] = useState('');
-  const [resetDept, setResetDept] = useState<'ICS' | 'IBE'>('ICS');
+  const [resetEmployeeNumber, setResetEmployeeNumber] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
 
@@ -122,11 +122,14 @@ export default function SignInScreen({ navigation }: Props) {
       setResetMsg('Please enter your official CdM Student Number.');
       return;
     }
+    if (resetRole === 'Staff' && !resetEmployeeNumber.trim()) {
+      setResetMsg('Please enter your official CdM Employee ID.');
+      return;
+    }
 
     setResetLoading(true);
-    const idParam = resetRole === 'Student' ? resetStudentNumber : undefined;
-    const deptParam = resetRole === 'Staff' ? resetDept : undefined;
-    const result = await requestInstitutionalPasswordReset(resetEmail, idParam, deptParam);
+    const idParam = resetRole === 'Student' ? resetStudentNumber : resetEmployeeNumber;
+    const result = await requestInstitutionalPasswordReset(resetEmail, idParam);
     setResetLoading(false);
 
     if (result.error) {
@@ -165,21 +168,22 @@ export default function SignInScreen({ navigation }: Props) {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[s.tabButton, resetRole === 'Staff' && s.tabButtonActive]}
-                  onPress={() => { setResetRole('Staff'); setResetStudentNumber(''); setResetMsg(''); }}
+                  onPress={() => { setResetRole('Staff'); setResetStudentNumber(''); setResetEmployeeNumber(''); setResetMsg(''); }}
                   activeOpacity={0.7}
                 >
                   <Text style={[s.tabText, resetRole === 'Staff' && s.tabTextActive]}>👔 Faculty / Staff</Text>
                 </TouchableOpacity>
               </View>
 
-              {resetRole === 'Student' && (
-                <View style={s.infoNotice}>
-                  <Ionicons name="shield-checkmark" size={14} color="#854d0e" />
-                  <Text style={s.infoNoticeText}>
-                    <Text style={{ fontWeight: '800' }}>Identity Proofing:</Text> Students must provide their official CdM Student Number to verify account ownership.
-                  </Text>
-                </View>
-              )}
+              <View style={s.infoNotice}>
+                <Ionicons name="shield-checkmark" size={14} color="#854d0e" />
+                <Text style={s.infoNoticeText}>
+                  <Text style={{ fontWeight: '800' }}>Identity Verification:</Text>{' '}
+                  {resetRole === 'Student'
+                    ? 'Students must provide their official CdM Student Number (e.g. 2021-00123-CM) to verify account ownership.'
+                    : 'Faculty must provide their official CdM Employee ID (e.g. 2024-001) to verify account ownership.'}
+                </Text>
+              </View>
 
               <Text style={s.label}>
                 {resetRole === 'Student' ? 'Registered Student Email' : 'Registered Faculty/Staff Email'}
@@ -207,25 +211,17 @@ export default function SignInScreen({ navigation }: Props) {
                   />
                 </>
               ) : (
-                <View style={{ marginBottom: 14 }}>
-                  <Text style={s.label}>Assigned Department / Institute</Text>
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-                    <TouchableOpacity
-                      onPress={() => setResetDept('ICS')}
-                      style={[s.tabButton, { backgroundColor: resetDept === 'ICS' ? '#0A3D24' : '#f1f5f9', borderWidth: 1, borderColor: resetDept === 'ICS' ? '#FFCC00' : '#e2e8f0' }]}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: resetDept === 'ICS' ? '#FFCC00' : '#64748b' }}>Institute of Computing Studies (ICS)</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setResetDept('IBE')}
-                      style={[s.tabButton, { backgroundColor: resetDept === 'IBE' ? '#0A3D24' : '#f1f5f9', borderWidth: 1, borderColor: resetDept === 'IBE' ? '#FFCC00' : '#e2e8f0' }]}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: resetDept === 'IBE' ? '#FFCC00' : '#64748b' }}>Institute of Business & Entrep (IBE)</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <>
+                  <Text style={s.label}>CdM Employee ID Number</Text>
+                  <TextInput
+                    style={s.input}
+                    value={resetEmployeeNumber}
+                    onChangeText={setResetEmployeeNumber}
+                    placeholder="e.g. 2024-001"
+                    placeholderTextColor="#94a3b8"
+                    autoCapitalize="none"
+                  />
+                </>
               )}
 
               {!!resetMsg && (

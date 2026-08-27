@@ -44,7 +44,7 @@ export default function SignInPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetStudentNumber, setResetStudentNumber] = useState('');
   const [resetRole, setResetRole] = useState<'Student' | 'Staff'>('Student');
-  const [resetDept, setResetDept] = useState('ICS');
+  const [resetEmployeeNumber, setResetEmployeeNumber] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
 
@@ -146,9 +146,8 @@ export default function SignInPage() {
     setResetMessage('');
     setResetLoading(true);
     const { requestPasswordReset } = await import('@/src/services/auth');
-    const identifier = resetRole === 'Student' ? resetStudentNumber : undefined;
-    const dept = resetRole === 'Staff' ? resetDept : undefined;
-    const result = await requestPasswordReset(resetEmail, identifier, dept);
+    const identifier = resetRole === 'Student' ? resetStudentNumber : resetEmployeeNumber;
+    const result = await requestPasswordReset(resetEmail, identifier);
     setResetLoading(false);
     if (result.error) {
       setResetMessage(result.error.message);
@@ -195,16 +194,17 @@ export default function SignInPage() {
           </button>
         </div>
 
-        {resetRole === 'Student' && (
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-amber-200/80 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px] text-amber-800">
-              i
-            </div>
-            <p className="text-[11px] leading-relaxed text-amber-800">
-              <strong>Student Verification:</strong> Please provide your official CdM Student Number and registered email to verify ownership.
-            </p>
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs flex items-start gap-2.5">
+          <div className="w-5 h-5 rounded-full bg-amber-200/80 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px] text-amber-800">
+            i
           </div>
-        )}
+          <p className="text-[11px] leading-relaxed text-amber-800">
+            <strong>{resetRole === 'Student' ? 'Student Verification' : 'Faculty Verification'}:</strong>{' '}
+            {resetRole === 'Student'
+              ? 'Please provide your official CdM Student Number (e.g. 2021-00123-CM) to verify account ownership.'
+              : 'Please provide your official CdM Employee ID (e.g. 2024-001) to verify faculty account ownership.'}
+          </p>
+        </div>
 
         <form onSubmit={handleResetRequest} className="flex flex-col gap-3.5">
           <Input
@@ -226,19 +226,14 @@ export default function SignInPage() {
               required
             />
           ) : (
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Assigned Department / Institute</label>
-              <select
-                value={resetDept}
-                onChange={(e) => setResetDept(e.target.value)}
-                className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-[#0A3D24] focus:ring-1 focus:ring-[#0A3D24]"
-              >
-                <option value="ICS">Institute of Computing Studies (ICS)</option>
-                <option value="IBE">Institute of Business and Entrepreneurship (IBE)</option>
-                <option value="HTE">Host Training Establishment (HTE Supervisor)</option>
-                <option value="ADMIN">Institutional Administration</option>
-              </select>
-            </div>
+            <Input
+              label="CdM Employee ID Number"
+              type="text"
+              value={resetEmployeeNumber}
+              onChange={(e) => setResetEmployeeNumber(e.target.value)}
+              placeholder="e.g. 2024-001"
+              required
+            />
           )}
 
           {resetMessage && (

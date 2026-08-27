@@ -96,6 +96,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
     password: '',
     role: 'Coordinator',
     department_or_program: 'ICS',
+    employee_number: `${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
@@ -298,6 +299,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
       password: '',
       role: 'Coordinator',
       department_or_program: 'ICS',
+      employee_number: `${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
     });
     fetchUsers(page, roleFilter, statusFilter, searchQuery);
     loadAudit();
@@ -534,7 +536,14 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     users.map((u) => (
                       <tr key={u.user_id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-3">
-                          <p className="font-medium text-slate-900">{u.full_name}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-medium text-slate-900">{u.full_name}</p>
+                            {u.employee_number && (
+                              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700">
+                                ID: {u.employee_number}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-400">{u.email}</p>
                         </td>
                         <td className="px-4 py-3">
@@ -914,6 +923,30 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
             required
           />
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700">CdM Employee ID Number</label>
+              <button
+                type="button"
+                onClick={() =>
+                  setStaffForm({
+                    ...staffForm,
+                    employee_number: `${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+                  })
+                }
+                className="text-[11px] font-bold text-[#0A3D24] hover:underline cursor-pointer"
+              >
+                🎲 Generate ID
+              </button>
+            </div>
+            <Input
+              placeholder="e.g. 2024-001"
+              value={staffForm.employee_number || ''}
+              onChange={(e) => setStaffForm({ ...staffForm, employee_number: e.target.value })}
+              required
+            />
+          </div>
 
           <Input
             label="Temporary Password (Min. 8 characters)"

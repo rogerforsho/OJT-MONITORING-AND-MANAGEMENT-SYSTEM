@@ -21,9 +21,12 @@ export default async function SettingsPage() {
   let extraDetails: {
     course?: string;
     studentNumber?: string;
+    employeeNumber?: string;
     department?: string;
     companyName?: string;
-  } = {};
+  } = {
+    employeeNumber: (user as any).employee_number || undefined,
+  };
 
   if (user.role === 'Student') {
     const { data: student } = await supabase

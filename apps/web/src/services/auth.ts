@@ -262,8 +262,7 @@ export async function signOut(): Promise<void> {
 
 export async function requestPasswordReset(
   email: string,
-  identifier?: string,
-  departmentOrRole?: string
+  identifier?: string
 ): Promise<AppResult<null>> {
   if (!email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
@@ -274,7 +273,7 @@ export async function requestPasswordReset(
   // 1. Verify user exists in the system
   const { data: userProfile } = await service
     .from('users')
-    .select('user_id, role, full_name')
+    .select('user_id, role, full_name, employee_number')
     .eq('email', normalizedEmail)
     .maybeSingle();
 
@@ -312,35 +311,24 @@ export async function requestPasswordReset(
         },
       };
     }
-  }
-
-  // 3. If user is Faculty/Staff (Coordinator, ProgramHead), verify Department affiliation
-  if (['Coordinator', 'ProgramHead'].includes(userProfile.role)) {
-    if (!departmentOrRole?.trim()) {
+  } else {
+    // 3. If user is Faculty / Staff / Admin, perform Two-Point Identity Proofing against their Employee ID Number
+    if (!identifier?.trim()) {
       return {
         data: null,
-        error: { code: 'VALIDATION_FAILURE', message: 'Assigned Department/Institute is required for faculty verification.' },
+        error: { code: 'VALIDATION_FAILURE', message: 'Employee ID Number is required for faculty verification.' },
       };
     }
 
-    let userDept = '';
-    if (userProfile.role === 'Coordinator') {
-      const { data: coord } = await service.from('coordinators').select('department').eq('user_id', userProfile.user_id).maybeSingle();
-      userDept = coord?.department || '';
-    } else if (userProfile.role === 'ProgramHead') {
-      const { data: head } = await service.from('program_heads').select('department_or_program').eq('user_id', userProfile.user_id).maybeSingle();
-      userDept = head?.department_or_program || '';
-    }
+    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanDbId = (userProfile.employee_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    const cleanInputDept = departmentOrRole.trim().toUpperCase();
-    const cleanDbDept = userDept.trim().toUpperCase();
-
-    if (cleanDbDept && !cleanDbDept.includes(cleanInputDept) && !cleanInputDept.includes(cleanDbDept)) {
+    if (!cleanDbId || cleanInputId !== cleanDbId) {
       return {
         data: null,
         error: {
           code: 'VALIDATION_FAILURE',
-          message: 'The selected Department does not match our official institutional records for this faculty account.',
+          message: 'The provided Employee ID does not match our institutional records for this faculty account.',
         },
       };
     }
@@ -425,7 +413,7 @@ export async function getAuthUser() {
 
   const { data } = await supabase
     .from('users')
-    .select('user_id, full_name, email, role, account_status')
+    .select('user_id, full_name, email, role, account_status, employee_number')
     .eq('user_id', user.id)
     .single();
 
