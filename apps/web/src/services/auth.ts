@@ -187,7 +187,7 @@ export async function registerStudent(
   return { data: null, error: null };
 }
 
-export async function signIn(input: SignInInput): Promise<AppResult<null>> {
+export async function signIn(input: SignInInput): Promise<AppResult<{ email: string; full_name: string; role: string }>> {
   if (!input.email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
   if (!input.password)
@@ -222,7 +222,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<null>> {
   // Check account status — backend authority
   const { data: user } = await supabase
     .from('users')
-    .select('account_status, role')
+    .select('account_status, role, full_name, email')
     .eq('user_id', data.user.id)
     .single();
 
@@ -244,7 +244,14 @@ export async function signIn(input: SignInInput): Promise<AppResult<null>> {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account has been deactivated.' } };
   }
 
-  return { data: null, error: null };
+  return {
+    data: {
+      email: user.email || input.email.trim(),
+      full_name: user.full_name || '',
+      role: user.role || 'Student',
+    },
+    error: null,
+  };
 }
 
 export async function signOut(): Promise<void> {
