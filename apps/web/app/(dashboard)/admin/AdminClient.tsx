@@ -22,11 +22,15 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  Key,
+  Copy,
+  CheckCheck,
 } from '@/src/components/ui/Icons';
 import {
   updateUserAccountStatus,
   createSystemUser,
   deleteSystemUser,
+  adminResetUserPassword,
   listAllUsers,
   type UserManagementItem,
   type CreateSystemUserInput,
@@ -75,6 +79,14 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
   const [deleteTarget, setDeleteTarget] = useState<UserManagementItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  // Admin Direct Password Reset State
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [userToReset, setUserToReset] = useState<UserManagementItem | null>(null);
+  const [customResetPassword, setCustomResetPassword] = useState('');
+  const [generatedPasswordResult, setGeneratedPasswordResult] = useState<string | null>(null);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Create Staff Modal State
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -222,6 +234,45 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
     fetchUsers(page, roleFilter, statusFilter, searchQuery);
     loadAudit();
   };
+  const handleOpenResetPasswordModal = (u: UserManagementItem) => {
+    setUserToReset(u);
+    setCustomResetPassword(`CdM@${Math.floor(100000 + Math.random() * 900000)}!`);
+    setGeneratedPasswordResult(null);
+    setCopied(false);
+    setResetModalOpen(true);
+  };
+
+  const handleGenerateRandomPassword = () => {
+    setCustomResetPassword(`CdM@${Math.floor(100000 + Math.random() * 900000)}!`);
+  };
+
+  const confirmAdminPasswordReset = async () => {
+    if (!userToReset) return;
+    setResetPasswordLoading(true);
+    const res = await adminResetUserPassword(userToReset.user_id, customResetPassword);
+    setResetPasswordLoading(false);
+
+    if (res.error) {
+      setMsg({ type: 'error', text: res.error.message });
+    } else {
+      const tempPw = res.data?.temporaryPassword || customResetPassword;
+      setGeneratedPasswordResult(tempPw);
+      setMsg({
+        type: 'success',
+        text: `Password for "${userToReset.full_name}" has been securely updated. Provide the temporary credentials to the user.`,
+      });
+      loadAudit();
+    }
+  };
+
+  const handleCopyPassword = () => {
+    if (generatedPasswordResult || customResetPassword) {
+      navigator.clipboard.writeText(generatedPasswordResult || customResetPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -910,6 +961,114 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
           </div>
         </form>
       </Modal>
+      {/* Admin Direct Password Reset Override Modal */}
+      {resetModalOpen && userToReset && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 page-fade-in">
+            <div className="flex items-center gap-3 text-amber-600 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                <Key className="w-5 h-5 text-amber-700" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Direct Password Reset Override</h3>
+                <p className="text-xs text-slate-500">Administrator Security Control</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-xs space-y-1">
+              <p className="font-bold text-slate-800">{userToReset.full_name}</p>
+              <p className="text-slate-600">{userToReset.email}</p>
+              <p className="text-[10px] text-slate-400 pt-0.5">Role: <span className="font-bold uppercase text-[#0A3D24]">{userToReset.role}</span></p>
+            </div>
+
+            {!generatedPasswordResult ? (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-700">Temporary Password</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateRandomPassword}
+                      className="text-[11px] font-bold text-[#0A3D24] hover:underline cursor-pointer"
+                    >
+                      🎲 Generate New
+                    </button>
+                  </div>
+                  <Input
+                    type="text"
+                    value={customResetPassword}
+                    onChange={(e) => setCustomResetPassword(e.target.value)}
+                    placeholder="Enter minimum 8 characters..."
+                    required
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    The user will be able to log in immediately and update this password in their Account Settings.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setResetModalOpen(false); setUserToReset(null); }}
+                    disabled={resetPasswordLoading}
+                    className="cursor-pointer"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={confirmAdminPasswordReset}
+                    loading={resetPasswordLoading}
+                    className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold cursor-pointer"
+                  >
+                    <Key className="w-4 h-4 mr-1.5" />
+                    Apply Password Reset
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 page-fade-in">
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
+                  <p className="text-xs font-bold text-emerald-900">
+                    ✅ Password Reset Successfully Applied!
+                  </p>
+                  <p className="text-[11px] text-emerald-800">
+                    Copy and provide these temporary login credentials to the user:
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generatedPasswordResult}
+                      className="w-full font-mono font-bold text-sm bg-white border border-emerald-300 rounded-lg px-3 py-1.5 text-slate-900 select-all outline-none"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleCopyPassword}
+                      className="shrink-0 bg-emerald-700 hover:bg-emerald-800 text-white font-bold cursor-pointer"
+                    >
+                      {copied ? <CheckCheck className="w-4 h-4 mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
+                      {copied ? 'Copied' : 'Copy'}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    size="sm"
+                    onClick={() => { setResetModalOpen(false); setUserToReset(null); setGeneratedPasswordResult(null); }}
+                    className="bg-slate-900 hover:bg-slate-800 text-white cursor-pointer font-bold"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Permanent Delete Announcement Confirmation Modal */}
       {deleteAnncModalOpen && anncToDelete && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">

@@ -260,18 +260,72 @@ export async function signOut(): Promise<void> {
   redirect('/auth/sign-in');
 }
 
-export async function requestPasswordReset(email: string): Promise<AppResult<null>> {
+export async function requestPasswordReset(
+  email: string,
+  studentNumber?: string
+): Promise<AppResult<null>> {
   if (!email?.trim())
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
 
+  const service = serviceClient();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // 1. Verify user exists in the system
+  const { data: userProfile } = await service
+    .from('users')
+    .select('user_id, role, full_name')
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (!userProfile) {
+    return {
+      data: null,
+      error: { code: 'NOT_FOUND', message: 'No registered account found with that email address.' },
+    };
+  }
+
+  // 2. If user is a Student, perform Two-Point Identity Proofing against their Student Number
+  if (userProfile.role === 'Student') {
+    if (!studentNumber?.trim()) {
+      return {
+        data: null,
+        error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for institutional verification.' },
+      };
+    }
+
+    const { data: studentRecord } = await service
+      .from('students')
+      .select('student_number')
+      .eq('user_id', userProfile.user_id)
+      .maybeSingle();
+
+    const cleanInputId = studentNumber.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanDbId = (studentRecord?.student_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (!cleanDbId || cleanInputId !== cleanDbId) {
+      return {
+        data: null,
+        error: {
+          code: 'VALIDATION_FAILURE',
+          message: 'The provided Student ID does not match our institutional enrollment records for this account.',
+        },
+      };
+    }
+  }
+
+  // 3. Dispatch Supabase Auth Recovery Email
   const supabase = await createClient();
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: `${appUrl}/auth/reset-password`,
   });
 
-  if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to send reset email.' } };
+  if (resetErr) {
+    return {
+      data: null,
+      error: { code: 'SERVER_FAILURE', message: resetErr.message || 'Failed to send recovery email.' },
+    };
+  }
 
   return { data: null, error: null };
 }

@@ -325,3 +325,56 @@ export async function deleteSystemUser(
 
   return { data: null, error: null };
 }
+
+export async function adminResetUserPassword(
+  userId: string,
+  newPassword?: string
+): Promise<AppResult<{ temporaryPassword?: string }>> {
+  const { user, authorized } = await assertAdmin();
+  if (!user || !authorized)
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Admin access required.' } };
+
+  if (!userId)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'User ID is required.' } };
+
+  const finalPassword = newPassword?.trim() || `CdM@${Math.floor(100000 + Math.random() * 900000)}!`;
+
+  if (finalPassword.length < 8)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password must be at least 8 characters long.' } };
+
+  const service = serviceClient();
+
+  // Fetch target user metadata
+  const { data: targetUser } = await service
+    .from('users')
+    .select('email, full_name, role')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  // Update password in Supabase Auth Admin API
+  const { error: authErr } = await service.auth.admin.updateUserById(userId, {
+    password: finalPassword,
+  });
+
+  if (authErr) {
+    return {
+      data: null,
+      error: { code: 'SERVER_FAILURE', message: authErr.message || 'Failed to update user password in Auth server.' },
+    };
+  }
+
+  // Record immutable security audit log
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: 'ADMIN_RESET_PASSWORD',
+    entity_type: 'user',
+    entity_id: userId,
+    details: {
+      target_email: targetUser?.email,
+      target_role: targetUser?.role,
+      reset_by_admin: user.id,
+    },
+  });
+
+  return { data: { temporaryPassword: finalPassword }, error: null };
+}

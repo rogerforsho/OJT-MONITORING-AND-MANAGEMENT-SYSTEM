@@ -42,6 +42,7 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [resetStudentNumber, setResetStudentNumber] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
 
@@ -143,50 +144,72 @@ export default function SignInPage() {
     setResetMessage('');
     setResetLoading(true);
     const { requestPasswordReset } = await import('@/src/services/auth');
-    const result = await requestPasswordReset(resetEmail);
+    const result = await requestPasswordReset(resetEmail, resetStudentNumber);
     setResetLoading(false);
     if (result.error) {
       setResetMessage(result.error.message);
     } else {
-      setResetMessage('If that email is registered, a secure recovery link has been dispatched to your inbox.');
+      setResetMessage('Identity verified! If your credentials match our institutional records, a secure recovery link has been dispatched to your inbox.');
     }
   }
 
   if (showForgot) {
     return (
-      <div className="page-fade-in">
-        <div className="mb-6">
+      <div className="page-fade-in space-y-5">
+        <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-xl font-black text-[#0A3D24] font-serif">Reset Password</h2>
+            <h2 className="text-xl font-black text-[#0A3D24] font-serif">Account Recovery</h2>
           </div>
           <p className="text-xs text-slate-500">
-            Enter your institutional email to receive a recovery link.
+            Verify your institutional identity to securely receive a password recovery link.
           </p>
         </div>
-        <form onSubmit={handleResetRequest} className="flex flex-col gap-4">
+
+        {/* Institutional Identity Notice Box */}
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs flex items-start gap-2.5">
+          <div className="w-5 h-5 rounded-full bg-amber-200/80 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px] text-amber-800">
+            i
+          </div>
+          <p className="text-[11px] leading-relaxed text-amber-800">
+            <strong>Institutional Verification:</strong> Students must provide their official CdM Student Number to verify account ownership and prevent unauthorized access.
+          </p>
+        </div>
+
+        <form onSubmit={handleResetRequest} className="flex flex-col gap-3.5">
           <Input
-            label="Institutional Email"
+            label="Registered Institutional Email"
             type="email"
             value={resetEmail}
             onChange={(e) => setResetEmail(e.target.value)}
-            placeholder="username@cdm.edu.ph"
+            placeholder="e.g. dela_cruz.ralph@cdm.edu.ph"
             required
           />
+
+          <Input
+            label="Student ID Number (Required for Students)"
+            type="text"
+            value={resetStudentNumber}
+            onChange={(e) => setResetStudentNumber(e.target.value)}
+            placeholder="e.g. 2021-00123-CM (Leave blank if Faculty/Admin)"
+          />
+
           {resetMessage && (
             <Alert
-              type={resetMessage.includes('dispatched') ? 'success' : 'error'}
+              type={resetMessage.includes('dispatched') || resetMessage.includes('verified') ? 'success' : 'error'}
               message={resetMessage}
             />
           )}
-          <Button type="submit" loading={resetLoading} className="w-full mt-1 shadow-md shadow-[#0A3D24]/20">
-            Send Reset Link
+
+          <Button type="submit" loading={resetLoading} className="w-full mt-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer">
+            Verify Identity & Send Reset Link
           </Button>
+
           <button
             type="button"
-            onClick={() => setShowForgot(false)}
+            onClick={() => { setShowForgot(false); setResetMessage(''); }}
             className="text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline text-center mt-1 cursor-pointer"
           >
-            Back to Sign In
+            ← Back to Sign In
           </button>
         </form>
       </div>
