@@ -31,7 +31,8 @@ import {
   type UserManagementItem,
   type CreateSystemUserInput,
 } from '@/src/services/admin';
-import { createAnnouncement } from '@/src/services/announcements';
+import { createAnnouncement, listAnnouncements, deleteAnnouncement } from '@/src/services/announcements';
+import type { DbAnnouncement } from '@ojt/shared';
 import { listAuditLogs, type AuditLogItem } from '@/src/services/audit';
 import type { AccountStatus } from '@ojt/shared';
 
@@ -92,6 +93,11 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
   const [anncContent, setAnncContent] = useState('');
   const [anncDept, setAnncDept] = useState('All');
   const [anncLoading, setAnncLoading] = useState(false);
+  const [announcements, setAnnouncements] = useState<DbAnnouncement[]>([]);
+  const [anncListLoading, setAnncListLoading] = useState(true);
+  const [deleteAnncModalOpen, setDeleteAnncModalOpen] = useState(false);
+  const [anncToDelete, setAnncToDelete] = useState<DbAnnouncement | null>(null);
+  const [deleteAnncLoading, setDeleteAnncLoading] = useState(false);
 
   // Audit Logs State
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
@@ -118,9 +124,19 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
     fetchUsers(page, roleFilter, statusFilter, searchQuery);
   }, [page, roleFilter, statusFilter, searchQuery, fetchUsers]);
 
+  const loadAnnouncements = useCallback(async () => {
+    setAnncListLoading(true);
+    const res = await listAnnouncements();
+    if (res.data) {
+      setAnnouncements(res.data);
+    }
+    setAnncListLoading(false);
+  }, []);
+
   useEffect(() => {
     loadAudit();
-  }, []);
+    loadAnnouncements();
+  }, [loadAnnouncements]);
 
   async function loadAudit() {
     setAuditLoading(true);
@@ -130,6 +146,28 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
     }
     setAuditLoading(false);
   }
+
+  const handleDeleteAnnouncementClick = (annc: DbAnnouncement) => {
+    setAnncToDelete(annc);
+    setDeleteAnncModalOpen(true);
+  };
+
+  const confirmDeleteAnnouncement = async () => {
+    if (!anncToDelete) return;
+    setDeleteAnncLoading(true);
+    const res = await deleteAnnouncement(anncToDelete.announcement_id);
+    setDeleteAnncLoading(false);
+    setDeleteAnncModalOpen(false);
+
+    if (res.error) {
+      setMsg({ type: 'error', text: res.error.message });
+    } else {
+      setMsg({ type: 'success', text: `Announcement "${anncToDelete.title}" has been permanently removed.` });
+      setAnncToDelete(null);
+      loadAnnouncements();
+      loadAudit();
+    }
+  };
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -234,6 +272,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
       setAnncTitle('');
       setAnncContent('');
       setMsg({ type: 'success', text: 'Announcement broadcasted and alerts dispatched successfully!' });
+      loadAnnouncements();
       loadAudit();
     }
   };
@@ -600,6 +639,61 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
               </form>
             </CardContent>
           </Card>
+
+          {/* Active Announcements List & Deletion */}
+          <div className="mt-4">
+            <h3 className="text-sm font-bold text-slate-800 mb-2.5 flex items-center justify-between">
+              <span>Active Broadcasts ({announcements.length})</span>
+              <button
+                type="button"
+                onClick={loadAnnouncements}
+                className="text-xs font-bold text-[#0A3D24] hover:underline cursor-pointer"
+              >
+                Refresh
+              </button>
+            </h3>
+
+            <Card className="border-slate-200/80 shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                {anncListLoading ? (
+                  <div className="p-6 text-center text-xs text-slate-400">Loading broadcasts...</div>
+                ) : announcements.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-400">
+                    No active broadcasts currently posted.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 max-h-[360px] overflow-y-auto">
+                    {announcements.map((annc) => (
+                      <div key={annc.announcement_id} className="p-4 flex items-start justify-between gap-3 hover:bg-slate-50 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider">
+                              {annc.target_department === 'All' ? 'Campus-Wide' : `${annc.target_department} Dept`}
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-medium">
+                              {new Date(annc.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+                          <h4 className="text-xs font-bold text-slate-900 leading-snug">{annc.title}</h4>
+                          <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">{annc.content}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAnnouncementClick(annc)}
+                          title="Permanently delete announcement"
+                          className="text-xs font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
@@ -816,6 +910,55 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
           </div>
         </form>
       </Modal>
+      {/* Permanent Delete Announcement Confirmation Modal */}
+      {deleteAnncModalOpen && anncToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 page-fade-in">
+            <div className="flex items-center gap-3 text-rose-600 mb-4">
+              <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Delete Broadcast Notice?</h3>
+                <p className="text-xs text-slate-500">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-xs space-y-1">
+              <p className="font-bold text-slate-800">{anncToDelete.title}</p>
+              <p className="text-slate-600 line-clamp-2">{anncToDelete.content}</p>
+              <p className="text-[10px] text-slate-400 pt-1">
+                Target: {anncToDelete.target_department === 'All' ? 'Campus-Wide' : anncToDelete.target_department} • {new Date(anncToDelete.created_at).toLocaleDateString()}
+              </p>
+            </div>
+
+            <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+              Permanently deleting this announcement will remove it from all student, coordinator, and faculty dashboards across the system immediately.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setDeleteAnncModalOpen(false); setAnncToDelete(null); }}
+                disabled={deleteAnncLoading}
+                className="cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={confirmDeleteAnnouncement}
+                loading={deleteAnncLoading}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                Delete Announcement
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import CampusBulletin from '@/src/components/dashboard/CampusBulletin';
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
 import { createClient } from '@/src/lib/supabase/server';
@@ -793,50 +794,9 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Right / Secondary Column: Institutional Campus Bulletin Board Widget */}
+        {/* Right / Secondary Column: Interactive Campus Bulletin Board Widget */}
         <div className="lg:col-span-1">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
-                  <Megaphone className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900">Campus Bulletin</h3>
-                  <p className="text-[10px] text-slate-400">Institutional Announcements</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#FFCC00]/15 text-[#0A3D24] border border-[#FFCC00]/40 uppercase">
-                Notice Board
-              </span>
-            </div>
-
-            {latestAnnouncements && latestAnnouncements.length > 0 ? (
-              <div className="space-y-3">
-                {latestAnnouncements.map((annc) => (
-                  <div
-                    key={annc.announcement_id}
-                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-amber-500/40 transition-all flex flex-col gap-1.5"
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider truncate max-w-[120px]">
-                        {annc.target_department === 'All' ? 'Campus-Wide' : `${annc.target_department} Dept`}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        {new Date(annc.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug">{annc.title}</h4>
-                    <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-3">{annc.content}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-slate-400 text-xs">
-                No active announcements posted.
-              </div>
-            )}
-          </div>
+          <CampusBulletin announcements={latestAnnouncements || []} />
         </div>
       </div>
     </div>
