@@ -1,15 +1,70 @@
 const { app, BrowserWindow, ipcMain, Notification, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const { spawn } = require('child_process');
 const { createTray } = require('./tray');
 
 let mainWindow = null;
 let tray = null;
+let webServerProcess = null;
 app.isQuitting = false;
 
 const isSingleInstance = app.requestSingleInstanceLock();
 if (!isSingleInstance) {
   app.quit();
+}
+
+function checkServerReady(url) {
+  return new Promise((resolve) => {
+    try {
+      const parsed = new URL(url);
+      const req = http.request(
+        {
+          hostname: parsed.hostname,
+          port: parsed.port || 80,
+          path: '/',
+          method: 'HEAD',
+          timeout: 1000,
+        },
+        (res) => {
+          resolve(true);
+        }
+      );
+      req.on('error', () => resolve(false));
+      req.on('timeout', () => {
+        req.destroy();
+        resolve(false);
+      });
+      req.end();
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+function autoStartWebServerIfNeeded(targetUrl) {
+  checkServerReady(targetUrl).then((isReady) => {
+    if (!isReady) {
+      console.log('Web server not detected at ' + targetUrl + '. Attempting background startup...');
+      const projectRoot = path.resolve(__dirname, '..', '..');
+      try {
+        const isWindows = process.platform === 'win32';
+        const npmCmd = isWindows ? 'npm.cmd' : 'npm';
+        webServerProcess = spawn(npmCmd, ['run', 'dev', '-w', 'apps/web'], {
+          cwd: projectRoot,
+          stdio: 'pipe',
+          shell: true,
+        });
+
+        webServerProcess.stdout.on('data', (d) => {
+          console.log('[Next.js]', d.toString());
+        });
+      } catch (err) {
+        console.error('Could not auto-spawn web server:', err);
+      }
+    }
+  });
 }
 
 function createMainWindow() {
@@ -30,9 +85,32 @@ function createMainWindow() {
   });
 
   const targetUrl = process.env.DESKTOP_TARGET_URL || 'http://localhost:3000';
-  mainWindow.loadURL(targetUrl);
 
-  // Remove default window menu for cleaner look
+  // Load loader screen first
+  const loaderPath = path.join(__dirname, 'loader.html');
+  mainWindow.loadFile(loaderPath, {
+    query: { url: targetUrl },
+  });
+
+  // Check server and navigate once ready
+  const pollInterval = setInterval(async () => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      clearInterval(pollInterval);
+      return;
+    }
+
+    const ready = await checkServerReady(targetUrl);
+    if (ready) {
+      clearInterval(pollInterval);
+      console.log('Server is ready. Loading ' + targetUrl);
+      mainWindow.loadURL(targetUrl);
+    }
+  }, 1200);
+
+  // Auto-spawn web server if needed
+  autoStartWebServerIfNeeded(targetUrl);
+
+  // Hide default menu for clean enterprise look
   mainWindow.setMenuBarVisibility(false);
 
   // Close to Tray behavior
@@ -117,6 +195,11 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   app.isQuitting = true;
+  if (webServerProcess) {
+    try {
+      webServerProcess.kill();
+    } catch {}
+  }
 });
 
 app.on('window-all-closed', () => {
