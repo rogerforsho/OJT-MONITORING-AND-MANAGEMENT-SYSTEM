@@ -8,9 +8,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFileToFolder: (folderPath, fileName, fileData) => ipcRenderer.invoke('save-file', { folderPath, fileName, fileData }),
   minimizeToTray: () => ipcRenderer.send('minimize-to-tray'),
   toggleMiniWidget: (enable) => ipcRenderer.send('toggle-mini-widget', enable),
-  // Window Controls for Frameless Titlebar
-  minimizeWindow: () => ipcRenderer.send('window-minimize'),
-  maximizeWindow: () => ipcRenderer.send('window-maximize'),
-  closeWindow: () => ipcRenderer.send('window-close'),
-  isWindowMaximized: () => ipcRenderer.invoke('is-window-maximized'),
 });

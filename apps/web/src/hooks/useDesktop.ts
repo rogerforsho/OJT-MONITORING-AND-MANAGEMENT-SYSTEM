@@ -6,7 +6,6 @@ import { getElectronAPI, type ElectronAPI } from '@/src/lib/desktop';
 export function useDesktop() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [platform, setPlatform] = useState<string>('web');
-  const [isMaximized, setIsMaximized] = useState(false);
   const [isMiniWidget, setIsMiniWidget] = useState(false);
 
   useEffect(() => {
@@ -14,7 +13,6 @@ export function useDesktop() {
     if (api?.isDesktop) {
       setIsDesktop(true);
       setPlatform(api.platform || 'desktop');
-      api.isWindowMaximized?.().then((max) => setIsMaximized(max));
     }
   }, []);
 
@@ -46,36 +44,14 @@ export function useDesktop() {
     if (api) api.toggleMiniWidget(enable);
   };
 
-  const minimizeWindow = () => {
-    const api = getElectronAPI();
-    if (api) api.minimizeWindow();
-  };
-
-  const maximizeWindow = () => {
-    const api = getElectronAPI();
-    if (api) {
-      api.maximizeWindow();
-      setIsMaximized(!isMaximized);
-    }
-  };
-
-  const closeWindow = () => {
-    const api = getElectronAPI();
-    if (api) api.closeWindow();
-  };
-
   return {
     isDesktop,
     platform,
-    isMaximized,
     isMiniWidget,
     showNotification,
     selectFolder,
     saveFileToFolder,
     minimizeToTray,
     toggleMiniWidget,
-    minimizeWindow,
-    maximizeWindow,
-    closeWindow,
   };
 }
