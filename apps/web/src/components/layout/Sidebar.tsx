@@ -164,6 +164,21 @@ export default function Sidebar({ user }: Props) {
         </div>
       )}
 
+      {/* Universal Account Settings Link */}
+      <div className="px-3 pb-2">
+        <Link
+          href="/settings"
+          className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
+            pathname === '/settings'
+              ? 'bg-[#0A3D24] text-[#FFCC00] shadow-md border border-[#FFCC00]/30'
+              : 'text-slate-300 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Settings className={`w-4 h-4 flex-shrink-0 ${pathname === '/settings' ? 'text-[#FFCC00]' : 'text-slate-400'}`} />
+          <span className="truncate">Account Settings</span>
+        </Link>
+      </div>
+
       {/* Sign Out Action */}
       <div className="p-3 border-t border-white/10 bg-black/20">
         <form action={signOut}>

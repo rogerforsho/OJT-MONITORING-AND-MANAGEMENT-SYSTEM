@@ -276,6 +276,48 @@ export async function requestPasswordReset(email: string): Promise<AppResult<nul
   return { data: null, error: null };
 }
 
+
+export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<AppResult<null>> {
+  if (!newPassword || newPassword.length < 8)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'New password must be at least 8 characters long.' } };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !user.email)
+    return { data: null, error: { code: 'UNAUTHORIZED', message: 'You must be signed in to change your password.' } };
+
+  // Verify current password if supplied
+  if (currentPassword) {
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (verifyErr) {
+      return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'The current password you entered is incorrect.' } };
+    }
+  }
+
+  // Update password in Supabase Auth
+  const { error: updateErr } = await supabase.auth.updateUser({ password: newPassword });
+  if (updateErr)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: updateErr.message || 'Failed to update password.' } };
+
+  // Log Security Audit Event
+  try {
+    const service = serviceClient();
+    await service.from('audit_logs').insert({
+      user_id: user.id,
+      action: 'PASSWORD_CHANGED',
+      table_affected: 'users',
+      record_id: user.id,
+      details: { changed_at: new Date().toISOString() },
+      timestamp: new Date().toISOString(),
+    });
+  } catch {}
+
+  return { data: null, error: null };
+}
+
 export async function updatePassword(newPassword: string): Promise<AppResult<null>> {
   if (!newPassword || newPassword.length < 8)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password must be at least 8 characters.' } };
