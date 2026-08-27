@@ -23,6 +23,11 @@ import {
   Megaphone,
   CheckCircle2,
   ArrowRight,
+  FileText,
+  Clock,
+  Award,
+  BarChart3,
+  ClipboardCheck,
 } from '@/src/components/ui/Icons';
 
 function serviceClient() {
@@ -229,7 +234,7 @@ export default async function DashboardPage() {
     .from('announcements')
     .select('announcement_id, title, content, target_department, created_at')
     .order('created_at', { ascending: false })
-    .limit(2);
+    .limit(3);
 
   return (
     <div className="p-6 sm:p-8 space-y-7 max-w-7xl page-fade-in">
@@ -301,35 +306,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Campus Announcements Banner */}
-      {latestAnnouncements && latestAnnouncements.length > 0 && (
-        <div className="space-y-3">
-          {latestAnnouncements.map((annc) => (
-            <div
-              key={annc.announcement_id}
-              className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-[#FFCC00]/30 flex items-start gap-3.5 shadow-sm"
-            >
-              <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0 mt-0.5">
-                <Megaphone className="w-4 h-4 text-[#0A3D24]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider">
-                    {annc.target_department === 'All' ? 'Campus-Wide Announcement' : `${annc.target_department} Department`}
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {new Date(annc.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <h4 className="text-sm font-bold text-slate-900 mt-1">{annc.title}</h4>
-                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{annc.content}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Role-Specific Metric Cards */}
+      {/* Hero: Role-Specific Primary Metric Cards (Placed immediately at top for quick glance) */}
       {user.role === 'Student' && stats.student && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
@@ -545,75 +522,323 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Admin Balanced Full-Width 4-Card Grid & Quick Operations Hub */}
       {user.role === 'Admin' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Accounts</p>
-                <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalUsers}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Registered system users</p>
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
             </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-emerald-700 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Users</p>
-                <h3 className="text-2xl font-bold text-emerald-700 mt-0.5">{stats.activeUsers}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Verified active accounts</p>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Approvals</p>
-                <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingUsers}</h3>
-                <Link href="/admin" className="text-xs text-amber-700 font-bold hover:underline inline-block mt-0.5">
-                  Review pending →
-                </Link>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
-                <Building2 className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
-                <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Host Training Establishments</p>
-              </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Accounts</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalUsers}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Registered system users</p>
             </div>
           </div>
 
-          {/* Full-Width Quick Management Panel for Admin */}
-          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Administrative System Console</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Access advanced user controls, staff provisioning, campus broadcasts, and immutable security audit logs.
-              </p>
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-emerald-700 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
-            <Link
-              href="/admin"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs shadow-sm transition-all duration-150 shrink-0"
-            >
-              <Settings className="w-4 h-4" />
-              Open System Administration
-            </Link>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Users</p>
+              <h3 className="text-2xl font-bold text-emerald-700 mt-0.5">{stats.activeUsers}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Verified active accounts</p>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Approvals</p>
+              <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingUsers}</h3>
+              <Link href="/admin" className="text-xs text-amber-700 font-bold hover:underline inline-block mt-0.5">
+                Review pending →
+              </Link>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Host Training Establishments</p>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Balanced 2-Column Lower Section: Quick Operations + Campus Bulletin Board */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left / Primary Operations Hub (2 Columns on Large Screens) */}
+        <div className="lg:col-span-2 space-y-5">
+          {user.role === 'Student' && (
+            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Practicum Quick Actions</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Quickly access attendance, daily logs, and required submissions</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <Link
+                  href="/student/attendance"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Log Attendance</span>
+                  <span className="text-[10px] text-slate-500">Record daily time-in & selfie</span>
+                </Link>
+
+                <Link
+                  href="/student/reports"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Submit Reports</span>
+                  <span className="text-[10px] text-slate-500">Upload weekly journals & DTR</span>
+                </Link>
+
+                <Link
+                  href="/student/progress"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                    <BarChart3 className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Track Progress</span>
+                  <span className="text-[10px] text-slate-500">View completion milestones</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {user.role === 'Coordinator' && (
+            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Coordinator Oversight Actions</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Direct shortcuts to verification queues and student rosters</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <Link
+                  href="/coordinator/approvals"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-amber-50/50 border border-slate-200/80 hover:border-amber-500/30 transition-all flex flex-col gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-amber-700 text-white flex items-center justify-center">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-amber-800">Pending Registrations</span>
+                  <span className="text-[10px] text-slate-500">{stats.pendingApprovals} trainees awaiting review</span>
+                </Link>
+
+                <Link
+                  href="/coordinator/students"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Trainee Directory</span>
+                  <span className="text-[10px] text-slate-500">View active student placements</span>
+                </Link>
+
+                <Link
+                  href="/coordinator/submissions"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                    <ClipboardCheck className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Review Submissions</span>
+                  <span className="text-[10px] text-slate-500">Grade DTRs & requirement files</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {user.role === 'Admin' && (
+            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Administrative System Console</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Manage user access, staff roles, and audit security records</p>
+                </div>
+                <Link
+                  href="/admin"
+                  className="text-xs font-bold text-[#0A3D24] hover:underline flex items-center gap-1"
+                >
+                  Open Console <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <Link
+                  href="/admin"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">User Management</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Filter, search, activate, or delete accounts</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/admin"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Security & Audit Logs</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Immutable audit trail of system events</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {user.role === 'Supervisor' && (
+            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Industry Supervisor Workspace</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Daily trainee verification and performance evaluations</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <Link
+                  href="/supervisor/attendance"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Verify Attendance Logs</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Review intern time-in and selfie captures</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/supervisor/evaluations"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                    <Star className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Performance Evaluations</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Grade trainees based on standard rubrics</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {user.role === 'ProgramHead' && (
+            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Academic Program Analytics</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Institute completion rates and departmental accreditation metrics</p>
+                </div>
+                <Link
+                  href="/program-head/reports"
+                  className="text-xs font-bold text-[#0A3D24] hover:underline flex items-center gap-1"
+                >
+                  Full Report <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <Link
+                  href="/program-head/reports"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                    <BarChart3 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Cohort Completion Rates</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Compare {stats.dept} progress statistics</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/program-head/reports"
+                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">HTE Partner Distribution</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Inspect company deployment capacity</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right / Secondary Column: Institutional Campus Bulletin Board Widget */}
+        <div className="lg:col-span-1">
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                  <Megaphone className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900">Campus Bulletin</h3>
+                  <p className="text-[10px] text-slate-400">Institutional Announcements</p>
+                </div>
+              </div>
+              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#FFCC00]/15 text-[#0A3D24] border border-[#FFCC00]/40 uppercase">
+                Notice Board
+              </span>
+            </div>
+
+            {latestAnnouncements && latestAnnouncements.length > 0 ? (
+              <div className="space-y-3">
+                {latestAnnouncements.map((annc) => (
+                  <div
+                    key={annc.announcement_id}
+                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-amber-500/40 transition-all flex flex-col gap-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider truncate max-w-[120px]">
+                        {annc.target_department === 'All' ? 'Campus-Wide' : `${annc.target_department} Dept`}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {new Date(annc.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-900 leading-snug">{annc.title}</h4>
+                    <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-3">{annc.content}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                No active announcements posted.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
