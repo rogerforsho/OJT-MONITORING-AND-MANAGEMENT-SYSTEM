@@ -89,7 +89,8 @@ export async function signOut(): Promise<void> {
 
 export async function requestInstitutionalPasswordReset(
   email: string,
-  studentNumber?: string
+  identifier?: string,
+  departmentOrRole?: string
 ): Promise<AppResult<null>> {
   if (!email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
@@ -112,7 +113,7 @@ export async function requestInstitutionalPasswordReset(
 
   // 2. If student, verify Student Number identity proofing
   if (userProfile.role === 'Student') {
-    if (!studentNumber?.trim()) {
+    if (!identifier?.trim()) {
       return {
         data: null,
         error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for student verification.' },
@@ -125,7 +126,7 @@ export async function requestInstitutionalPasswordReset(
       .eq('user_id', userProfile.user_id)
       .maybeSingle();
 
-    const cleanInputId = studentNumber.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     const cleanDbId = (studentRecord?.student_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
     if (!cleanDbId || cleanInputId !== cleanDbId) {
@@ -139,7 +140,39 @@ export async function requestInstitutionalPasswordReset(
     }
   }
 
-  // 3. Request password reset email from Supabase Auth
+  // 3. If faculty/staff (Coordinator, ProgramHead), verify Department affiliation
+  if (['Coordinator', 'ProgramHead'].includes(userProfile.role)) {
+    if (!departmentOrRole?.trim()) {
+      return {
+        data: null,
+        error: { code: 'VALIDATION_FAILURE', message: 'Assigned Department/Institute is required for faculty verification.' },
+      };
+    }
+
+    let userDept = '';
+    if (userProfile.role === 'Coordinator') {
+      const { data: coord } = await supabase.from('coordinators').select('department').eq('user_id', userProfile.user_id).maybeSingle();
+      userDept = coord?.department || '';
+    } else if (userProfile.role === 'ProgramHead') {
+      const { data: head } = await supabase.from('program_heads').select('department_or_program').eq('user_id', userProfile.user_id).maybeSingle();
+      userDept = head?.department_or_program || '';
+    }
+
+    const cleanInputDept = departmentOrRole.trim().toUpperCase();
+    const cleanDbDept = userDept.trim().toUpperCase();
+
+    if (cleanDbDept && !cleanDbDept.includes(cleanInputDept) && !cleanInputDept.includes(cleanDbDept)) {
+      return {
+        data: null,
+        error: {
+          code: 'VALIDATION_FAILURE',
+          message: 'The selected Department does not match our official institutional records for this faculty account.',
+        },
+      };
+    }
+  }
+
+  // 4. Request password reset email from Supabase Auth
   const { error: resetErr } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
   if (resetErr) {
     return {

@@ -44,6 +44,7 @@ export default function SignInPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetStudentNumber, setResetStudentNumber] = useState('');
   const [resetRole, setResetRole] = useState<'Student' | 'Staff'>('Student');
+  const [resetDept, setResetDept] = useState('ICS');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
 
@@ -145,7 +146,9 @@ export default function SignInPage() {
     setResetMessage('');
     setResetLoading(true);
     const { requestPasswordReset } = await import('@/src/services/auth');
-    const result = await requestPasswordReset(resetEmail, resetStudentNumber);
+    const identifier = resetRole === 'Student' ? resetStudentNumber : undefined;
+    const dept = resetRole === 'Staff' ? resetDept : undefined;
+    const result = await requestPasswordReset(resetEmail, identifier, dept);
     setResetLoading(false);
     if (result.error) {
       setResetMessage(result.error.message);
@@ -213,7 +216,7 @@ export default function SignInPage() {
             required
           />
 
-          {resetRole === 'Student' && (
+          {resetRole === 'Student' ? (
             <Input
               label="CdM Student ID Number"
               type="text"
@@ -222,6 +225,20 @@ export default function SignInPage() {
               placeholder="e.g. 2021-00123-CM"
               required
             />
+          ) : (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Assigned Department / Institute</label>
+              <select
+                value={resetDept}
+                onChange={(e) => setResetDept(e.target.value)}
+                className="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-[#0A3D24] focus:ring-1 focus:ring-[#0A3D24]"
+              >
+                <option value="ICS">Institute of Computing Studies (ICS)</option>
+                <option value="IBE">Institute of Business and Entrepreneurship (IBE)</option>
+                <option value="HTE">Host Training Establishment (HTE Supervisor)</option>
+                <option value="ADMIN">Institutional Administration</option>
+              </select>
+            </div>
           )}
 
           {resetMessage && (

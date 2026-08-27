@@ -262,7 +262,8 @@ export async function signOut(): Promise<void> {
 
 export async function requestPasswordReset(
   email: string,
-  studentNumber?: string
+  identifier?: string,
+  departmentOrRole?: string
 ): Promise<AppResult<null>> {
   if (!email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
@@ -280,16 +281,16 @@ export async function requestPasswordReset(
   if (!userProfile) {
     return {
       data: null,
-      error: { code: 'NOT_FOUND', message: 'No registered account found with that email address.' },
+      error: { code: 'NOT_FOUND', message: 'No registered CdM account was found with that email address.' },
     };
   }
 
   // 2. If user is a Student, perform Two-Point Identity Proofing against their Student Number
   if (userProfile.role === 'Student') {
-    if (!studentNumber?.trim()) {
+    if (!identifier?.trim()) {
       return {
         data: null,
-        error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for institutional verification.' },
+        error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for student verification.' },
       };
     }
 
@@ -299,7 +300,7 @@ export async function requestPasswordReset(
       .eq('user_id', userProfile.user_id)
       .maybeSingle();
 
-    const cleanInputId = studentNumber.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     const cleanDbId = (studentRecord?.student_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
     if (!cleanDbId || cleanInputId !== cleanDbId) {
@@ -313,7 +314,39 @@ export async function requestPasswordReset(
     }
   }
 
-  // 3. Dispatch Supabase Auth Recovery Email
+  // 3. If user is Faculty/Staff (Coordinator, ProgramHead), verify Department affiliation
+  if (['Coordinator', 'ProgramHead'].includes(userProfile.role)) {
+    if (!departmentOrRole?.trim()) {
+      return {
+        data: null,
+        error: { code: 'VALIDATION_FAILURE', message: 'Assigned Department/Institute is required for faculty verification.' },
+      };
+    }
+
+    let userDept = '';
+    if (userProfile.role === 'Coordinator') {
+      const { data: coord } = await service.from('coordinators').select('department').eq('user_id', userProfile.user_id).maybeSingle();
+      userDept = coord?.department || '';
+    } else if (userProfile.role === 'ProgramHead') {
+      const { data: head } = await service.from('program_heads').select('department_or_program').eq('user_id', userProfile.user_id).maybeSingle();
+      userDept = head?.department_or_program || '';
+    }
+
+    const cleanInputDept = departmentOrRole.trim().toUpperCase();
+    const cleanDbDept = userDept.trim().toUpperCase();
+
+    if (cleanDbDept && !cleanDbDept.includes(cleanInputDept) && !cleanInputDept.includes(cleanDbDept)) {
+      return {
+        data: null,
+        error: {
+          code: 'VALIDATION_FAILURE',
+          message: 'The selected Department does not match our official institutional records for this faculty account.',
+        },
+      };
+    }
+  }
+
+  // 4. Dispatch Supabase Auth Recovery Email
   const supabase = await createClient();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const { error: resetErr } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
@@ -323,7 +356,7 @@ export async function requestPasswordReset(
   if (resetErr) {
     return {
       data: null,
-      error: { code: 'SERVER_FAILURE', message: resetErr.message || 'Failed to send recovery email.' },
+      error: { code: 'SERVER_FAILURE', message: resetErr.message || 'Failed to dispatch recovery link.' },
     };
   }
 
