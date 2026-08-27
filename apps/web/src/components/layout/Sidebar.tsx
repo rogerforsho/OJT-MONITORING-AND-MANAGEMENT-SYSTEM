@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { AuthUser } from '@ojt/shared';
-import { signOut } from '@/src/services/auth';
+import SignOutButton from '@/src/components/layout/SignOutButton';
 import { useDesktop } from '@/src/hooks/useDesktop';
 import {
   LayoutDashboard,
@@ -181,15 +181,7 @@ export default function Sidebar({ user }: Props) {
 
       {/* Sign Out Action */}
       <div className="p-3 border-t border-white/10 bg-black/20">
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-300 hover:text-rose-100 hover:bg-rose-950/40 border border-transparent hover:border-rose-800/40 transition-all duration-150 cursor-pointer"
-          >
-            <LogOut className="w-4 h-4 text-rose-300 shrink-0" />
-            <span>Sign Out</span>
-          </button>
-        </form>
+        <SignOutButton />
       </div>
     </aside>
   );

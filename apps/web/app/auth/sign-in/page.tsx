@@ -111,10 +111,17 @@ export default function SignInPage() {
       window.dispatchEvent(new CustomEvent('ojt-slow-connection', { detail: { slow: false } }));
     }
 
-    setLoading(false);
     if (result.error) {
+      setLoading(false);
       setError(result.error.message);
       return;
+    }
+
+    // Keep loading state active during page transition
+    setLoading(true);
+    setLoadingText('Entering portal...');
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ojt-route-start'));
     }
 
     // Save profile to remembered accounts on success
@@ -127,7 +134,6 @@ export default function SignInPage() {
       });
     }
 
-    setLoadingText('Redirecting to dashboard...');
     router.push('/dashboard');
     router.refresh();
   }
