@@ -9,7 +9,7 @@ import { registerStudent } from '../../services/auth';
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Register'> };
 
-const ICS_IBE_COURSES = ['BSIT', 'BSCS', 'BSBA-MKT', 'BSBA-HRM', 'BSBA-FM', 'BSA'];
+const ICS_IBE_COURSES = ['BSIT', 'BSCS', 'BS-CPE', 'BSBA-HRM', 'BSBA-MKT', 'BSBA-FM', 'BSENTREP', 'BSA'];
 
 export default function RegisterScreen({ navigation }: Props) {
   const [form, setForm] = useState({

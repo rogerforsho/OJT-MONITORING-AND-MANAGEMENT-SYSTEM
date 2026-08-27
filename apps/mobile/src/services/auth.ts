@@ -1,4 +1,4 @@
-﻿import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import type { AppResult, RegisterStudentInput, SignInInput, AuthUser } from '@ojt/shared';
 
 export async function registerStudent(input: RegisterStudentInput): Promise<AppResult<null>> {
@@ -87,13 +87,111 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
-export async function requestPasswordReset(email: string): Promise<AppResult<null>> {
+export async function requestInstitutionalPasswordReset(
+  email: string,
+  studentNumber?: string
+): Promise<AppResult<null>> {
   if (!email?.trim())
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
-  if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to send reset email.' } };
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // 1. Verify user profile exists
+  const { data: userProfile } = await supabase
+    .from('users')
+    .select('user_id, role, full_name')
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (!userProfile) {
+    return {
+      data: null,
+      error: { code: 'NOT_FOUND', message: 'No registered CdM account found with that email address.' },
+    };
+  }
+
+  // 2. If student, verify Student Number identity proofing
+  if (userProfile.role === 'Student') {
+    if (!studentNumber?.trim()) {
+      return {
+        data: null,
+        error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for student verification.' },
+      };
+    }
+
+    const { data: studentRecord } = await supabase
+      .from('students')
+      .select('student_number')
+      .eq('user_id', userProfile.user_id)
+      .maybeSingle();
+
+    const cleanInputId = studentNumber.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanDbId = (studentRecord?.student_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (!cleanDbId || cleanInputId !== cleanDbId) {
+      return {
+        data: null,
+        error: {
+          code: 'VALIDATION_FAILURE',
+          message: 'The provided Student ID does not match our institutional records for this account.',
+        },
+      };
+    }
+  }
+
+  // 3. Request password reset email from Supabase Auth
+  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
+  if (resetErr) {
+    return {
+      data: null,
+      error: { code: 'SERVER_FAILURE', message: resetErr.message || 'Failed to dispatch recovery link.' },
+    };
+  }
+
+  return { data: null, error: null };
+}
+
+export async function changeUserPassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<AppResult<null>> {
+  if (!newPassword || newPassword.length < 8) {
+    return {
+      data: null,
+      error: { code: 'VALIDATION_FAILURE', message: 'New password must be at least 8 characters long.' },
+    };
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !user.email) {
+    return {
+      data: null,
+      error: { code: 'UNAUTHORIZED', message: 'You must be signed in to update your password.' },
+    };
+  }
+
+  // Verify current password first
+  if (currentPassword) {
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (verifyErr) {
+      return {
+        data: null,
+        error: { code: 'UNAUTHORIZED', message: 'Current password verification failed. Please enter your correct current password.' },
+      };
+    }
+  }
+
+  // Update password in Supabase Auth
+  const { error: updateErr } = await supabase.auth.updateUser({ password: newPassword });
+  if (updateErr) {
+    return {
+      data: null,
+      error: { code: 'SERVER_FAILURE', message: updateErr.message || 'Failed to update password.' },
+    };
+  }
 
   return { data: null, error: null };
 }

@@ -1,9 +1,20 @@
-﻿import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
+  Alert,
+  Platform,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
-import { signOut } from '../../services/auth';
+import { signOut, changeUserPassword } from '../../services/auth';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -11,11 +22,22 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
 
+  // In-App Password Change State
+  const [showSecurity, setShowSecurity] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdMsg, setPwdMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   useEffect(() => {
-    loadProfile();
+    fetchProfile();
   }, []);
 
-  async function loadProfile() {
+  async function fetchProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -49,6 +71,44 @@ export default function ProfileScreen() {
     }
   }
 
+  const getStrength = (pwd: string) => {
+    if (!pwd) return 0;
+    let score = 0;
+    if (pwd.length >= 8) score += 25;
+    if (pwd.length >= 12) score += 25;
+    if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score += 25;
+    if (/[0-9]/.test(pwd) || /[^A-Za-z0-9]/.test(pwd)) score += 25;
+    return score;
+  };
+
+  const strength = getStrength(newPassword);
+
+  async function handlePasswordChange() {
+    setPwdMsg(null);
+    if (!newPassword || newPassword.length < 8) {
+      setPwdMsg({ type: 'error', text: 'New password must be at least 8 characters long.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwdMsg({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+
+    setPwdLoading(true);
+    const result = await changeUserPassword(currentPassword, newPassword);
+    setPwdLoading(false);
+
+    if (result.error) {
+      setPwdMsg({ type: 'error', text: result.error.message });
+    } else {
+      setPwdMsg({ type: 'success', text: 'Password successfully updated!' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setShowSecurity(false), 2000);
+    }
+  }
+
   function handleSignOut() {
     Alert.alert(
       'Sign Out',
@@ -76,7 +136,7 @@ export default function ProfileScreen() {
   }
 
   const course = (profile?.student?.course || '').toUpperCase();
-  const isICS = course.includes('BSIT') || course.includes('BS-CPE') || course.includes('BSCPE') || course.includes('INFORMATION TECHNOLOGY') || course.includes('COMPUTER ENGINEERING');
+  const isICS = course.includes('BSIT') || course.includes('BSCS') || course.includes('BS-CPE') || course.includes('BSCPE') || course.includes('INFORMATION TECHNOLOGY') || course.includes('COMPUTER SCIENCE') || course.includes('COMPUTER ENGINEERING');
   const departmentName = isICS ? 'Institute of Computing Studies (ICS)' : 'Institute of Business and Entrepreneurship (IBE)';
 
   const supervisorUser = (profile?.assignment?.supervisors as any)?.users;
@@ -99,7 +159,7 @@ export default function ProfileScreen() {
           <Text style={s.name}>{profile?.student?.users?.full_name || profile?.user?.email || 'Student Trainee'}</Text>
           <Text style={s.email}>{profile?.user?.email}</Text>
           <View style={s.badge}>
-            <Text style={s.badgeText}>{profile?.student?.course || 'BSIT'} &bull; 4th Year Intern</Text>
+            <Text style={s.badgeText}>{profile?.student?.course || 'BSIT'} • 4th Year Intern</Text>
           </View>
         </View>
 
@@ -139,6 +199,111 @@ export default function ProfileScreen() {
             <Text style={s.label}>Supervisor</Text>
             <Text style={s.value}>{supervisorName}</Text>
           </View>
+        </View>
+
+        {/* Account Security & Password Card */}
+        <View style={s.card}>
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            onPress={() => setShowSecurity(!showSecurity)}
+            activeOpacity={0.7}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="key-outline" size={16} color="#0A3D24" />
+              <Text style={s.cardTitleNoMargin}>Account Security & Password</Text>
+            </View>
+            <Ionicons name={showSecurity ? 'chevron-up' : 'chevron-down'} size={18} color="#64748b" />
+          </TouchableOpacity>
+
+          {showSecurity && (
+            <View style={{ marginTop: 14 }}>
+              <Text style={s.label}>Current Password</Text>
+              <View style={s.passwordContainer}>
+                <TextInput
+                  style={s.passwordInput}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  placeholder="Enter current password..."
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showCurrent}
+                />
+                <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)} style={s.eyeButton}>
+                  <Ionicons name={showCurrent ? 'eye-off-outline' : 'eye-outline'} size={16} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={s.label}>New Password</Text>
+              <View style={s.passwordContainer}>
+                <TextInput
+                  style={s.passwordInput}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Min. 8 characters..."
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showNew}
+                />
+                <TouchableOpacity onPress={() => setShowNew(!showNew)} style={s.eyeButton}>
+                  <Ionicons name={showNew ? 'eye-off-outline' : 'eye-outline'} size={16} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              {newPassword.length > 0 && (
+                <View style={{ marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 10, color: '#64748b' }}>Strength:</Text>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: strength <= 25 ? '#e11d48' : strength <= 50 ? '#d97706' : strength <= 75 ? '#2563eb' : '#059669' }}>
+                      {strength <= 25 ? 'Weak' : strength <= 50 ? 'Fair' : strength <= 75 ? 'Good' : 'Strong'}
+                    </Text>
+                  </View>
+                  <View style={{ height: 4, backgroundColor: '#f1f5f9', borderRadius: 2, overflow: 'hidden' }}>
+                    <View
+                      style={{
+                        height: '100%',
+                        width: `${strength}%`,
+                        backgroundColor: strength <= 25 ? '#e11d48' : strength <= 50 ? '#d97706' : strength <= 75 ? '#2563eb' : '#059669',
+                      }}
+                    />
+                  </View>
+                </View>
+              )}
+
+              <Text style={s.label}>Confirm New Password</Text>
+              <View style={s.passwordContainer}>
+                <TextInput
+                  style={s.passwordInput}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm new password..."
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showConfirm}
+                />
+                <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={s.eyeButton}>
+                  <Ionicons name={showConfirm ? 'eye-off-outline' : 'eye-outline'} size={16} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              {!!pwdMsg && (
+                <View style={pwdMsg.type === 'success' ? s.alertSuccess : s.alertError}>
+                  <Text style={pwdMsg.type === 'success' ? s.alertSuccessText : s.alertErrorText}>
+                    {pwdMsg.text}
+                  </Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={s.savePwdBtn}
+                onPress={handlePasswordChange}
+                disabled={pwdLoading}
+                activeOpacity={0.85}
+              >
+                {pwdLoading ? (
+                  <ActivityIndicator color="#FFCC00" size="small" />
+                ) : (
+                  <Text style={s.savePwdBtnText}>Update Password</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* System Status Notice */}
@@ -219,11 +384,56 @@ const s = StyleSheet.create({
     elevation: 1,
   },
   cardTitle: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 },
+  cardTitleNoMargin: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  label: { fontSize: 13, color: '#64748b', fontWeight: '500' },
+  label: { fontSize: 12, color: '#64748b', fontWeight: '600', marginBottom: 4 },
   value: { fontSize: 13, fontWeight: '700', color: '#1e293b', flex: 1, textAlign: 'right' },
   valueBold: { fontSize: 14, fontWeight: '900', color: '#0A3D24' },
   divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 10 },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    marginBottom: 12,
+    paddingRight: 8,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 13,
+    color: '#0f172a',
+  },
+  eyeButton: { padding: 4 },
+  savePwdBtn: {
+    backgroundColor: '#0A3D24',
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  savePwdBtnText: { color: '#FFCC00', fontWeight: '800', fontSize: 13 },
+  alertError: {
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  alertErrorText: { fontSize: 11, color: '#dc2626', fontWeight: '600' },
+  alertSuccess: {
+    backgroundColor: '#ecfdf5',
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  alertSuccessText: { fontSize: 11, color: '#047857', fontWeight: '700' },
   infoCard: {
     backgroundColor: 'rgba(10,61,36,0.05)',
     borderWidth: 1,
