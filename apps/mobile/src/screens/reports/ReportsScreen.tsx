@@ -1,57 +1,48 @@
-﻿import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, TextInput,
-  Modal, ActivityIndicator, RefreshControl, StyleSheet,
+  View, Text, TouchableOpacity, FlatList, RefreshControl,
+  Modal, TextInput, ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
+import { Ionicons } from '@expo/vector-icons';
 import { listStudentReports, submitStudentReport } from '../../services/reports';
 import { isNetworkAvailable } from '../../lib/syncEngine';
 import NetworkToast from '../../components/NetworkToast';
 import type { DbReport } from '@ojt/shared';
 
-const DRAFT_STORAGE_KEY = 'cdm_ojt_report_draft_key';
-
 const REPORT_TYPES = [
-  'Weekly Progress Report',
-  'Monthly Narrative Report',
-  'Daily Time Record (DTR)',
-  'Final OJT Portfolio',
-  'Certificate of Completion',
+  'Daily Journal',
+  'Weekly Progress',
+  'Accomplishment Report',
   'Incident Report',
+  'MOA Endorsement',
+  'Final Evaluation',
 ];
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const [reports, setReports] = useState<DbReport[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  // Modal State
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedType, setSelectedType] = useState(REPORT_TYPES[0]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState('Daily Journal');
   const [filePath, setFilePath] = useState('');
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [modalError, setModalError] = useState('');
-  const [draftInfo, setDraftInfo] = useState('');
+  const [isOffline, setIsOffline] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
     const online = await isNetworkAvailable();
     setIsOffline(!online);
-
-    const res = await listStudentReports(1, 50);
-    if (res.error) {
-      setError(res.error.message);
+    const result = await listStudentReports(1, 50);
+    if (result.error) {
+      setError(result.error.message);
     } else {
-      setReports(res.data?.reports || []);
-      setTotal(res.data?.total || 0);
+      setReports(result.data?.reports || []);
     }
     setLoading(false);
     setRefreshing(false);
@@ -66,85 +57,38 @@ export default function ReportsScreen() {
     load();
   };
 
-  async function handleOpenSubmit() {
+  const handleOpenModal = () => {
     setModalError('');
-    setDraftInfo('');
+    setSelectedType('Daily Journal');
+    setFilePath('');
+    setRemarks('');
+    setModalOpen(true);
+  };
 
-    // Check for existing saved draft
-    try {
-      const rawDraft = await SecureStore.getItemAsync(DRAFT_STORAGE_KEY);
-      if (rawDraft) {
-        const draft = JSON.parse(rawDraft);
-        setSelectedType(draft.type || REPORT_TYPES[0]);
-        setFilePath(draft.filePath || '');
-        setRemarks(draft.remarks || '');
-        setDraftInfo('Restored your previously saved local draft.');
-      } else {
-        setFilePath('');
-        setRemarks('');
-        setSelectedType(REPORT_TYPES[0]);
-      }
-    } catch {
-      setFilePath('');
-      setRemarks('');
-      setSelectedType(REPORT_TYPES[0]);
-    }
-
-    setModalVisible(true);
-  }
-
-  async function handleSaveDraft() {
-    try {
-      await SecureStore.setItemAsync(
-        DRAFT_STORAGE_KEY,
-        JSON.stringify({ type: selectedType, filePath, remarks, savedAt: new Date().toISOString() })
-      );
-      setDraftInfo('Draft saved locally on your device.');
-    } catch {
-      setModalError('Failed to save local draft.');
-    }
-  }
-
-  async function handleSubmit() {
+  const handleSubmit = async () => {
+    setModalError('');
     if (!filePath.trim()) {
-      setModalError('Please provide a document link or cloud file path.');
-      return;
-    }
-
-    const online = await isNetworkAvailable();
-    if (!online) {
-      await handleSaveDraft();
-      setModalError('No internet connection. Saved as local draft. Please submit when connected.');
+      setModalError('Please enter a valid file link, Google Drive URL, or document reference.');
       return;
     }
 
     setSubmitting(true);
-    setModalError('');
-
-    const res = await submitStudentReport({
+    const result = await submitStudentReport({
       report_type: selectedType,
       file_path: filePath.trim(),
-      remarks: remarks.trim(),
+      remarks: remarks.trim() || undefined,
     });
-
     setSubmitting(false);
 
-    if (res.error) {
-      setModalError(res.error.message);
+    if (result.error) {
+      setModalError(result.error.message);
       return;
     }
 
-    // Clear saved draft upon successful submission
-    try {
-      await SecureStore.deleteItemAsync(DRAFT_STORAGE_KEY);
-    } catch {
-      // Ignore cleanup error
-    }
-
-    setModalVisible(false);
-    setSuccess('✅ Document submitted successfully to your OJT Coordinator.');
+    setModalOpen(false);
+    setSuccess('Report submitted successfully for coordinator review.');
     load();
-  }
+  };
 
   if (loading) {
     return (
@@ -156,31 +100,36 @@ export default function ReportsScreen() {
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
-      {/* Header */}
+      {/* Top Header */}
       <View style={s.header}>
         <View>
           <Text style={s.headerKicker}>Colegio de Montalban OJT</Text>
-          <Text style={s.title}>Digital Reports</Text>
-          <Text style={s.subtitle}>{total} document{total !== 1 ? 's' : ''} submitted</Text>
+          <Text style={s.title}>Practicum Reports</Text>
+          <Text style={s.subtitle}>Journals, MOAs & Weekly Submissions</Text>
         </View>
         <TouchableOpacity
-          onPress={handleOpenSubmit}
+          onPress={handleOpenModal}
           style={s.btnSubmitHeader}
           activeOpacity={0.85}
         >
-          <Text style={s.btnSubmitHeaderText}>+ SUBMIT</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Ionicons name="add-circle" size={16} color="#FFCC00" />
+            <Text style={s.btnSubmitHeaderText}>Submit</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
+      {/* Alerts */}
       {!!success && (
         <View style={s.alertSuccess}>
+          <Ionicons name="checkmark-circle" size={18} color="#0A3D24" />
           <Text style={s.alertSuccessText}>{success}</Text>
         </View>
       )}
-
       {!!error && (
         <View style={s.alertError}>
-          <Text style={s.alertErrorText}>⚠️ {error}</Text>
+          <Ionicons name="alert-circle" size={18} color="#dc2626" />
+          <Text style={s.alertErrorText}>{error}</Text>
         </View>
       )}
 
@@ -192,47 +141,49 @@ export default function ReportsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
         ListEmptyComponent={
           <View style={s.emptyBox}>
-            <Text style={{ fontSize: 36, marginBottom: 8 }}>📄</Text>
+            <Ionicons name="document-text-outline" size={44} color="#94a3b8" style={{ marginBottom: 8 }} />
             <Text style={s.emptyTitle}>No reports submitted yet</Text>
             <Text style={s.emptySub}>
-              Submit your weekly logs, DTR copies, or required documentation here.
+              Tap the Submit button at the top to upload your daily or weekly practicum journal.
             </Text>
           </View>
         }
         renderItem={({ item }) => (
           <View style={s.reportCard}>
             <View style={s.cardTopRow}>
-              <Text style={s.reportType}>{item.report_type}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                <Ionicons name="document-attach-outline" size={18} color="#0A3D24" />
+                <Text style={s.reportType}>
+                  {item.report_type}
+                </Text>
+              </View>
+
               <View style={[
                 s.statusBadge,
-                item.status === 'approved' ? s.badgeGreen :
-                item.status === 'reviewed' ? s.badgeBlue :
-                item.status === 'rejected' ? s.badgeRed : s.badgeAmber
+                item.status === 'reviewed' ? s.badgeGreen : s.badgeAmber
               ]}>
                 <Text style={[
                   s.statusBadgeText,
-                  item.status === 'approved' ? s.textGreen :
-                  item.status === 'reviewed' ? s.textBlue :
-                  item.status === 'rejected' ? s.textRed : s.textAmber
+                  item.status === 'reviewed' ? s.textGreen : s.textAmber
                 ]}>
-                  {item.status}
+                  {item.status === 'reviewed' ? 'Reviewed' : 'Pending Review'}
                 </Text>
               </View>
             </View>
 
             <Text style={s.dateText}>
-              Submitted: {new Date(item.submission_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+              Submitted on {new Date(item.submission_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
             </Text>
 
             <View style={s.fileBox}>
               <Text style={s.fileText} numberOfLines={1}>
-                📁 {item.file_path}
+                {item.file_path}
               </Text>
             </View>
 
             {!!item.remarks && (
               <View style={s.remarksBox}>
-                <Text style={s.remarksLabel}>Coordinator Remarks:</Text>
+                <Text style={s.remarksLabel}>Student Remarks:</Text>
                 <Text style={s.remarksText}>{item.remarks}</Text>
               </View>
             )}
@@ -240,25 +191,25 @@ export default function ReportsScreen() {
         )}
       />
 
-      {/* Submit Report Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
+      {/* Submission Modal */}
+      <Modal
+        visible={modalOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalOpen(false)}
+      >
         <View style={s.modalBackdrop}>
           <View style={s.modalContent}>
             <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>Submit OJT Document</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={s.modalClose}>✕</Text>
+              <Text style={s.modalTitle}>Submit Practicum Report</Text>
+              <TouchableOpacity onPress={() => setModalOpen(false)} style={{ padding: 4 }}>
+                <Ionicons name="close-circle" size={24} color="#94a3b8" />
               </TouchableOpacity>
             </View>
 
-            {!!draftInfo && (
-              <View style={s.alertDraft}>
-                <Text style={s.alertDraftText}>💾 {draftInfo}</Text>
-              </View>
-            )}
-
             {!!modalError && (
               <View style={s.alertError}>
+                <Ionicons name="alert-circle" size={16} color="#dc2626" />
                 <Text style={s.alertErrorText}>{modalError}</Text>
               </View>
             )}
@@ -270,6 +221,7 @@ export default function ReportsScreen() {
                   key={type}
                   onPress={() => setSelectedType(type)}
                   style={[s.typePill, selectedType === type && s.typePillActive]}
+                  activeOpacity={0.8}
                 >
                   <Text style={[s.typePillText, selectedType === type && s.typePillTextActive]}>
                     {type}
@@ -278,11 +230,12 @@ export default function ReportsScreen() {
               ))}
             </View>
 
-            <Text style={s.fieldLabel}>File Link / Document URL / Reference</Text>
+            <Text style={s.fieldLabel}>File Link / Google Drive URL / Reference</Text>
             <TextInput
               value={filePath}
               onChangeText={setFilePath}
-              placeholder="e.g. drive.google.com/... or weekly_report_w1.pdf"
+              placeholder="drive.google.com/... or weekly_report_w1.pdf"
+              placeholderTextColor="#94a3b8"
               style={s.input}
               autoCapitalize="none"
             />
@@ -292,17 +245,18 @@ export default function ReportsScreen() {
               value={remarks}
               onChangeText={setRemarks}
               placeholder="Add any notes for your coordinator..."
-              style={[s.input, { height: 72, textAlignVertical: 'top' }]}
+              placeholderTextColor="#94a3b8"
+              style={[s.input, { height: 68, textAlignVertical: 'top' }]}
               multiline
             />
 
             <View style={s.modalBtnRow}>
               <TouchableOpacity
-                onPress={handleSaveDraft}
-                style={s.btnSaveDraft}
+                onPress={() => setModalOpen(false)}
+                style={s.btnCancelModal}
                 activeOpacity={0.85}
               >
-                <Text style={s.btnSaveDraftText}>Save Draft</Text>
+                <Text style={s.btnCancelModalText}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -321,6 +275,7 @@ export default function ReportsScreen() {
           </View>
         </View>
       </Modal>
+
       <NetworkToast isOffline={isOffline} />
     </View>
   );
@@ -335,8 +290,8 @@ const s = StyleSheet.create({
   subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
   btnSubmitHeader: {
     backgroundColor: '#0A3D24',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 12,
     shadowColor: '#0A3D24',
     shadowOffset: { width: 0, height: 2 },
@@ -346,12 +301,32 @@ const s = StyleSheet.create({
   },
   btnSubmitHeaderText: { color: '#FFCC00', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
   listContent: { padding: 20, gap: 14 },
-  alertSuccess: { backgroundColor: 'rgba(10,61,36,0.08)', borderWidth: 1, borderColor: '#0A3D24', borderRadius: 14, padding: 14, marginHorizontal: 20, marginBottom: 12 },
-  alertSuccessText: { color: '#0A3D24', fontSize: 13, fontWeight: '700' },
-  alertError: { backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 14, padding: 14, marginHorizontal: 20, marginBottom: 12 },
-  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
-  alertDraft: { backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 10, padding: 10, marginBottom: 12 },
-  alertDraftText: { color: '#15803d', fontSize: 12, fontWeight: '700' },
+  alertSuccess: {
+    backgroundColor: 'rgba(10,61,36,0.08)',
+    borderWidth: 1,
+    borderColor: '#0A3D24',
+    borderRadius: 14,
+    padding: 14,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  alertSuccessText: { color: '#0A3D24', fontSize: 13, fontWeight: '700', flex: 1 },
+  alertError: {
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: 14,
+    padding: 14,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600', flex: 1 },
   reportCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -365,16 +340,12 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  reportType: { fontSize: 14, fontWeight: '800', color: '#0f172a', flex: 1, marginRight: 8 },
+  reportType: { fontSize: 14, fontWeight: '800', color: '#0f172a' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   badgeGreen: { backgroundColor: 'rgba(10,61,36,0.1)' },
   textGreen: { color: '#0A3D24', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
-  badgeBlue: { backgroundColor: '#eff6ff' },
-  textBlue: { color: '#2563eb', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
-  badgeRed: { backgroundColor: '#fee2e2' },
-  textRed: { color: '#dc2626', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
   badgeAmber: { backgroundColor: '#fef3c7' },
-  textAmber: { color: '#d97706', fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  textAmber: { color: '#d97706', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
   dateText: { fontSize: 11, color: '#94a3b8', marginBottom: 10 },
   fileBox: { backgroundColor: '#f8fafc', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9' },
@@ -389,7 +360,6 @@ const s = StyleSheet.create({
   modalContent: { backgroundColor: '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '85%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   modalTitle: { fontSize: 18, fontWeight: '900', color: '#0A3D24' },
-  modalClose: { fontSize: 18, color: '#94a3b8', fontWeight: '700', padding: 4 },
   fieldLabel: { fontSize: 12, fontWeight: '700', color: '#334155', marginBottom: 6, marginTop: 10 },
   typeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
   typePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },
@@ -398,8 +368,8 @@ const s = StyleSheet.create({
   typePillTextActive: { color: '#FFCC00', fontWeight: '800' },
   input: { borderWidth: 1.5, borderColor: '#e2e8f0', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#0f172a', backgroundColor: '#f8fafc' },
   modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
-  btnSaveDraft: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: '#cbd5e1' },
-  btnSaveDraftText: { color: '#475569', fontSize: 13, fontWeight: '800' },
+  btnCancelModal: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: '#cbd5e1' },
+  btnCancelModalText: { color: '#475569', fontSize: 13, fontWeight: '800' },
   btnSubmitModal: { flex: 2, backgroundColor: '#0A3D24', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)' },
   btnSubmitModalText: { color: '#FFCC00', fontSize: 13, fontWeight: '800' },
 });
