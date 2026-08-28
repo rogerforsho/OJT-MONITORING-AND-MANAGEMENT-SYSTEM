@@ -3,7 +3,7 @@ import Image from 'next/image';
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row w-full bg-slate-900 overflow-hidden">
-      {/* ─── LEFT SIDE (60% Width): The Identity & Culture Zone ─── */}
+      {/* 🟢 LEFT SIDE (60% Width): The Identity & Culture Zone */}
       <div className="lg:w-[58%] xl:w-[60%] relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-gradient-to-br from-[#062415] via-[#0A3D24] to-[#041a0f] text-white min-h-[360px] lg:min-h-screen overflow-hidden select-none">
         {/* Ambient Glows */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none" />
@@ -29,7 +29,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               Colegio de Montalban
             </h1>
             <p className="text-xs sm:text-sm font-medium text-slate-200 tracking-wide mt-0.5">
-              Institute of Computing Studies &bull; IBE
+              Institute of Computer Studies &bull; Institute of Business and Education
             </p>
           </div>
         </div>
@@ -41,23 +41,32 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             Empowering the Next Generation of Industry Leaders
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-            A unified management platform designed to monitor, verify, and evaluate student internship milestones.
+            A unified OJT management platform designed to monitor, verify, and evaluate student internship milestones with institutional integrity.
           </p>
         </div>
 
-        {/* Bottom Left: Academic Period */}
-        <div className="relative z-10 pt-4 border-t border-[#0A3D24]/80 text-xs text-slate-400 font-medium flex items-center justify-between">
-          <span>Rodriguez, Rizal</span>
-          <span className="text-[#FFCC00] font-bold">Academic Year 2024–2025</span>
+        {/* Bottom Left: Legal & Campus Compliance Footer */}
+        <div className="relative z-10 pt-4 border-t border-white/10 text-[11px] text-slate-300 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span>Rodriguez, Rizal</span>
+            <span className="mx-2 text-slate-500">&bull;</span>
+            <span className="text-slate-300">Kasiglahan Village</span>
+          </div>
+          <div className="text-[#FFCC00] font-bold">
+            Republic Act 10173 (Data Privacy Act) Compliant
+          </div>
         </div>
       </div>
 
-      {/* ─── RIGHT SIDE (40% Width): The Action Zone ─── */}
+      {/* ⚪ RIGHT SIDE (40% Width): The Action Zone */}
       <div className="lg:w-[42%] xl:w-[40%] bg-white flex flex-col justify-between p-6 sm:p-10 lg:p-12 min-h-[500px] lg:min-h-screen relative z-10 shadow-2xl">
         {/* Top Right Access Badge */}
-        <div className="hidden lg:flex justify-end">
+        <div className="hidden lg:flex justify-between items-center">
+          <span className="text-[10px] font-bold text-slate-400">
+            CdM OJT System v1.2.0
+          </span>
           <span className="text-[10px] font-bold text-[#0A3D24] uppercase tracking-wider bg-[#0A3D24]/10 px-3 py-1 rounded-full border border-[#0A3D24]/20">
-            Secure Portal Access
+            Secure Institutional Access
           </span>
         </div>
 
@@ -67,8 +76,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* System Footnote at Bottom Right */}
-        <div className="pt-4 border-t border-slate-100 text-right text-[11px] text-slate-400 font-medium">
-          ISO/IEC 25010:2023 Evaluated &bull; Version 1.0
+        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 font-medium">
+          <span>&copy; {new Date().getFullYear()} Colegio de Montalban</span>
+          <span>ISO/IEC 25010:2023 &bull; MIS: mis@cdm.edu.ph</span>
         </div>
       </div>
     </div>

@@ -179,9 +179,18 @@ export default function Sidebar({ user }: Props) {
         </Link>
       </div>
 
-      {/* Sign Out Action */}
-      <div className="p-3 border-t border-white/10 bg-black/20">
+      {/* Sign Out Action & Micro-Status Badge */}
+      <div className="p-3 border-t border-white/10 bg-black/20 space-y-2.5">
         <SignOutButton />
+
+        {/* System Version & Legal Compliance Footnote */}
+        <div className="pt-1.5 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-semibold text-slate-300">v1.2.0 &bull; Online</span>
+          </div>
+          <span className="text-[9px] text-slate-400 font-medium">RA 10173 &bull; ISO/IEC</span>
+        </div>
       </div>
     </aside>
   );
