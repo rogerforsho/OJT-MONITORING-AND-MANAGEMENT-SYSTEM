@@ -262,7 +262,8 @@ export async function signOut(): Promise<void> {
 
 export async function requestPasswordReset(
   email: string,
-  identifier?: string
+  identifier?: string,
+  expectedRole?: 'Student' | 'Staff'
 ): Promise<AppResult<null>> {
   if (!email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
@@ -284,7 +285,28 @@ export async function requestPasswordReset(
     };
   }
 
-  // 2. If user is a Student, perform Two-Point Identity Proofing against their Student Number
+  // 2. Strict Role Tab Enforcement: Block cross-role recovery in the wrong tab
+  if (expectedRole === 'Student' && userProfile.role !== 'Student') {
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: `This account is registered as a ${userProfile.role} (Faculty/Staff). Please switch to the "Coordinator / Faculty" tab to reset your password.`,
+      },
+    };
+  }
+
+  if (expectedRole === 'Staff' && userProfile.role === 'Student') {
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: 'This account is registered as a Student. Please switch to the "Student" tab to reset your password.',
+      },
+    };
+  }
+
+  // 3. If user is a Student, perform Two-Point Identity Proofing against their Student Number
   if (userProfile.role === 'Student') {
     if (!identifier?.trim()) {
       return {

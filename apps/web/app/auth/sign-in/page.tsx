@@ -147,7 +147,7 @@ export default function SignInPage() {
     setResetLoading(true);
     const { requestPasswordReset } = await import('@/src/services/auth');
     const identifier = resetRole === 'Student' ? resetStudentNumber : resetEmployeeNumber;
-    const result = await requestPasswordReset(resetEmail, identifier);
+    const result = await requestPasswordReset(resetEmail, identifier, resetRole);
     setResetLoading(false);
     if (result.error) {
       setResetMessage(result.error.message);

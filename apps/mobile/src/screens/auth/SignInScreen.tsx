@@ -129,7 +129,7 @@ export default function SignInScreen({ navigation }: Props) {
 
     setResetLoading(true);
     const idParam = resetRole === 'Student' ? resetStudentNumber : resetEmployeeNumber;
-    const result = await requestInstitutionalPasswordReset(resetEmail, idParam);
+    const result = await requestInstitutionalPasswordReset(resetEmail, idParam, resetRole);
     setResetLoading(false);
 
     if (result.error) {
