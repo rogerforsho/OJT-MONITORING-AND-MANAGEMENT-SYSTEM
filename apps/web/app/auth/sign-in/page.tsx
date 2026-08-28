@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
@@ -28,6 +28,8 @@ const ROLE_BADGES: Record<string, { bg: string; text: string; border: string }> 
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isInactiveLogout = searchParams.get('reason') === 'inactivity';
 
   // State
   const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>([]);
@@ -146,13 +148,12 @@ export default function SignInPage() {
     setResetMessage('');
     setResetLoading(true);
     const { requestPasswordReset } = await import('@/src/services/auth');
-    const identifier = resetRole === 'Student' ? resetStudentNumber : resetEmployeeNumber;
-    const result = await requestPasswordReset(resetEmail, identifier, resetRole);
+    const result = await requestPasswordReset(resetEmail, resetEmployeeNumber, 'Staff');
     setResetLoading(false);
     if (result.error) {
       setResetMessage(result.error.message);
     } else {
-      setResetMessage('Identity verified! If your credentials match our institutional records, a secure recovery link has been dispatched to your inbox.');
+      setResetMessage('Identity verified! A secure recovery link has been dispatched to your institutional inbox.');
     }
   }
 

@@ -115,27 +115,22 @@ export default function SignInScreen({ navigation }: Props) {
   async function handleReset() {
     setResetMsg('');
     if (!resetEmail.trim()) {
-      setResetMsg('Please enter your institutional email.');
+      setResetMsg('Please enter your student email.');
       return;
     }
-    if (resetRole === 'Student' && !resetStudentNumber.trim()) {
+    if (!resetStudentNumber.trim()) {
       setResetMsg('Please enter your official CdM Student Number.');
-      return;
-    }
-    if (resetRole === 'Staff' && !resetEmployeeNumber.trim()) {
-      setResetMsg('Please enter your official CdM Employee ID.');
       return;
     }
 
     setResetLoading(true);
-    const idParam = resetRole === 'Student' ? resetStudentNumber : resetEmployeeNumber;
-    const result = await requestInstitutionalPasswordReset(resetEmail, idParam, resetRole);
+    const result = await requestInstitutionalPasswordReset(resetEmail, resetStudentNumber, 'Student');
     setResetLoading(false);
 
     if (result.error) {
       setResetMsg(result.error.message);
     } else {
-      setResetMsg('Identity verified! A secure password recovery link has been dispatched to your email.');
+      setResetMsg('Identity verified! A secure password recovery link has been dispatched to your student inbox.');
     }
   }
 
@@ -150,79 +145,40 @@ export default function SignInScreen({ navigation }: Props) {
                 <Image source={require('../../../assets/logo.png')} style={s.logo} resizeMode="contain" />
               </View>
               <Text style={s.brandTitle}>Colegio de Montalban</Text>
-              <Text style={s.brandSub}>Account Recovery & Password Reset</Text>
+              <Text style={s.brandSub}>Student Trainee Account Recovery</Text>
             </View>
 
             <View style={s.card}>
               <Text style={s.title}>Reset Password</Text>
-              <Text style={s.subtitle}>Verify your institutional identity to receive a recovery link.</Text>
-
-              {/* Role Tabs */}
-              <View style={s.tabContainer}>
-                <TouchableOpacity
-                  style={[s.tabButton, resetRole === 'Student' && s.tabButtonActive]}
-                  onPress={() => { setResetRole('Student'); setResetMsg(''); }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[s.tabText, resetRole === 'Student' && s.tabTextActive]}>🎓 Student</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.tabButton, resetRole === 'Staff' && s.tabButtonActive]}
-                  onPress={() => { setResetRole('Staff'); setResetStudentNumber(''); setResetEmployeeNumber(''); setResetMsg(''); }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[s.tabText, resetRole === 'Staff' && s.tabTextActive]}>👔 Faculty / Staff</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={s.subtitle}>Verify your student identity to receive a recovery link.</Text>
 
               <View style={s.infoNotice}>
                 <Ionicons name="shield-checkmark" size={14} color="#854d0e" />
                 <Text style={s.infoNoticeText}>
-                  <Text style={{ fontWeight: '800' }}>Identity Verification:</Text>{' '}
-                  {resetRole === 'Student'
-                    ? 'Students must provide their official CdM Student Number (e.g. 2021-00123-CM) to verify account ownership.'
-                    : 'Faculty must provide their official CdM Employee ID (e.g. 2024-001) to verify account ownership.'}
+                  <Text style={{ fontWeight: '800' }}>Student Verification:</Text> Please enter your official CdM Student Number (e.g. 2021-00123-CM) to verify account ownership.
                 </Text>
               </View>
 
-              <Text style={s.label}>
-                {resetRole === 'Student' ? 'Registered Student Email' : 'Registered Faculty/Staff Email'}
-              </Text>
+              <Text style={s.label}>Registered Student Email</Text>
               <TextInput
                 style={s.input}
                 value={resetEmail}
                 onChangeText={setResetEmail}
-                placeholder={resetRole === 'Student' ? 'student@cdm.edu.ph' : 'coordinator@cdm.edu.ph'}
+                placeholder="student@cdm.edu.ph"
                 placeholderTextColor="#94a3b8"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
 
-              {resetRole === 'Student' ? (
-                <>
-                  <Text style={s.label}>CdM Student ID Number</Text>
-                  <TextInput
-                    style={s.input}
-                    value={resetStudentNumber}
-                    onChangeText={setResetStudentNumber}
-                    placeholder="e.g. 2021-00123-CM"
-                    placeholderTextColor="#94a3b8"
-                    autoCapitalize="none"
-                  />
-                </>
-              ) : (
-                <>
-                  <Text style={s.label}>CdM Employee ID Number</Text>
-                  <TextInput
-                    style={s.input}
-                    value={resetEmployeeNumber}
-                    onChangeText={setResetEmployeeNumber}
-                    placeholder="e.g. 2024-001"
-                    placeholderTextColor="#94a3b8"
-                    autoCapitalize="none"
-                  />
-                </>
-              )}
+              <Text style={s.label}>CdM Student ID Number</Text>
+              <TextInput
+                style={s.input}
+                value={resetStudentNumber}
+                onChangeText={setResetStudentNumber}
+                placeholder="e.g. 2021-00123-CM"
+                placeholderTextColor="#94a3b8"
+                autoCapitalize="none"
+              />
 
               {!!resetMsg && (
                 <View style={resetMsg.includes('dispatched') || resetMsg.includes('verified') ? s.alertSuccess : s.alertError}>
@@ -236,11 +192,15 @@ export default function SignInScreen({ navigation }: Props) {
                 {resetLoading ? (
                   <ActivityIndicator color="#FFCC00" />
                 ) : (
-                  <Text style={s.btnText}>
-                    {resetRole === 'Student' ? 'Verify Identity & Send Link' : 'Send Recovery Link'}
-                  </Text>
+                  <Text style={s.btnText}>Verify Student ID & Send Link</Text>
                 )}
               </TouchableOpacity>
+
+              <View style={{ marginTop: 10, padding: 10, backgroundColor: '#f8fafc', borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                <Text style={{ fontSize: 10, color: '#64748b', textAlign: 'center' }}>
+                  👔 <Text style={{ fontWeight: '700' }}>Faculty or Coordinator?</Text> Please access the Web Portal on your computer to recover your staff account.
+                </Text>
+              </View>
 
               <TouchableOpacity
                 onPress={() => { setShowForgot(false); setResetMsg(''); }}
