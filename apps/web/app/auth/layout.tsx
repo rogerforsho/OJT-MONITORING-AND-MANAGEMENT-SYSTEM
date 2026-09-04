@@ -78,10 +78,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
 
-          {/* System Footnote at Bottom Right */}
-          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400 font-medium">
-            <span>&copy; {new Date().getFullYear()} Colegio de Montalban</span>
-            <span>ISO/IEC 25010:2023 &bull; MIS: mis@cdm.edu.ph</span>
+          {/* Subtle Institutional MIS indicator */}
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Colegio de Montalban</span>
+            <span>MIS Helpdesk: mis@cdm.edu.ph</span>
           </div>
         </div>
       </div>
