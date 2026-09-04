@@ -1,8 +1,7 @@
-﻿import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import type { StudentTabParamList } from './types';
 import AttendanceScreen from '../screens/attendance/AttendanceScreen';
-import AttendanceHistoryScreen from '../screens/attendance/AttendanceHistoryScreen';
 import ProgressScreen from '../screens/progress/ProgressScreen';
 import ReportsScreen from '../screens/reports/ReportsScreen';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
@@ -36,16 +35,6 @@ export default function StudentNavigator() {
             <Ionicons name={focused ? 'camera' : 'camera-outline'} size={size ?? 22} color={color} />
           ),
           title: 'Attendance',
-        }}
-      />
-      <Tab.Screen
-        name="AttendanceHistory"
-        component={AttendanceHistoryScreen}
-        options={{
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'time' : 'time-outline'} size={size ?? 22} color={color} />
-          ),
-          title: 'History',
         }}
       />
       <Tab.Screen

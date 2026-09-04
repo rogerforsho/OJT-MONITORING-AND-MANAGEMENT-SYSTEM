@@ -1,6 +1,6 @@
-﻿import { redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
-import Sidebar from '@/src/components/layout/Sidebar';
+import DashboardShell from '@/src/components/layout/DashboardShell';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthUser();
@@ -10,11 +10,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (user.account_status !== 'active') redirect('/auth/sign-in');
 
   return (
-    <div className="flex h-screen bg-[#F4F6F9] overflow-hidden">
-      <Sidebar user={user} />
-      <main className="flex-1 overflow-y-auto page-fade-in">
-        {children}
-      </main>
-    </div>
+    <DashboardShell user={user}>
+      {children}
+    </DashboardShell>
   );
 }

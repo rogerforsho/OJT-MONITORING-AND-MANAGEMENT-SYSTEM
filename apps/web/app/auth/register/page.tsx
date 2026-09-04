@@ -9,11 +9,15 @@ import Alert from '@/src/components/ui/Alert';
 import { registerStudent } from '@/src/services/auth';
 
 const COURSES = [
+  // Institute of Computing Studies (ICS)
   { code: 'BSIT', name: 'BS in Information Technology (ICS)' },
   { code: 'BSCS', name: 'BS in Computer Science (ICS)' },
-  { code: 'BSBA-MKT', name: 'BSBA - Marketing Management (IBE)' },
+  { code: 'BS-CPE', name: 'BS in Computer Engineering (ICS)' },
+  // Institute of Business and Entrepreneurship (IBE)
   { code: 'BSBA-HRM', name: 'BSBA - Human Resource Mgt (IBE)' },
+  { code: 'BSBA-MKT', name: 'BSBA - Marketing Management (IBE)' },
   { code: 'BSBA-FM', name: 'BSBA - Financial Management (IBE)' },
+  { code: 'BSENTREP', name: 'BS in Entrepreneurship (IBE)' },
   { code: 'BSA', name: 'BS in Accountancy (IBE)' },
 ];
 

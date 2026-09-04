@@ -1,10 +1,10 @@
-﻿import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity,
-  ActivityIndicator, RefreshControl, StyleSheet,
+  View, Text, TouchableOpacity, FlatList, RefreshControl,
+  ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { listStudentFeed, markNotificationRead, type MobileFeedItem } from '../../services/notifications';
 
 export default function NotificationsScreen() {
@@ -77,8 +77,11 @@ export default function NotificationsScreen() {
             <Text style={s.title}>Notices & Alerts</Text>
           </View>
           {unreadCount > 0 && (
-            <TouchableOpacity onPress={handleMarkAllRead} style={s.markAllBtn}>
-              <Text style={s.markAllText}>Mark all read</Text>
+            <TouchableOpacity onPress={handleMarkAllRead} style={s.markAllBtn} activeOpacity={0.8}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="checkmark-done" size={14} color="#0A3D24" />
+                <Text style={s.markAllText}>Mark all read</Text>
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -89,6 +92,7 @@ export default function NotificationsScreen() {
           <TouchableOpacity
             onPress={() => setFilter('all')}
             style={[s.filterPill, filter === 'all' && s.filterPillActive]}
+            activeOpacity={0.8}
           >
             <Text style={[s.filterText, filter === 'all' && s.filterTextActive]}>
               All ({feed.length})
@@ -97,25 +101,42 @@ export default function NotificationsScreen() {
           <TouchableOpacity
             onPress={() => setFilter('announcements')}
             style={[s.filterPill, filter === 'announcements' && s.filterPillActive]}
+            activeOpacity={0.8}
           >
-            <Text style={[s.filterText, filter === 'announcements' && s.filterTextActive]}>
-              📢 Announcements
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons
+                name="megaphone-outline"
+                size={13}
+                color={filter === 'announcements' ? '#FFCC00' : '#475569'}
+              />
+              <Text style={[s.filterText, filter === 'announcements' && s.filterTextActive]}>
+                Announcements
+              </Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setFilter('alerts')}
             style={[s.filterPill, filter === 'alerts' && s.filterPillActive]}
+            activeOpacity={0.8}
           >
-            <Text style={[s.filterText, filter === 'alerts' && s.filterTextActive]}>
-              🔔 Direct Alerts {unreadCount > 0 ? `(${unreadCount})` : ''}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons
+                name="notifications-outline"
+                size={13}
+                color={filter === 'alerts' ? '#FFCC00' : '#475569'}
+              />
+              <Text style={[s.filterText, filter === 'alerts' && s.filterTextActive]}>
+                Alerts {unreadCount > 0 ? `(${unreadCount})` : ''}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
 
       {!!error && (
         <View style={s.alertError}>
-          <Text style={s.alertErrorText}>⚠️ {error}</Text>
+          <Ionicons name="alert-circle" size={18} color="#dc2626" />
+          <Text style={s.alertErrorText}>{error}</Text>
         </View>
       )}
 
@@ -127,7 +148,7 @@ export default function NotificationsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
         ListEmptyComponent={
           <View style={s.emptyBox}>
-            <Text style={{ fontSize: 36, marginBottom: 8 }}>🔔</Text>
+            <Ionicons name="notifications-off-outline" size={44} color="#94a3b8" style={{ marginBottom: 8 }} />
             <Text style={s.emptyTitle}>No notifications yet</Text>
             <Text style={s.emptySub}>
               You are all caught up with your OJT coordinator and supervisor updates.
@@ -146,7 +167,11 @@ export default function NotificationsScreen() {
             >
               <View style={s.cardTop}>
                 <View style={s.tagRow}>
-                  <Text style={{ fontSize: 13 }}>{isAnnouncement ? '📢' : '🔔'}</Text>
+                  <Ionicons
+                    name={isAnnouncement ? 'megaphone' : 'notifications'}
+                    size={14}
+                    color="#0A3D24"
+                  />
                   <Text style={s.tagText}>
                     {isAnnouncement ? 'ANNOUNCEMENT' : 'DIRECT NOTICE'}
                   </Text>
@@ -174,15 +199,15 @@ const s = StyleSheet.create({
   headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   title: { fontSize: 24, fontWeight: '900', color: '#062415' },
   subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  markAllBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(10,61,36,0.08)' },
+  markAllBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: 'rgba(10,61,36,0.08)' },
   markAllText: { fontSize: 11, fontWeight: '700', color: '#0A3D24' },
   filterRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
   filterPill: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ffffff', borderWidth: 1.5, borderColor: '#e2e8f0' },
   filterPillActive: { backgroundColor: '#0A3D24', borderColor: '#0A3D24' },
   filterText: { fontSize: 12, fontWeight: '700', color: '#475569' },
   filterTextActive: { color: '#FFCC00' },
-  alertError: { marginHorizontal: 20, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12 },
-  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
+  alertError: { marginHorizontal: 20, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600', flex: 1 },
   listContent: { paddingHorizontal: 20, paddingBottom: 32, gap: 12 },
   feedCard: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
   feedCardUnread: { backgroundColor: 'rgba(10,61,36,0.04)', borderColor: '#0A3D24' },

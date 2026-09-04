@@ -187,7 +187,7 @@ export async function registerStudent(
   return { data: null, error: null };
 }
 
-export async function signIn(input: SignInInput): Promise<AppResult<null>> {
+export async function signIn(input: SignInInput): Promise<AppResult<{ email: string; full_name: string; role: string }>> {
   if (!input.email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
   if (!input.password)
@@ -222,7 +222,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<null>> {
   // Check account status — backend authority
   const { data: user } = await supabase
     .from('users')
-    .select('account_status, role')
+    .select('account_status, role, full_name, email')
     .eq('user_id', data.user.id)
     .single();
 
@@ -244,7 +244,14 @@ export async function signIn(input: SignInInput): Promise<AppResult<null>> {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account has been deactivated.' } };
   }
 
-  return { data: null, error: null };
+  return {
+    data: {
+      email: user.email || input.email.trim(),
+      full_name: user.full_name || '',
+      role: user.role || 'Student',
+    },
+    error: null,
+  };
 }
 
 export async function signOut(): Promise<void> {
@@ -253,18 +260,157 @@ export async function signOut(): Promise<void> {
   redirect('/auth/sign-in');
 }
 
-export async function requestPasswordReset(email: string): Promise<AppResult<null>> {
+export async function requestPasswordReset(
+  email: string,
+  identifier?: string,
+  expectedRole?: 'Student' | 'Staff'
+): Promise<AppResult<null>> {
   if (!email?.trim())
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
 
+  const service = serviceClient();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // 1. Verify user exists in the system
+  const { data: userProfile } = await service
+    .from('users')
+    .select('user_id, role, full_name, employee_number')
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (!userProfile) {
+    return {
+      data: null,
+      error: { code: 'NOT_FOUND', message: 'No registered CdM account was found with that email address.' },
+    };
+  }
+
+  // 2. Strict Role Tab Enforcement: Block cross-role recovery in the wrong tab
+  if (expectedRole === 'Student' && userProfile.role !== 'Student') {
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: `This account is registered as a ${userProfile.role} (Faculty/Staff). Please switch to the "Coordinator / Faculty" tab to reset your password.`,
+      },
+    };
+  }
+
+  if (expectedRole === 'Staff' && userProfile.role === 'Student') {
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: 'This account is registered as a Student. Please switch to the "Student" tab to reset your password.',
+      },
+    };
+  }
+
+  // 3. If user is a Student, perform Two-Point Identity Proofing against their Student Number
+  if (userProfile.role === 'Student') {
+    if (!identifier?.trim()) {
+      return {
+        data: null,
+        error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for student verification.' },
+      };
+    }
+
+    const { data: studentRecord } = await service
+      .from('students')
+      .select('student_number')
+      .eq('user_id', userProfile.user_id)
+      .maybeSingle();
+
+    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanDbId = (studentRecord?.student_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (!cleanDbId || cleanInputId !== cleanDbId) {
+      return {
+        data: null,
+        error: {
+          code: 'VALIDATION_FAILURE',
+          message: 'The provided Student ID does not match our institutional enrollment records for this account.',
+        },
+      };
+    }
+  } else {
+    // 3. If user is Faculty / Staff / Admin, perform Two-Point Identity Proofing against their Employee ID Number
+    if (!identifier?.trim()) {
+      return {
+        data: null,
+        error: { code: 'VALIDATION_FAILURE', message: 'Employee ID Number is required for faculty verification.' },
+      };
+    }
+
+    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanDbId = (userProfile.employee_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (!cleanDbId || cleanInputId !== cleanDbId) {
+      return {
+        data: null,
+        error: {
+          code: 'VALIDATION_FAILURE',
+          message: 'The provided Employee ID does not match our institutional records for this faculty account.',
+        },
+      };
+    }
+  }
+
+  // 4. Dispatch Supabase Auth Recovery Email
   const supabase = await createClient();
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: `${appUrl}/auth/reset-password`,
   });
 
-  if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to send reset email.' } };
+  if (resetErr) {
+    return {
+      data: null,
+      error: { code: 'SERVER_FAILURE', message: resetErr.message || 'Failed to dispatch recovery link.' },
+    };
+  }
+
+  return { data: null, error: null };
+}
+
+
+export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<AppResult<null>> {
+  if (!newPassword || newPassword.length < 8)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'New password must be at least 8 characters long.' } };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !user.email)
+    return { data: null, error: { code: 'UNAUTHORIZED', message: 'You must be signed in to change your password.' } };
+
+  // Verify current password if supplied
+  if (currentPassword) {
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (verifyErr) {
+      return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'The current password you entered is incorrect.' } };
+    }
+  }
+
+  // Update password in Supabase Auth
+  const { error: updateErr } = await supabase.auth.updateUser({ password: newPassword });
+  if (updateErr)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: updateErr.message || 'Failed to update password.' } };
+
+  // Log Security Audit Event
+  try {
+    const service = serviceClient();
+    await service.from('audit_logs').insert({
+      user_id: user.id,
+      action: 'PASSWORD_CHANGED',
+      table_affected: 'users',
+      record_id: user.id,
+      details: { changed_at: new Date().toISOString() },
+      timestamp: new Date().toISOString(),
+    });
+  } catch {}
 
   return { data: null, error: null };
 }
@@ -289,7 +435,7 @@ export async function getAuthUser() {
 
   const { data } = await supabase
     .from('users')
-    .select('user_id, full_name, email, role, account_status')
+    .select('user_id, full_name, email, role, account_status, employee_number')
     .eq('user_id', user.id)
     .single();
 

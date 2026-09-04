@@ -4,6 +4,7 @@ import {
   ActivityIndicator, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchOwnAttendance } from '../../services/attendance';
 import type { DbAttendance } from '@ojt/shared';
 
@@ -53,7 +54,8 @@ export default function AttendanceHistoryScreen() {
 
       {!!error && (
         <View style={s.alertError}>
-          <Text style={s.alertErrorText}>⚠ {error}</Text>
+          <Ionicons name="alert-circle" size={16} color="#dc2626" />
+          <Text style={s.alertErrorText}>{error}</Text>
         </View>
       )}
 
@@ -64,7 +66,7 @@ export default function AttendanceHistoryScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
         ListEmptyComponent={
           <View style={s.emptyContainer}>
-            <Text style={{ fontSize: 36, marginBottom: 8 }}>📅</Text>
+            <Ionicons name="calendar-outline" size={40} color="#94a3b8" style={{ marginBottom: 8 }} />
             <Text style={s.emptyTitle}>No attendance records found</Text>
             <Text style={s.emptySub}>Your verified time in and out records will appear here.</Text>
           </View>
@@ -126,8 +128,8 @@ const s = StyleSheet.create({
   headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   title: { fontSize: 24, fontWeight: '900', color: '#062415' },
   subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  alertError: { marginHorizontal: 20, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12 },
-  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
+  alertError: { marginHorizontal: 20, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600', flex: 1 },
   listContent: { paddingHorizontal: 20, paddingBottom: 24, gap: 12 },
   card: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },

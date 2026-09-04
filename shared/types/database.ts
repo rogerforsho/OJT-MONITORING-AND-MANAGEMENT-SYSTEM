@@ -11,6 +11,7 @@ export interface DbUser {
   email: string;
   role: UserRole;
   account_status: AccountStatus;
+  employee_number?: string | null;
   created_at: string;
   updated_at: string;
 }

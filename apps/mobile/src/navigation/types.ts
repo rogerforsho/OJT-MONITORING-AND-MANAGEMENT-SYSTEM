@@ -6,7 +6,6 @@ export type AuthStackParamList = {
 
 export type StudentTabParamList = {
   Attendance: undefined;
-  AttendanceHistory: undefined;
   Progress: undefined;
   Reports: undefined;
   Notifications: undefined;

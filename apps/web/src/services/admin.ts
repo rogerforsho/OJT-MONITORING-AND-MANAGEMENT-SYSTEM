@@ -33,6 +33,7 @@ export interface UserManagementItem {
   email: string;
   role: UserRole;
   account_status: AccountStatus;
+  employee_number?: string | null;
   created_at: string;
 }
 
@@ -42,6 +43,7 @@ export interface CreateSystemUserInput {
   password: string;
   role: 'Coordinator' | 'ProgramHead' | 'Admin';
   department_or_program?: string;
+  employee_number?: string;
 }
 
 export async function listAllUsers(
@@ -121,6 +123,8 @@ export async function createSystemUser(
   const newUserId = authData.user.id;
   const dept = input.department_or_program || 'ICS';
 
+  const empNumber = input.employee_number?.trim() || `${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+
   // 2. Ensure public.users entry is active
   await service
     .from('users')
@@ -129,6 +133,7 @@ export async function createSystemUser(
       full_name: input.full_name.trim(),
       email: input.email.trim(),
       role: input.role,
+      employee_number: empNumber,
       account_status: 'active',
       updated_at: new Date().toISOString(),
     });
@@ -252,4 +257,129 @@ export async function getSystemOverview(): Promise<AppResult<{
     },
     error: null,
   };
+}
+export async function deleteSystemUser(
+  user_id: string
+): Promise<AppResult<null>> {
+  const { authorized, user: adminUser } = await assertAdmin();
+  if (!authorized || !adminUser) {
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Admin access required.' } };
+  }
+
+  if (adminUser.id === user_id) {
+    return { data: null, error: { code: 'FORBIDDEN', message: 'You cannot delete your own administrator account.' } };
+  }
+
+  const service = serviceClient();
+
+  // 1. Fetch user details for audit logging and role-specific cleanup
+  const { data: targetUser } = await service
+    .from('users')
+    .select('full_name, email, role')
+    .eq('user_id', user_id)
+    .maybeSingle();
+
+  if (!targetUser) {
+    return { data: null, error: { code: 'NOT_FOUND', message: 'User not found.' } };
+  }
+
+  // 2. If user is a supervisor, check/handle assignments to avoid foreign key restrict errors
+  if (targetUser.role === 'Supervisor') {
+    const { data: supervisor } = await service
+      .from('supervisors')
+      .select('supervisor_id')
+      .eq('user_id', user_id)
+      .maybeSingle();
+
+    if (supervisor) {
+      await service
+        .from('student_assignments')
+        .delete()
+        .eq('supervisor_id', supervisor.supervisor_id);
+    }
+  }
+
+  // 3. Delete user record in public schema (cascades to students/coordinators/etc)
+  const { error: dbError } = await service
+    .from('users')
+    .delete()
+    .eq('user_id', user_id);
+
+  if (dbError) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: `Database deletion failed: ${dbError.message}` } };
+  }
+
+  // 4. Delete Supabase Auth user identity
+  const { error: authError } = await service.auth.admin.deleteUser(user_id);
+  if (authError) {
+    console.error('Warning: Failed to delete auth user from Supabase Auth:', authError.message);
+  }
+
+  // 5. Audit Log Entry
+  await recordAuditEvent({
+    actor_user_id: adminUser.id,
+    action: 'USER_DELETED',
+    entity_type: 'user',
+    entity_id: user_id,
+    details: {
+      deleted_user_name: targetUser.full_name,
+      deleted_user_email: targetUser.email,
+      deleted_user_role: targetUser.role,
+    },
+  });
+
+  return { data: null, error: null };
+}
+
+export async function adminResetUserPassword(
+  userId: string,
+  newPassword?: string
+): Promise<AppResult<{ temporaryPassword?: string }>> {
+  const { user, authorized } = await assertAdmin();
+  if (!user || !authorized)
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Admin access required.' } };
+
+  if (!userId)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'User ID is required.' } };
+
+  const finalPassword = newPassword?.trim() || `CdM@${Math.floor(100000 + Math.random() * 900000)}!`;
+
+  if (finalPassword.length < 8)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password must be at least 8 characters long.' } };
+
+  const service = serviceClient();
+
+  // Fetch target user metadata
+  const { data: targetUser } = await service
+    .from('users')
+    .select('email, full_name, role')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  // Update password in Supabase Auth Admin API
+  const { error: authErr } = await service.auth.admin.updateUserById(userId, {
+    password: finalPassword,
+  });
+
+  if (authErr) {
+    return {
+      data: null,
+      error: { code: 'SERVER_FAILURE', message: authErr.message || 'Failed to update user password in Auth server.' },
+    };
+  }
+
+  // Record immutable security audit log
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: 'ADMIN_RESET_PASSWORD',
+    entity_type: 'user',
+    entity_id: userId,
+    details: {
+      target_email: targetUser?.email,
+      target_role: targetUser?.role,
+      reset_by_admin: user.id,
+    },
+  });
+
+  return { data: { temporaryPassword: finalPassword }, error: null };
 }
