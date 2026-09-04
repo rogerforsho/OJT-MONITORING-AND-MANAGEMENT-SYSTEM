@@ -1,8 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
-import TopProgressBar from "@/src/components/ui/TopProgressBar";
-import NetworkToast from "@/src/components/ui/NetworkToast";
+import ClientProviders from "@/src/components/providers/ClientProviders";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -37,11 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`h-full antialiased ${plusJakartaSans.variable} ${outfit.variable}`}>
       <body className="min-h-full flex flex-col bg-[#F4F6F9] text-slate-900 font-sans">
-        <Suspense fallback={null}>
-          <TopProgressBar />
-        </Suspense>
-        <NetworkToast />
-        {children}
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );

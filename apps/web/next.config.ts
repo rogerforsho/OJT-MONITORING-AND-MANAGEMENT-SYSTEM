@@ -28,6 +28,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['@ojt/shared'],
   eslint: {
     ignoreDuringBuilds: true,
   },

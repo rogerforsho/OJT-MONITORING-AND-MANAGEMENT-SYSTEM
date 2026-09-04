@@ -9,6 +9,8 @@
     "apps/desktop"
   ],
   "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "@xmldom/xmldom": "^0.8.13",
     "brace-expansion": "^5.0.8",
     "uuid": "^11.1.1"
