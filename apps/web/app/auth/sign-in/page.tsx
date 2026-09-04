@@ -139,7 +139,10 @@ function SignInContent() {
     if (result.error) {
       setResetMessage(result.error.message);
     } else {
-      setResetMessage('Identity verified! A secure recovery link has been dispatched to your institutional inbox.');
+      setResetMessage('Identity verified! 6-digit verification code dispatched. Redirecting to verification...');
+      setTimeout(() => {
+        router.push(`/auth/reset-password?email=${encodeURIComponent(resetEmail.trim())}&role=Staff&step=verify`);
+      }, 1200);
     }
   }
 
@@ -152,7 +155,7 @@ function SignInContent() {
             <h2 className="text-xl font-black text-[#0A3D24] font-serif">Staff Account Recovery</h2>
           </div>
           <p className="text-xs text-slate-500">
-            Verify your institutional identity to securely receive a password recovery link.
+            Verify your institutional identity to securely receive a 6-digit verification code.
           </p>
         </div>
 
@@ -161,7 +164,7 @@ function SignInContent() {
             i
           </div>
           <p className="text-[11px] leading-relaxed text-amber-800">
-            <strong>Faculty & Staff Verification:</strong> Please provide your official CdM Employee ID (e.g. 2024-001) and registered institutional email.
+            <strong>Faculty &amp; Staff Verification:</strong> Please provide your official CdM Employee ID (e.g. 2024-001) and registered institutional email.
           </p>
         </div>
 
@@ -192,14 +195,20 @@ function SignInContent() {
           )}
 
           <Button type="submit" loading={resetLoading} className="w-full mt-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer">
-            Verify Employee ID & Send Recovery Link
+            Verify Employee ID &amp; Send 6-Digit Code
           </Button>
 
           {/* Student Trainee Guidance Box */}
           <div className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-            <p className="text-[11px] text-slate-600">
-              🎓 <strong>Student Trainee?</strong> Please reset your password directly in the official <strong>CdM Mobile App</strong> using your Student ID.
+            <p className="text-[11px] text-slate-600 mb-1">
+              🎓 <strong>Student Trainee?</strong>
             </p>
+            <Link
+              href="/auth/reset-password"
+              className="text-xs font-bold text-[#0A3D24] hover:underline"
+            >
+              Reset via Student Number &amp; 6-Digit Code →
+            </Link>
           </div>
 
           <button

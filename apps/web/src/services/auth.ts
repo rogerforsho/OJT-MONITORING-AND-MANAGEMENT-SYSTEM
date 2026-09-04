@@ -3,6 +3,8 @@
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
+import crypto from 'crypto';
+import { sendOtpEmail } from '@/src/lib/email/send-otp';
 import type { AppResult } from '@ojt/shared';
 import type { RegisterStudentInput, SignInInput } from '@ojt/shared';
 
@@ -282,11 +284,20 @@ export async function signOut(): Promise<void> {
   redirect('/auth/sign-in');
 }
 
+function maskEmail(email: string): string {
+  const parts = email.split('@');
+  if (parts.length !== 2) return email;
+  const name = parts[0];
+  const domain = parts[1];
+  if (name.length <= 2) return `${name[0]}*@${domain}`;
+  return `${name[0]}${'*'.repeat(Math.min(name.length - 2, 5))}${name[name.length - 1]}@${domain}`;
+}
+
 export async function requestPasswordReset(
   email: string,
   identifier?: string,
   expectedRole?: 'Student' | 'Staff'
-): Promise<AppResult<null>> {
+): Promise<AppResult<{ email: string; maskedEmail: string; expiresAt: string }>> {
   if (!email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
 
@@ -344,7 +355,7 @@ export async function requestPasswordReset(
     };
   }
 
-  // 3. If user is a Student, perform Two-Point Identity Proofing against their Student Number
+  // 3. Two-Point Identity Proofing against institutional ID records
   if (userProfile.role === 'Student') {
     if (!identifier?.trim()) {
       return {
@@ -372,7 +383,6 @@ export async function requestPasswordReset(
       };
     }
   } else {
-    // 3. If user is Faculty / Staff / Admin, perform Two-Point Identity Proofing against their Employee ID Number
     if (!identifier?.trim()) {
       return {
         data: null,
@@ -394,22 +404,184 @@ export async function requestPasswordReset(
     }
   }
 
-  // 4. Dispatch Supabase Auth Recovery Email
-  const supabase = await createClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-    redirectTo: `${appUrl}/auth/reset-password`,
+  // 4. Generate cryptographically secure 6-digit numeric OTP
+  const otp = crypto.randomInt(100000, 1000000).toString();
+  const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
+  // Invalidate any existing unused OTPs for this email address
+  await service
+    .from('password_reset_otps')
+    .update({ used: true })
+    .eq('email', normalizedEmail)
+    .eq('used', false);
+
+  // Insert new hashed OTP record
+  const { error: insertErr } = await service.from('password_reset_otps').insert({
+    user_id: userProfile.user_id,
+    email: normalizedEmail,
+    otp_hash: otpHash,
+    expires_at: expiresAt,
+    attempts: 0,
+    used: false,
   });
 
-  if (resetErr) {
+  if (insertErr) {
+    console.error('[requestPasswordReset] Failed to store OTP in database:', insertErr);
     return {
       data: null,
-      error: { code: 'SERVER_FAILURE', message: resetErr.message || 'Failed to dispatch recovery link.' },
+      error: { code: 'SERVER_FAILURE', message: 'Failed to issue verification code. Please try again.' },
     };
   }
 
-  return { data: null, error: null };
+  // 5. Dispatch branded email with 6-digit verification code
+  await sendOtpEmail({
+    to: normalizedEmail,
+    fullName: userProfile.full_name || 'Colegio de Montalban User',
+    otp,
+    expiresMinutes: 10,
+  });
+
+  return {
+    data: {
+      email: normalizedEmail,
+      maskedEmail: maskEmail(normalizedEmail),
+      expiresAt,
+    },
+    error: null,
+  };
 }
+
+export async function verifyOtpAndResetPassword(
+  email: string,
+  otp: string,
+  newPassword: string
+): Promise<AppResult<{ success: boolean }>> {
+  if (!email?.trim() || !otp?.trim() || !newPassword) {
+    return {
+      data: null,
+      error: { code: 'VALIDATION_FAILURE', message: 'Email, verification code, and new password are required.' },
+    };
+  }
+
+  if (newPassword.length < 8) {
+    return {
+      data: null,
+      error: { code: 'VALIDATION_FAILURE', message: 'Password must be at least 8 characters long.' },
+    };
+  }
+
+  const cleanOtp = otp.trim().replace(/\D/g, '');
+  if (cleanOtp.length !== 6) {
+    return {
+      data: null,
+      error: { code: 'VALIDATION_FAILURE', message: 'Verification code must be exactly 6 digits.' },
+    };
+  }
+
+  const service = serviceClient();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // 1. Fetch active OTP record for this email
+  const { data: otpRecord, error: fetchErr } = await service
+    .from('password_reset_otps')
+    .select('id, user_id, otp_hash, expires_at, attempts, used')
+    .eq('email', normalizedEmail)
+    .eq('used', false)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (fetchErr || !otpRecord) {
+    return {
+      data: null,
+      error: {
+        code: 'NOT_FOUND',
+        message: 'No active verification code found for this account. Please request a new code.',
+      },
+    };
+  }
+
+  // 2. Check if expired
+  const isExpired = new Date(otpRecord.expires_at).getTime() < Date.now();
+  if (isExpired) {
+    await service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id);
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: 'The verification code has expired (valid for 10 minutes). Please request a new code.',
+      },
+    };
+  }
+
+  // 3. Check brute-force attempts
+  if (otpRecord.attempts >= 5) {
+    await service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id);
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: 'Too many incorrect attempts. For security, this code has been revoked. Please request a new code.',
+      },
+    };
+  }
+
+  // 4. Verify OTP Hash
+  const inputHash = crypto.createHash('sha256').update(cleanOtp).digest('hex');
+  if (inputHash !== otpRecord.otp_hash) {
+    const nextAttempts = otpRecord.attempts + 1;
+    await service
+      .from('password_reset_otps')
+      .update({ attempts: nextAttempts, used: nextAttempts >= 5 })
+      .eq('id', otpRecord.id);
+
+    const remaining = 5 - nextAttempts;
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: remaining > 0
+          ? `Incorrect verification code. ${remaining} attempt(s) remaining.`
+          : 'Incorrect verification code. Attempt limit reached; please request a new code.',
+      },
+    };
+  }
+
+  // 5. Code verified! Update the user password in Supabase Auth via Admin client
+  const { error: adminAuthErr } = await service.auth.admin.updateUserById(otpRecord.user_id, {
+    password: newPassword,
+  });
+
+  if (adminAuthErr) {
+    console.error('[verifyOtpAndResetPassword] Supabase admin error:', adminAuthErr);
+    return {
+      data: null,
+      error: {
+        code: 'SERVER_FAILURE',
+        message: adminAuthErr.message || 'Failed to update account password.',
+      },
+    };
+  }
+
+  // 6. Mark OTP as used
+  await service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id);
+
+  // 7. Write security audit log
+  try {
+    await service.from('audit_logs').insert({
+      user_id: otpRecord.user_id,
+      action: 'PASSWORD_RESET_VIA_OTP',
+      table_affected: 'users',
+      record_id: otpRecord.user_id,
+      details: { reset_method: '6_DIGIT_OTP', reset_at: new Date().toISOString() },
+      timestamp: new Date().toISOString(),
+    });
+  } catch {}
+
+  return { data: { success: true }, error: null };
+}
+
 
 
 export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<AppResult<null>> {

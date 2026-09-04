@@ -626,3 +626,13 @@ export function ExternalLink({ className = 'w-4 h-4', ...props }: IconProps) {
   );
 }
 
+export function ArrowLeft({ className = 'w-4 h-4', ...props }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
+}
+
+
