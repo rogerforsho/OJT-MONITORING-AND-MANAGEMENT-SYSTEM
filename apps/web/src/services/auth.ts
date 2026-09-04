@@ -8,11 +8,19 @@ import { sendOtpEmail } from '@/src/lib/email/send-otp';
 import type { AppResult } from '@ojt/shared';
 import type { RegisterStudentInput, SignInInput } from '@ojt/shared';
 
+let cachedServiceClient: any = null;
+
 function serviceClient() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  if (!cachedServiceClient) {
+    cachedServiceClient = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: { persistSession: false, autoRefreshToken: false },
+      }
+    );
+  }
+  return cachedServiceClient;
 }
 
 async function assertCoordinator() {
@@ -564,20 +572,18 @@ export async function verifyOtpAndResetPassword(
     };
   }
 
-  // 6. Mark OTP as used
-  await service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id);
-
-  // 7. Write security audit log
-  try {
-    await service.from('audit_logs').insert({
+  // 6. Concurrently mark OTP as used and write security audit log in parallel
+  await Promise.allSettled([
+    service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id),
+    service.from('audit_logs').insert({
       user_id: otpRecord.user_id,
       action: 'PASSWORD_RESET_VIA_OTP',
       table_affected: 'users',
       record_id: otpRecord.user_id,
       details: { reset_method: '6_DIGIT_OTP', reset_at: new Date().toISOString() },
       timestamp: new Date().toISOString(),
-    });
-  } catch {}
+    }),
+  ]);
 
   return { data: { success: true }, error: null };
 }

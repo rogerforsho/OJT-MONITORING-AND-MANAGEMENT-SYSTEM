@@ -41,6 +41,7 @@ function ResetPasswordForm() {
 
   // Status state
   const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<'idle' | 'verifying' | 'updating'>('idle');
   const [resendLoading, setResendLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
@@ -183,16 +184,23 @@ function ResetPasswordForm() {
     }
 
     setLoading(true);
+    setLoadingStage('verifying');
+    const stageTimer = setTimeout(() => {
+      setLoadingStage('updating');
+    }, 600);
+
     const result = await verifyOtpAndResetPassword(email.trim(), cleanOtp, password);
+    clearTimeout(stageTimer);
     setLoading(false);
+    setLoadingStage('idle');
 
     if (result.error) {
       setIsError(true);
       setMessage(result.error.message);
     } else {
       setIsError(false);
-      setMessage('Password successfully updated! Redirecting you to the sign-in screen...');
-      setTimeout(() => router.push('/auth/sign-in'), 1800);
+      setMessage('Password successfully updated! Redirecting to sign in...');
+      setTimeout(() => router.push('/auth/sign-in'), 1000);
     }
   }
 
@@ -471,7 +479,11 @@ function ResetPasswordForm() {
             className="w-full mt-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer"
           >
             <Key className="w-4 h-4 mr-1.5" />
-            Verify Code &amp; Save Password
+            {loadingStage === 'verifying'
+              ? 'Verifying 6-Digit Code...'
+              : loadingStage === 'updating'
+              ? 'Saving New Password...'
+              : 'Verify Code & Save Password'}
           </Button>
 
           <div className="text-center pt-1">
