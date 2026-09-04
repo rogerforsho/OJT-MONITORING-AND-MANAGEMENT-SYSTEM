@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
 import Alert from '@/src/components/ui/Alert';
-import { Eye, EyeOff, ShieldCheck, UserCheck, Trash2, ArrowRight, Clock } from '@/src/components/ui/Icons';
+import { Eye, EyeOff, ShieldCheck, UserCheck, Trash2, ArrowRight, Clock, Monitor, Download } from '@/src/components/ui/Icons';
 import { signIn } from '@/src/services/auth';
 
 const STORAGE_KEY = 'ojt_remembered_profiles';
@@ -422,6 +422,18 @@ export default function SignInPage() {
             ← Back to Saved Profiles
           </button>
         )}
+
+        {/* Windows Desktop Client Download Option */}
+        <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+          <a
+            href="/downloads/CdM-OJT-Portal-Setup-1.0.0.exe"
+            download="CdM-OJT-Portal-Setup-1.0.0.exe"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-[#0A3D24] font-medium transition-colors"
+          >
+            <Monitor className="w-3.5 h-3.5 text-slate-400" />
+            <span>Download Desktop Client for Windows</span>
+          </a>
+        </div>
       </form>
     </div>
   );

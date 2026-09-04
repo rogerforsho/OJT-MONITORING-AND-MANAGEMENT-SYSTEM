@@ -16,6 +16,8 @@ import {
   User,
   Building2,
   Lock,
+  Monitor,
+  Download,
 } from '@/src/components/ui/Icons';
 import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
@@ -207,6 +209,44 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                     </span>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dedicated Windows Desktop Client Card */}
+          <Card className="border-slate-200/80 shadow-xs overflow-hidden bg-gradient-to-b from-white to-slate-50/50">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24]/10 border border-[#0A3D24]/20 flex items-center justify-center text-[#0A3D24]">
+                    <Monitor className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 leading-tight">Desktop Client</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">Windows 10 / 11 (64-bit)</p>
+                  </div>
+                </div>
+                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                  v1.0.0
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Native Windows client for faculty with System Tray parking, background alerts, and floating WFH shift stopwatch (<kbd className="font-mono text-[10px] bg-slate-200 text-slate-700 px-1 py-0.5 rounded border border-slate-300">Ctrl+M</kbd>).
+              </p>
+
+              <div className="pt-1">
+                <a
+                  href="/downloads/CdM-OJT-Portal-Setup-1.0.0.exe"
+                  download="CdM-OJT-Portal-Setup-1.0.0.exe"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download Windows Setup (.exe)
+                </a>
+                <p className="text-[10px] text-center text-slate-400 mt-1.5 font-medium">
+                  Pre-configured for Colegio de Montalban Cloud
+                </p>
               </div>
             </CardContent>
           </Card>

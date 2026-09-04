@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, Notification, dialog } = require('electron'
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const { spawn } = require('child_process');
 const { createTray } = require('./tray');
 
@@ -10,25 +11,52 @@ let tray = null;
 let webServerProcess = null;
 app.isQuitting = false;
 
+// Ensure single instance lock
 const isSingleInstance = app.requestSingleInstanceLock();
 if (!isSingleInstance) {
   app.quit();
 }
 
+// Load desktop configuration
+function getDesktopConfig() {
+  const configPath = path.join(__dirname, '..', 'desktop-config.json');
+  try {
+    if (fs.existsSync(configPath)) {
+      const data = fs.readFileSync(configPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error('Error reading desktop-config.json:', e);
+  }
+  return {
+    productionUrl: 'https://ojt-monitoring-and-management-system.vercel.app',
+    developmentUrl: 'http://localhost:3000',
+  };
+}
+
+const config = getDesktopConfig();
+const isProd = app.isPackaged || process.env.NODE_ENV === 'production';
+const targetUrl = process.env.DESKTOP_TARGET_URL || (isProd ? config.productionUrl : (config.developmentUrl || 'http://localhost:3000'));
+
 function checkServerReady(url) {
   return new Promise((resolve) => {
     try {
       const parsed = new URL(url);
-      const req = http.request(
+      const isHttps = parsed.protocol === 'https:';
+      const client = isHttps ? https : http;
+      const defaultPort = isHttps ? 443 : 80;
+
+      const req = client.request(
         {
           hostname: parsed.hostname,
-          port: parsed.port || 80,
-          path: '/',
+          port: parsed.port || defaultPort,
+          path: parsed.pathname || '/',
           method: 'HEAD',
-          timeout: 1000,
+          timeout: 2500,
+          headers: { 'User-Agent': 'CdM-Desktop-Client/1.0.0' },
         },
         (res) => {
-          resolve(true);
+          resolve(res.statusCode >= 200 && res.statusCode < 500);
         }
       );
       req.on('error', () => resolve(false));
@@ -43,10 +71,13 @@ function checkServerReady(url) {
   });
 }
 
-function autoStartWebServerIfNeeded(targetUrl) {
-  checkServerReady(targetUrl).then((isReady) => {
+function autoStartWebServerIfNeeded(url) {
+  // Never attempt to spawn local dev server in packaged production or if pointing to remote https
+  if (app.isPackaged || url.startsWith('https://')) return;
+
+  checkServerReady(url).then((isReady) => {
     if (!isReady) {
-      console.log('Web server not detected at ' + targetUrl + '. Attempting background startup...');
+      console.log('Local server not detected at ' + url + '. Attempting background startup...');
       const projectRoot = path.resolve(__dirname, '..', '..');
       try {
         const isWindows = process.platform === 'win32';
@@ -67,6 +98,28 @@ function autoStartWebServerIfNeeded(targetUrl) {
   });
 }
 
+function loadSplashScreen() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const loaderPath = path.join(__dirname, 'loader.html');
+  mainWindow.loadFile(loaderPath, {
+    query: { url: targetUrl, isProd: isProd ? '1' : '0' },
+  });
+}
+
+function connectToPortal() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  checkServerReady(targetUrl).then((ready) => {
+    if (ready) {
+      console.log('Connecting to ' + targetUrl);
+      mainWindow.loadURL(targetUrl);
+    } else {
+      console.log('Target ' + targetUrl + ' not reachable yet. Polling...');
+      loadSplashScreen();
+    }
+  });
+}
+
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -80,19 +133,14 @@ function createMainWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
     },
   });
 
-  const targetUrl = process.env.DESKTOP_TARGET_URL || 'http://localhost:3000';
+  // Load splash screen first
+  loadSplashScreen();
 
-  // Load loader screen first
-  const loaderPath = path.join(__dirname, 'loader.html');
-  mainWindow.loadFile(loaderPath, {
-    query: { url: targetUrl },
-  });
-
-  // Check server and navigate once ready
+  // Check server readiness and navigate
   const pollInterval = setInterval(async () => {
     if (!mainWindow || mainWindow.isDestroyed()) {
       clearInterval(pollInterval);
@@ -102,16 +150,22 @@ function createMainWindow() {
     const ready = await checkServerReady(targetUrl);
     if (ready) {
       clearInterval(pollInterval);
-      console.log('Server is ready. Loading ' + targetUrl);
+      console.log('Portal ready. Loading ' + targetUrl);
       mainWindow.loadURL(targetUrl);
     }
-  }, 1200);
+  }, 1500);
 
-  // Auto-spawn web server if needed
+  // Auto-spawn dev server if in local dev mode
   autoStartWebServerIfNeeded(targetUrl);
 
   // Hide default top menu for clean look
   mainWindow.setMenuBarVisibility(false);
+
+  // Graceful handling of network drops / failure to load
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    console.warn(`Portal load failed (${errorCode}: ${errorDescription}). Displaying reconnect screen...`);
+    loadSplashScreen();
+  });
 
   // Close to Tray behavior
   mainWindow.on('close', (event) => {
@@ -142,6 +196,11 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   createMainWindow();
+
+  // IPC: Manual retry connection from loader splash
+  ipcMain.on('retry-connection', () => {
+    connectToPortal();
+  });
 
   // IPC: Native OS Notification
   ipcMain.on('show-notification', (_event, { title, body }) => {
@@ -199,11 +258,5 @@ app.on('before-quit', () => {
     try {
       webServerProcess.kill();
     } catch {}
-  }
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    // Keep running in tray unless explicit quit
   }
 });

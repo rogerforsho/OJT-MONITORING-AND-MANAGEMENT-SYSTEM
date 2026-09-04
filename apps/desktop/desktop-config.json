@@ -1,0 +1,7 @@
+{
+  "productionUrl": "https://ojt-monitoring-and-management-system.vercel.app",
+  "developmentUrl": "http://localhost:3000",
+  "appName": "CdM OJT Portal",
+  "version": "1.0.0",
+  "supportEmail": "mis@cdm.edu.ph"
+}
