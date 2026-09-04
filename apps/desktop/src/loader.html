@@ -32,11 +32,11 @@
       align-items: center;
     }
     .logo-container {
-      width: 80px;
-      height: 80px;
+      width: 84px;
+      height: 84px;
       background: rgba(255, 255, 255, 0.1);
       border: 2px solid #FFCC00;
-      border-radius: 20px;
+      border-radius: 22px;
       padding: 8px;
       display: flex;
       align-items: center;
@@ -80,7 +80,7 @@
       font-size: 13px;
       color: #cbd5e1;
       margin-bottom: 8px;
-      font-weight: 500;
+      font-weight: 600;
     }
     .hint {
       font-size: 11px;
@@ -88,26 +88,25 @@
       line-height: 1.5;
       margin-top: 12px;
       background: rgba(0, 0, 0, 0.3);
-      padding: 10px 14px;
+      padding: 12px 16px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.06);
     }
     .btn-retry {
       margin-top: 16px;
-      padding: 8px 20px;
+      padding: 10px 24px;
       background: #0A3D24;
-      border: 1px solid rgba(255, 204, 0, 0.4);
+      border: 1.5px solid #FFCC00;
       color: #FFCC00;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 12px;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
       transition: all 0.2s;
     }
     .btn-retry:hover {
-      background: #0d4e2e;
-      border-color: #FFCC00;
-      box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+      background: #062415;
+      box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -125,46 +124,48 @@
       <img class="logo" src="../assets/icon.png" alt="CdM Logo">
     </div>
     <h1>Colegio de Montalban</h1>
-    <div class="subtitle">OJT Practicum System</div>
+    <div class="subtitle">OJT Practicum Portal</div>
     
     <div class="spinner"></div>
-    <div class="status" id="status-text">Connecting to Practicum Portal...</div>
+    <div class="status" id="status-text">Connecting to Practicum Cloud...</div>
 
     <div class="hint" id="hint-text">
-      Starting local service at <strong>http://localhost:3000</strong>...<br>
-      Please wait while the dashboard initializes.
+      Establishing secure connection to Colegio de Montalban servers...<br>
+      Please wait while your workspace loads.
     </div>
 
-    <button class="btn-retry" id="btn-retry" onclick="checkConnection()">Retry Connection</button>
+    <button class="btn-retry" id="btn-retry" onclick="triggerReconnect()">Retry Connection</button>
   </div>
 
   <script>
-    const targetUrl = window.location.search ? decodeURIComponent(window.location.search.replace('?url=', '')) : 'http://localhost:3000';
+    const params = new URLSearchParams(window.location.search);
+    const targetUrl = params.get('url') || 'https://ojt-monitoring-and-management-system.vercel.app';
+    const isProd = params.get('isProd') === '1' || targetUrl.startsWith('https://');
     let attempts = 0;
 
-    async function checkConnection() {
+    function triggerReconnect() {
       attempts++;
       document.getElementById('status-text').innerText = 'Connecting to ' + targetUrl + ' (Attempt ' + attempts + ')...';
-      try {
-        const res = await fetch(targetUrl, { method: 'HEAD', mode: 'no-cors' });
-        document.getElementById('status-text').innerText = 'Connected! Loading dashboard...';
-        setTimeout(() => {
-          window.location.href = targetUrl;
-        }, 400);
-      } catch (err) {
-        document.getElementById('status-text').innerText = 'Waiting for local server to start...';
-        document.getElementById('hint-text').innerHTML = 
-          'Make sure the web server is running:<br><code style="color:#FFCC00; font-weight:bold;">npm run dev:desktop</code> from project root.';
+      if (window.electronAPI && typeof window.electronAPI.retryConnection === 'function') {
+        window.electronAPI.retryConnection();
+      } else {
+        window.location.href = targetUrl;
       }
     }
 
-    // Auto retry loop
-    setInterval(() => {
-      checkConnection();
-    }, 2000);
+    // Dynamic hint based on environment
+    if (!isProd) {
+      document.getElementById('hint-text').innerHTML = 
+        'Development Server: <strong>http://localhost:3000</strong><br>Run <code style="color:#FFCC00;">npm run dev:desktop</code> from workspace.';
+    } else {
+      document.getElementById('hint-text').innerHTML = 
+        'Connecting to live campus cloud portal.<br>If this screen persists, please verify your internet connection.';
+    }
 
-    // Initial check
-    checkConnection();
+    // Auto-poll retry every 3 seconds
+    setInterval(() => {
+      triggerReconnect();
+    }, 3000);
   </script>
 </body>
 </html>

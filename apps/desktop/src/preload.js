@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFileToFolder: (folderPath, fileName, fileData) => ipcRenderer.invoke('save-file', { folderPath, fileName, fileData }),
   minimizeToTray: () => ipcRenderer.send('minimize-to-tray'),
   toggleMiniWidget: (enable) => ipcRenderer.send('toggle-mini-widget', enable),
+  retryConnection: () => ipcRenderer.send('retry-connection'),
 });
