@@ -1,7 +1,9 @@
 {
-  "productionUrl": "https://ojt-monitoring-and-management-system.vercel.app",
+  "productionUrl": "https://ojt-monitoring-and-management-syste.vercel.app",
+  "fallbackUrl": "https://ojt-monitoring-and-management-syste.vercel.app/auth/sign-in",
   "developmentUrl": "http://localhost:3000",
   "appName": "CdM OJT Portal",
+  "institution": "Colegio de Montalban",
   "version": "1.0.0",
   "supportEmail": "mis@cdm.edu.ph"
 }

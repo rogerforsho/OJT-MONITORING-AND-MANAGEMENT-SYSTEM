@@ -2,6 +2,7 @@
   "name": "desktop",
   "version": "1.0.0",
   "description": "Colegio de Montalban OJT Practicum System - Desktop Application",
+  "author": "Colegio de Montalban",
   "main": "src/main.js",
   "private": true,
   "scripts": {
@@ -14,12 +15,13 @@
     "dev:desktop": "electron ."
   },
   "devDependencies": {
-    "electron": "^33.2.1",
+    "electron": "33.2.1",
     "electron-builder": "^25.1.8"
   },
   "build": {
     "appId": "ph.edu.cdm.ojt.desktop",
     "productName": "CdM OJT Portal",
+    "electronVersion": "33.2.1",
     "directories": {
       "output": "dist"
     },
