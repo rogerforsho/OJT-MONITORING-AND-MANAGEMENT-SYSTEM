@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/src/components/ui/Input';
@@ -26,7 +26,7 @@ const ROLE_BADGES: Record<string, { label: string; bg: string; text: string }> =
   Student: { label: 'Student Intern', bg: 'bg-amber-100', text: 'text-amber-800' },
 };
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isInactiveLogout = searchParams.get('reason') === 'inactivity';
@@ -436,5 +436,20 @@ export default function SignInPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-sm mx-auto my-auto py-12 flex flex-col items-center justify-center space-y-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[#0A3D24] border-t-transparent animate-spin" />
+          <p className="text-xs text-slate-500 font-medium">Loading sign-in portal...</p>
+        </div>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 }

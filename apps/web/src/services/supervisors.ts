@@ -65,7 +65,15 @@ export async function listSupervisors(
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load supervisors.' } };
 
-  const supervisors = (data ?? []).map((row: any) => {
+  interface RawSupervisorRow {
+    supervisor_id: string;
+    company_id: string;
+    position: string;
+    users: { full_name?: string | null; email?: string | null } | Array<{ full_name?: string | null; email?: string | null }>;
+    companies: { company_name?: string | null } | Array<{ company_name?: string | null }>;
+  }
+
+  const supervisors = (data ?? []).map((row: RawSupervisorRow) => {
     const user = Array.isArray(row.users) ? row.users[0] : row.users;
     const company = Array.isArray(row.companies) ? row.companies[0] : row.companies;
     return {
