@@ -165,6 +165,19 @@ export async function registerStudent(
   if (authError || !authData.user) {
     if (authError?.message?.includes('already registered'))
       return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email already registered.' } };
+    if (
+      authError?.message?.toLowerCase().includes('fetch failed') ||
+      authError?.message?.toLowerCase().includes('failed to fetch')
+    ) {
+      return {
+        data: null,
+        error: {
+          code: 'SERVER_FAILURE',
+          message:
+            'Database connection failed (fetch failed). Your Supabase project appears to be paused due to inactivity. Please restore it in the Supabase Dashboard (https://supabase.com/dashboard).',
+        },
+      };
+    }
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Registration failed. Please try again.' } };
   }
 
@@ -212,10 +225,19 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
   });
 
   if (error) {
-    const rawMsg = error.message;
-    const msg = (!rawMsg || rawMsg.trim() === '{}')
-      ? 'Invalid email or password. Please make sure the demo accounts were initialized in your Supabase SQL Editor.'
-      : rawMsg;
+    const rawMsg = error.message || '';
+    let msg = rawMsg;
+    if (!rawMsg || rawMsg.trim() === '{}') {
+      msg = 'Invalid email or password. Please make sure the demo accounts were initialized in your Supabase SQL Editor.';
+    } else if (
+      rawMsg.toLowerCase().includes('fetch failed') ||
+      rawMsg.toLowerCase().includes('failed to fetch') ||
+      rawMsg.toLowerCase().includes('networkerror') ||
+      rawMsg.toLowerCase().includes('enotfound')
+    ) {
+      msg =
+        'Database connection failed (fetch failed). Your Supabase project appears to be paused due to inactivity or the URL is unreachable. Please visit https://supabase.com/dashboard to click "Restore project", or verify the NEXT_PUBLIC_SUPABASE_URL in apps/web/.env.local.';
+    }
     return { data: null, error: { code: 'UNAUTHORIZED', message: msg } };
   }
 
@@ -272,11 +294,27 @@ export async function requestPasswordReset(
   const normalizedEmail = email.trim().toLowerCase();
 
   // 1. Verify user exists in the system
-  const { data: userProfile } = await service
+  const { data: userProfile, error: queryError } = await service
     .from('users')
     .select('user_id, role, full_name, employee_number')
     .eq('email', normalizedEmail)
     .maybeSingle();
+
+  if (queryError) {
+    if (
+      queryError.message?.toLowerCase().includes('fetch failed') ||
+      queryError.message?.toLowerCase().includes('failed to fetch')
+    ) {
+      return {
+        data: null,
+        error: {
+          code: 'SERVER_FAILURE',
+          message:
+            'Database connection failed (fetch failed). Your Supabase project appears to be paused due to inactivity. Please restore it in the Supabase Dashboard (https://supabase.com/dashboard).',
+        },
+      };
+    }
+  }
 
   if (!userProfile) {
     return {
