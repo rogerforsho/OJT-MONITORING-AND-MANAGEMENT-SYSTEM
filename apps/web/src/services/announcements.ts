@@ -3,6 +3,7 @@
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import type { AppResult, DbAnnouncement } from '@ojt/shared';
+import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 
 function serviceClient() {
   return createServiceClient(
@@ -80,25 +81,56 @@ export async function createAnnouncement(input: AnnouncementInput): Promise<AppR
   // Only fan out individual notification alerts if explicitly requested as an urgent alert
   if (input.dispatch_alert) {
     try {
-      let usersQuery = service.from('users').select('user_id, role, department_or_program').eq('account_status', 'active');
+      let usersQuery = service.from('users').select('user_id, role').eq('account_status', 'active');
       if (targetRole !== 'All') {
         usersQuery = usersQuery.eq('role', targetRole);
       }
-      if (targetDept !== 'All') {
-        usersQuery = usersQuery.eq('department_or_program', targetDept);
+      const { data: targetUsers, error: usersErr } = await usersQuery;
+      if (usersErr) {
+        console.error('[createAnnouncement] Error fetching target users:', usersErr);
       }
-      const { data: targetUsers } = await usersQuery;
+
       if (targetUsers && targetUsers.length > 0) {
-        const notifPayload = targetUsers.map((u) => ({
-          receiver_user_id: u.user_id,
-          message: `🚨 [Urgent Alert] ${input.title.trim()}: ${input.content.trim().slice(0, 100)}${input.content.length > 100 ? '...' : ''}`,
-          notification_date: new Date().toISOString(),
-          status: 'unread',
-        }));
-        await service.from('notifications').insert(notifPayload);
+        let recipientUserIds: string[] = [];
+
+        if (targetDept === 'All') {
+          recipientUserIds = targetUsers.map((u) => u.user_id);
+        } else {
+          // Cross-reference department from students (course) and coordinators (department)
+          const [{ data: students }, { data: coordinators }] = await Promise.all([
+            service.from('students').select('user_id, course'),
+            service.from('coordinators').select('user_id, department'),
+          ]);
+
+          const deptUserIds = new Set<string>();
+          (students ?? []).forEach((s) => {
+            if (targetDept === 'ICS' && isICSCourse(s.course)) deptUserIds.add(s.user_id);
+            if (targetDept === 'IBE' && isIBECourse(s.course)) deptUserIds.add(s.user_id);
+          });
+          (coordinators ?? []).forEach((c) => {
+            if (c.department === targetDept) deptUserIds.add(c.user_id);
+          });
+
+          recipientUserIds = targetUsers
+            .filter((u) => u.role === 'Admin' || deptUserIds.has(u.user_id))
+            .map((u) => u.user_id);
+        }
+
+        if (recipientUserIds.length > 0) {
+          const notifPayload = recipientUserIds.map((uid) => ({
+            receiver_user_id: uid,
+            message: `🚨 [Urgent Alert] ${input.title.trim()}: ${input.content.trim().slice(0, 100)}${input.content.length > 100 ? '...' : ''}`,
+            notification_date: new Date().toISOString(),
+            status: 'unread',
+          }));
+          const { error: notifErr } = await service.from('notifications').insert(notifPayload);
+          if (notifErr) {
+            console.error('[createAnnouncement] Error inserting notifications:', notifErr);
+          }
+        }
       }
-    } catch {
-      // Non-blocking notification dispatch
+    } catch (dispatchError) {
+      console.error('[createAnnouncement] Exception during alert notification dispatch:', dispatchError);
     }
   }
 

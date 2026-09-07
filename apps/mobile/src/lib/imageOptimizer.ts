@@ -75,7 +75,7 @@ export async function optimizeDocumentImage(
     const result = await manipulateAsync(sourceUri, actions, {
       compress: 0.75,
       format: SaveFormat.JPEG,
-      base64: false,
+      base64: true,
     });
 
     let sizeBytes: number | undefined;
@@ -91,6 +91,7 @@ export async function optimizeDocumentImage(
 
     return {
       uri: result.uri,
+      base64: result.base64,
       width: result.width,
       height: result.height,
       sizeBytes,

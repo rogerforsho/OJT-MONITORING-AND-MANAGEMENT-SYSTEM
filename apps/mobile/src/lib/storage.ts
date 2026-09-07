@@ -48,12 +48,23 @@ async function convertSourceToArrayBuffer(source: string): Promise<ArrayBuffer> 
     return await response.arrayBuffer();
   }
 
-  // Local file URI or Android content URI
-  if (source.startsWith('file://') || source.startsWith('content://')) {
-    const base64 = await FileSystem.readAsStringAsync(source, {
-      encoding: 'base64',
-    });
-    return decodeBase64ToArrayBuffer(base64);
+  // Local file URI, Android content URI, or absolute file path
+  if (source.startsWith('file://') || source.startsWith('content://') || source.startsWith('/')) {
+    const uriToRead = source.startsWith('/') ? `file://${source}` : source;
+    try {
+      const base64 = await FileSystem.readAsStringAsync(uriToRead, {
+        encoding: 'base64',
+      });
+      return decodeBase64ToArrayBuffer(base64);
+    } catch (fsErr) {
+      console.warn('[convertSourceToArrayBuffer] FileSystem read error, attempting fetch fallback:', fsErr);
+      const res = await fetch(uriToRead);
+      const blob = await res.blob();
+      if (typeof (blob as any).arrayBuffer === 'function') {
+        return await (blob as any).arrayBuffer();
+      }
+      throw fsErr;
+    }
   }
 
   // Raw base64 string or data URI
@@ -133,18 +144,23 @@ export async function uploadReportToStorage(
 ): Promise<AppResult<{ path: string; url?: string }>> {
   try {
     let sourceUri = fileUri;
+    let precomputedBuffer: ArrayBuffer | null = null;
     const resolvedMime = resolveMimeType(fileName, mimeType);
 
     // If document is an image (scanned report), compress it on-device first
     if (resolvedMime.startsWith('image/')) {
       const optimized = await optimizeDocumentImage(fileUri);
-      sourceUri = optimized.uri;
+      if (optimized.base64) {
+        precomputedBuffer = decodeBase64ToArrayBuffer(optimized.base64);
+      } else {
+        sourceUri = optimized.uri;
+      }
     }
 
     const cleanFileName = `${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     const storagePath = `${studentId}/${cleanFileName}`;
 
-    const arrayBuffer = await convertSourceToArrayBuffer(sourceUri);
+    const arrayBuffer = precomputedBuffer || (await convertSourceToArrayBuffer(sourceUri));
 
     // 1. If Firebase Storage Bucket is configured, upload via Firebase REST API
     if (FIREBASE_BUCKET) {
@@ -179,8 +195,8 @@ export async function uploadReportToStorage(
     }
 
     return { data: { path: data.path }, error: null };
-  } catch (err) {
+  } catch (err: any) {
     console.error('[uploadReportToStorage] Exception:', err);
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Error processing report file.' } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: err?.message || 'Error processing report file.' } };
   }
 }
