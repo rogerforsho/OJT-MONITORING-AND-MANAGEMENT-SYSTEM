@@ -1,6 +1,7 @@
-﻿import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { decodeBase64ToArrayBuffer } from '../lib/base64';
 import { isNetworkAvailable } from '../lib/syncEngine';
+import { uploadSelfieToStorage } from '../lib/storage';
 import {
   saveImageToSandbox,
   enqueueOfflineAttendance,
@@ -15,31 +16,7 @@ async function uploadSelfie(
   student_id: string,
   type: 'time_in' | 'time_out'
 ): Promise<AppResult<{ path: string }>> {
-  const filename = `${student_id}/${type}_${Date.now()}.jpg`;
-
-  try {
-    let arrayBuffer: ArrayBuffer;
-
-    if (imagePayload.startsWith('file://') || imagePayload.startsWith('http')) {
-      const response = await fetch(imagePayload);
-      const blob = await response.blob();
-      arrayBuffer = await blob.arrayBuffer();
-    } else {
-      arrayBuffer = decodeBase64ToArrayBuffer(imagePayload);
-    }
-
-    const { data, error } = await supabase.storage
-      .from('attendance-selfies')
-      .upload(filename, arrayBuffer, { contentType: 'image/jpeg', upsert: false });
-
-    if (error) {
-      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to upload selfie evidence.' } };
-    }
-
-    return { data: { path: data.path }, error: null };
-  } catch {
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Error processing selfie image.' } };
-  }
+  return uploadSelfieToStorage(imagePayload, student_id, type);
 }
 
 // ─── Late Status ──────────────────────────────────────────────────────────────

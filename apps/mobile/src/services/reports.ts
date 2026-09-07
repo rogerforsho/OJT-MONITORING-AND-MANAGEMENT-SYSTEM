@@ -1,9 +1,15 @@
 import { supabase } from '../lib/supabase';
+import { uploadReportToStorage } from '../lib/storage';
 import type { AppResult, DbReport } from '@ojt/shared';
 
 export interface SubmitReportInput {
   report_type: string;
-  file_path: string;
+  file_path?: string;
+  file_attachment?: {
+    uri: string;
+    name: string;
+    mimeType?: string;
+  };
   remarks?: string;
 }
 
@@ -49,8 +55,8 @@ export async function submitStudentReport(
   if (!input.report_type?.trim()) {
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Report type is required.' } };
   }
-  if (!input.file_path?.trim()) {
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'File link or document path is required.' } };
+  if (!input.file_path?.trim() && !input.file_attachment) {
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Please attach a document file or enter a link.' } };
   }
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -68,10 +74,31 @@ export async function submitStudentReport(
     return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
   }
 
+  let finalFilePath = input.file_path?.trim() || '';
+
+  // If a document was attached from device, upload through unified storage
+  if (input.file_attachment) {
+    const uploadRes = await uploadReportToStorage(
+      input.file_attachment.uri,
+      input.file_attachment.name,
+      student.student_id,
+      input.file_attachment.mimeType || 'application/pdf'
+    );
+
+    if (uploadRes.error || !uploadRes.data?.path) {
+      return {
+        data: null,
+        error: { code: 'SERVER_FAILURE', message: uploadRes.error?.message || 'Failed to upload report document.' },
+      };
+    }
+
+    finalFilePath = uploadRes.data.path;
+  }
+
   const { error } = await supabase.from('reports').insert({
     student_id: student.student_id,
     report_type: input.report_type.trim(),
-    file_path: input.file_path.trim(),
+    file_path: finalFilePath,
     status: 'submitted',
     remarks: input.remarks?.trim() || null,
   });

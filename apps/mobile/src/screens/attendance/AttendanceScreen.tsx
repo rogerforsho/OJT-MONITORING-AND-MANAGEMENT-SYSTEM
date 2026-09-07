@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { recordTimeIn, recordTimeOut, getTodayAttendance, fetchOwnAttendance } from '../../services/attendance';
 import { syncPendingOfflineAttendance, isNetworkAvailable } from '../../lib/syncEngine';
 import { getOfflineQueue } from '../../lib/offlineQueue';
+import { optimizeSelfie } from '../../lib/imageOptimizer';
 import NetworkToast from '../../components/NetworkToast';
 import type { DbAttendance } from '@ojt/shared';
 
@@ -115,9 +116,10 @@ export default function AttendanceScreen() {
   async function captureSelfie() {
     if (!cameraRef.current) return;
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.6, base64: true });
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: false });
       if (!photo) return;
-      await submitAttendance(photo.base64 || photo.uri);
+      const optimized = await optimizeSelfie(photo.uri, { includeBase64: true });
+      await submitAttendance(optimized.base64 || optimized.uri);
     } catch {
       setError('Failed to capture selfie. Please try again.');
       setStep('idle');

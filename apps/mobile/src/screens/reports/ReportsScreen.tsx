@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { listStudentReports, submitStudentReport } from '../../services/reports';
 import { isNetworkAvailable } from '../../lib/syncEngine';
 import NetworkToast from '../../components/NetworkToast';
@@ -19,6 +20,13 @@ const REPORT_TYPES = [
   'Final Evaluation',
 ];
 
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const [reports, setReports] = useState<DbReport[]>([]);
@@ -27,6 +35,12 @@ export default function ReportsScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedType, setSelectedType] = useState('Daily Journal');
   const [filePath, setFilePath] = useState('');
+  const [attachedFile, setAttachedFile] = useState<{
+    uri: string;
+    name: string;
+    size?: number;
+    mimeType?: string;
+  } | null>(null);
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -61,21 +75,54 @@ export default function ReportsScreen() {
     setModalError('');
     setSelectedType('Daily Journal');
     setFilePath('');
+    setAttachedFile(null);
     setRemarks('');
     setModalOpen(true);
   };
 
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'image/*',
+        ],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setAttachedFile({
+          uri: asset.uri,
+          name: asset.name,
+          size: asset.size,
+          mimeType: asset.mimeType,
+        });
+        setModalError('');
+      }
+    } catch (err: any) {
+      setModalError(err?.message || 'Failed to select document.');
+    }
+  };
+
+  const handleRemoveAttachedFile = () => {
+    setAttachedFile(null);
+  };
+
   const handleSubmit = async () => {
     setModalError('');
-    if (!filePath.trim()) {
-      setModalError('Please enter a valid file link, Google Drive URL, or document reference.');
+    if (!filePath.trim() && !attachedFile) {
+      setModalError('Please attach a document file or enter a valid file link / URL.');
       return;
     }
 
     setSubmitting(true);
     const result = await submitStudentReport({
       report_type: selectedType,
-      file_path: filePath.trim(),
+      file_path: filePath.trim() || undefined,
+      file_attachment: attachedFile || undefined,
       remarks: remarks.trim() || undefined,
     });
     setSubmitting(false);
@@ -230,11 +277,54 @@ export default function ReportsScreen() {
               ))}
             </View>
 
-            <Text style={s.fieldLabel}>File Link / Google Drive URL / Reference</Text>
+            <Text style={s.fieldLabel}>Attach Document File</Text>
+            {attachedFile ? (
+              <View style={s.attachedCard}>
+                <View style={s.attachedIconWrap}>
+                  <Ionicons
+                    name={attachedFile.mimeType?.includes('image') ? 'image' : 'document-text'}
+                    size={22}
+                    color="#0A3D24"
+                  />
+                </View>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Text style={s.attachedFileName} numberOfLines={1}>
+                    {attachedFile.name}
+                  </Text>
+                  <Text style={s.attachedFileSize}>
+                    {formatFileSize(attachedFile.size) || 'Ready to upload'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleRemoveAttachedFile}
+                  style={s.btnRemoveAttachment}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#dc2626" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={handlePickDocument}
+                style={s.btnAttachFile}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="cloud-upload-outline" size={20} color="#0A3D24" />
+                <Text style={s.btnAttachFileText}>Choose PDF, DOCX, or Image</Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={s.orDivider}>
+              <View style={s.orLine} />
+              <Text style={s.orText}>OR PASTE LINK / URL</Text>
+              <View style={s.orLine} />
+            </View>
+
+            <Text style={s.fieldLabel}>File Link / Google Drive URL (Alternative)</Text>
             <TextInput
               value={filePath}
               onChangeText={setFilePath}
-              placeholder="drive.google.com/... or weekly_report_w1.pdf"
+              placeholder="drive.google.com/... (optional if file attached)"
               placeholderTextColor="#94a3b8"
               style={s.input}
               autoCapitalize="none"
@@ -282,21 +372,39 @@ export default function ReportsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f4f6f9' },
-  center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center' },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
-  title: { fontSize: 24, fontWeight: '900', color: '#062415' },
-  subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  btnSubmitHeader: {
+  root: { flex: 1, backgroundColor: '#f8fafc' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: {
     backgroundColor: '#0A3D24',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 12,
-    shadowColor: '#0A3D24',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: '#FFCC00',
+  },
+  headerKicker: {
+    color: '#FFCC00',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  title: { color: '#ffffff', fontSize: 20, fontWeight: '900', marginTop: 2 },
+  subtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 },
+  btnSubmitHeader: {
+    backgroundColor: '#062415',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,204,0,0.4)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
     elevation: 3,
   },
   btnSubmitHeaderText: { color: '#FFCC00', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
@@ -366,6 +474,75 @@ const s = StyleSheet.create({
   typePillActive: { backgroundColor: '#0A3D24', borderColor: '#0A3D24' },
   typePillText: { fontSize: 11, fontWeight: '600', color: '#475569' },
   typePillTextActive: { color: '#FFCC00', fontWeight: '800' },
+  btnAttachFile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(10,61,36,0.06)',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#0A3D24',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  btnAttachFileText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0A3D24',
+  },
+  attachedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    borderRadius: 12,
+    padding: 12,
+  },
+  attachedIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'rgba(10,61,36,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  attachedFileName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  attachedFileSize: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#16a34a',
+    marginTop: 2,
+  },
+  btnRemoveAttachment: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#fee2e2',
+  },
+  orDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 10,
+    gap: 8,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e2e8f0',
+  },
+  orText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94a3b8',
+    letterSpacing: 0.5,
+  },
   input: { borderWidth: 1.5, borderColor: '#e2e8f0', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#0f172a', backgroundColor: '#f8fafc' },
   modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
   btnCancelModal: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: '#cbd5e1' },
