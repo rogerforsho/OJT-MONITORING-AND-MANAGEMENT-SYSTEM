@@ -179,20 +179,33 @@ export default function SupervisorEvaluationsPage() {
       )}
 
       {/* 5-Dimension Rubric Evaluation Modal */}
-      <Modal title="Trainee Performance Evaluation (5-Dimension Rubric)" open={modalOpen} onClose={() => setModalOpen(false)}>
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
+      <Modal
+        title="Trainee Performance Evaluation (5-Dimension Rubric)"
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        size="xl"
+      >
+        <div className="space-y-5 pb-2">
+          {/* Trainee Selection */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Assigned Trainee</label>
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Assigned Trainee <span className="text-rose-500">*</span>
+            </label>
             {students.length === 0 ? (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col gap-1">
-                <span className="font-bold">No Trainees Currently Assigned</span>
-                <span>You do not have any students assigned to your supervisor account yet, or your assignment is pending confirmation from the OJT Coordinator.</span>
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex flex-col gap-1">
+                <span className="font-bold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  No Trainees Currently Assigned
+                </span>
+                <span className="text-amber-800/90 leading-relaxed">
+                  You do not have any students assigned to your supervisor account yet, or your company assignment is pending confirmation from the OJT Coordinator.
+                </span>
               </div>
             ) : (
               <select
                 value={studentId}
                 onChange={e => setStudentId(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] shadow-xs"
               >
                 <option value="">Select assigned trainee ({students.length} available)</option>
                 {students.map(s => (
@@ -205,104 +218,136 @@ export default function SupervisorEvaluationsPage() {
           </div>
 
           {/* Rubric Dimension Sliders / Inputs */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">CHED Practicum Competency Rubric</h4>
+          <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/90 space-y-4 shadow-inner">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                CHED Practicum Competency Rubric
+              </h4>
+              <span className="text-[11px] font-bold text-[#0A3D24] bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-300">
+                100 Point Scale
+              </span>
+            </div>
             
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-slate-700">
-                <span>1. Technical Competence & Quality of Output (Max 25 pts)</span>
-                <span className="font-bold text-[#0A3D24]">{criteria.technical_competence} / 25</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
+                  <span className="truncate">1. Technical Competence</span>
+                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.technical_competence} / 25</span>
+                </div>
+                <input
+                  type="range" min="10" max="25"
+                  value={criteria.technical_competence}
+                  onChange={e => setCriteria(c => ({ ...c, technical_competence: Number(e.target.value) }))}
+                  className="w-full accent-[#0A3D24] cursor-pointer"
+                />
+                <p className="text-[10px] text-slate-400">Quality of output, technical skill application</p>
               </div>
-              <input
-                type="range" min="10" max="25"
-                value={criteria.technical_competence}
-                onChange={e => setCriteria(c => ({ ...c, technical_competence: Number(e.target.value) }))}
-                className="w-full accent-[#0A3D24]"
-              />
-            </div>
 
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-slate-700">
-                <span>2. Productivity & Dependability (Max 20 pts)</span>
-                <span className="font-bold text-[#0A3D24]">{criteria.productivity_dependability} / 20</span>
+              <div className="space-y-1.5 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
+                  <span className="truncate">2. Productivity & Dependability</span>
+                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.productivity_dependability} / 20</span>
+                </div>
+                <input
+                  type="range" min="8" max="20"
+                  value={criteria.productivity_dependability}
+                  onChange={e => setCriteria(c => ({ ...c, productivity_dependability: Number(e.target.value) }))}
+                  className="w-full accent-[#0A3D24] cursor-pointer"
+                />
+                <p className="text-[10px] text-slate-400">Deadlines, task completion, autonomy</p>
               </div>
-              <input
-                type="range" min="8" max="20"
-                value={criteria.productivity_dependability}
-                onChange={e => setCriteria(c => ({ ...c, productivity_dependability: Number(e.target.value) }))}
-                className="w-full accent-[#0A3D24]"
-              />
-            </div>
 
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-slate-700">
-                <span>3. Attendance, Punctuality & Discipline (Max 20 pts)</span>
-                <span className="font-bold text-[#0A3D24]">{criteria.attendance_punctuality} / 20</span>
+              <div className="space-y-1.5 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
+                  <span className="truncate">3. Attendance & Punctuality</span>
+                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.attendance_punctuality} / 20</span>
+                </div>
+                <input
+                  type="range" min="8" max="20"
+                  value={criteria.attendance_punctuality}
+                  onChange={e => setCriteria(c => ({ ...c, attendance_punctuality: Number(e.target.value) }))}
+                  className="w-full accent-[#0A3D24] cursor-pointer"
+                />
+                <p className="text-[10px] text-slate-400">Time compliance, shift discipline</p>
               </div>
-              <input
-                type="range" min="8" max="20"
-                value={criteria.attendance_punctuality}
-                onChange={e => setCriteria(c => ({ ...c, attendance_punctuality: Number(e.target.value) }))}
-                className="w-full accent-[#0A3D24]"
-              />
-            </div>
 
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-slate-700">
-                <span>4. Communication & Teamwork (Max 15 pts)</span>
-                <span className="font-bold text-[#0A3D24]">{criteria.communication_skills} / 15</span>
+              <div className="space-y-1.5 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
+                  <span className="truncate">4. Communication & Teamwork</span>
+                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.communication_skills} / 15</span>
+                </div>
+                <input
+                  type="range" min="5" max="15"
+                  value={criteria.communication_skills}
+                  onChange={e => setCriteria(c => ({ ...c, communication_skills: Number(e.target.value) }))}
+                  className="w-full accent-[#0A3D24] cursor-pointer"
+                />
+                <p className="text-[10px] text-slate-400">Interpersonal skills, collaborative spirit</p>
               </div>
-              <input
-                type="range" min="5" max="15"
-                value={criteria.communication_skills}
-                onChange={e => setCriteria(c => ({ ...c, communication_skills: Number(e.target.value) }))}
-                className="w-full accent-[#0A3D24]"
-              />
-            </div>
 
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-slate-700">
-                <span>5. Professionalism, Work Ethics & Initiative (Max 20 pts)</span>
-                <span className="font-bold text-[#0A3D24]">{criteria.work_ethics_professionalism} / 20</span>
+              <div className="space-y-1.5 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs md:col-span-2">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
+                  <span className="truncate">5. Professionalism, Work Ethics & Initiative</span>
+                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.work_ethics_professionalism} / 20</span>
+                </div>
+                <input
+                  type="range" min="8" max="20"
+                  value={criteria.work_ethics_professionalism}
+                  onChange={e => setCriteria(c => ({ ...c, work_ethics_professionalism: Number(e.target.value) }))}
+                  className="w-full accent-[#0A3D24] cursor-pointer"
+                />
+                <p className="text-[10px] text-slate-400">Workplace etiquette, proactive problem solving</p>
               </div>
-              <input
-                type="range" min="8" max="20"
-                value={criteria.work_ethics_professionalism}
-                onChange={e => setCriteria(c => ({ ...c, work_ethics_professionalism: Number(e.target.value) }))}
-                className="w-full accent-[#0A3D24]"
-              />
             </div>
 
             {/* Composite Score Card */}
-            <div className="p-3 rounded-lg bg-white border border-slate-200 flex items-center justify-between mt-2">
-              <span className="text-xs font-bold text-slate-800">Overall Calculated Rating:</span>
-              <span className="text-base font-bold text-[#0A3D24]">{computedTotalScore}% ({
-                computedTotalScore >= 90 ? 'Outstanding' :
-                computedTotalScore >= 80 ? 'Very Satisfactory' :
-                computedTotalScore >= 75 ? 'Satisfactory' : 'Needs Improvement'
-              })</span>
+            <div className="p-4 rounded-xl bg-white border border-[#0A3D24]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
+              <div>
+                <span className="text-xs font-bold text-slate-800">Overall Calculated Competency Rating:</span>
+                <p className="text-[11px] text-slate-500">Auto-aggregated composite across all 5 dimensions</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-black font-mono text-[#0A3D24]">{computedTotalScore}%</span>
+                <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full border ${
+                  computedTotalScore >= 90 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                  computedTotalScore >= 80 ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                  computedTotalScore >= 75 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  'bg-red-50 text-red-700 border-red-200'
+                }`}>
+                  {computedTotalScore >= 90 ? 'Outstanding' :
+                   computedTotalScore >= 80 ? 'Very Satisfactory' :
+                   computedTotalScore >= 75 ? 'Satisfactory' : 'Needs Improvement'}
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Qualitative Feedback & Mentor Remarks</label>
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Qualitative Feedback & Mentor Remarks <span className="text-rose-500">*</span>
+            </label>
             <textarea
               value={feedback}
               onChange={e => setFeedback(e.target.value)}
-              rows={3}
-              placeholder="Detail the trainee's technical strengths, key contributions, and areas for improvement..."
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+              rows={4}
+              placeholder="Detail the trainee's technical strengths, key contributions during their practicum shift, and recommended areas for continuous improvement..."
+              className="w-full rounded-xl border border-slate-200 p-3.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] shadow-xs"
               required
             />
           </div>
 
           {formError && <Alert type="error" message={formError} />}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-3 border-t border-slate-100">
             <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleSave} loading={saving} className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold">
+            <Button
+              onClick={handleSave}
+              loading={saving}
+              disabled={students.length === 0 || !studentId}
+              className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md"
+            >
               Submit Official Evaluation
             </Button>
           </div>
