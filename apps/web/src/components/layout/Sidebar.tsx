@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Star,
   Settings,
+  ShieldCheck,
   LogOut,
   type IconProps,
 } from '@/src/components/ui/Icons';
@@ -61,7 +62,7 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   ],
   Admin: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Administration', href: '/admin', icon: Settings },
+    { label: 'Administration', href: '/admin', icon: ShieldCheck },
   ],
 };
 
@@ -134,10 +135,10 @@ export default function Sidebar({ user }: Props) {
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 active
                   ? 'bg-[#0A3D24] text-[#FFCC00] shadow-md border border-[#FFCC00]/30'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10 hover:shadow-xs active:scale-[0.98]'
               }`}
             >
-              <IconComponent className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#FFCC00]' : 'text-slate-400'}`} />
+              <IconComponent className={`w-4 h-4 flex-shrink-0 transition-colors ${active ? 'text-[#FFCC00]' : 'text-slate-400 group-hover:text-white'}`} />
               <span className="truncate">{item.label}</span>
             </Link>
           );
@@ -157,7 +158,7 @@ export default function Sidebar({ user }: Props) {
             type="button"
             onClick={() => toggleMiniWidget(true)}
             title="Toggle Floating Mini-Widget Mode"
-            className="text-[10px] font-extrabold text-[#FFCC00] hover:text-white px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+            className="text-[10px] font-extrabold text-[#FFCC00] hover:text-white px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 transition-all cursor-pointer active:scale-95"
           >
             Widget
           </button>
@@ -171,10 +172,10 @@ export default function Sidebar({ user }: Props) {
           className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
             pathname === '/settings'
               ? 'bg-[#0A3D24] text-[#FFCC00] shadow-md border border-[#FFCC00]/30'
-              : 'text-slate-300 hover:text-white hover:bg-white/5'
+              : 'text-slate-300 hover:text-white hover:bg-white/10 hover:shadow-xs active:scale-[0.98]'
           }`}
         >
-          <Settings className={`w-4 h-4 flex-shrink-0 ${pathname === '/settings' ? 'text-[#FFCC00]' : 'text-slate-400'}`} />
+          <Settings className={`w-4 h-4 flex-shrink-0 transition-colors ${pathname === '/settings' ? 'text-[#FFCC00]' : 'text-slate-400'}`} />
           <span className="truncate">Account Settings</span>
         </Link>
       </div>

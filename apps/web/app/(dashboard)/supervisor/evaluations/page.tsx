@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import Button from '@/src/components/ui/Button';
@@ -109,7 +109,15 @@ export default function SupervisorEvaluationsPage() {
           <p className="text-sm text-slate-500 mt-0.5">Submit competency ratings using the 5-dimension CHED practicum rubric.</p>
         </div>
         <Button
-          onClick={() => { setStudentId(''); setFeedback(''); setCriteria(DEFAULT_CRITERIA); setFormError(''); setModalOpen(true); }}
+          onClick={async () => {
+            setStudentId('');
+            setFeedback('');
+            setCriteria(DEFAULT_CRITERIA);
+            setFormError('');
+            setModalOpen(true);
+            const res = await listAssignedStudentsForEvaluation();
+            if (res.data) setStudents(res.data);
+          }}
           className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
         >
           + Rate Assigned Trainee
@@ -175,18 +183,25 @@ export default function SupervisorEvaluationsPage() {
         <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Assigned Trainee</label>
-            <select
-              value={studentId}
-              onChange={e => setStudentId(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
-            >
-              <option value="">Select assigned trainee</option>
-              {students.map(s => (
-                <option key={s.student_id} value={s.student_id}>
-                  {s.full_name} — {s.student_number} ({s.course})
-                </option>
-              ))}
-            </select>
+            {students.length === 0 ? (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col gap-1">
+                <span className="font-bold">No Trainees Currently Assigned</span>
+                <span>You do not have any students assigned to your supervisor account yet, or your assignment is pending confirmation from the OJT Coordinator.</span>
+              </div>
+            ) : (
+              <select
+                value={studentId}
+                onChange={e => setStudentId(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+              >
+                <option value="">Select assigned trainee ({students.length} available)</option>
+                {students.map(s => (
+                  <option key={s.student_id} value={s.student_id}>
+                    {s.full_name} — {s.student_number} ({s.course})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Rubric Dimension Sliders / Inputs */}

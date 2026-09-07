@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -56,20 +56,11 @@ export async function listEvaluationsForSupervisor(
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
     const service = serviceClient();
-  let { data: supervisor } = await supabase
+  let { data: supervisor } = await service
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
     .maybeSingle();
-
-  if (!supervisor) {
-    const { data: svcSupervisor } = await service
-      .from('supervisors')
-      .select('supervisor_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    supervisor = svcSupervisor;
-  }
 
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
@@ -77,7 +68,7 @@ export async function listEvaluationsForSupervisor(
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  const { data, error, count } = await supabase
+  const { data, error, count } = await service
     .from('evaluations')
     .select(`*, students ( student_number, course, users ( full_name ) )`, { count: 'exact' })
     .eq('supervisor_id', supervisor.supervisor_id)
@@ -99,25 +90,16 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
     const service = serviceClient();
-  let { data: supervisor } = await supabase
+  let { data: supervisor } = await service
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (!supervisor) {
-    const { data: svcSupervisor } = await service
-      .from('supervisors')
-      .select('supervisor_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    supervisor = svcSupervisor;
-  }
-
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
 
-  const { data: assignment } = await supabase
+  const { data: assignment } = await service
     .from('student_assignments')
     .select('assignment_id')
     .eq('student_id', input.student_id)
@@ -139,7 +121,7 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
     ));
   }
 
-  const { data: evalRecord, error } = await supabase.from('evaluations').insert({
+  const { data: evalRecord, error } = await service.from('evaluations').insert({
     student_id: input.student_id,
     supervisor_id: supervisor.supervisor_id,
     performance_score: computedScore,
@@ -201,25 +183,16 @@ export async function listAssignedStudentsForEvaluation(): Promise<AppResult<{ s
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
     const service = serviceClient();
-  let { data: supervisor } = await supabase
+  let { data: supervisor } = await service
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (!supervisor) {
-    const { data: svcSupervisor } = await service
-      .from('supervisors')
-      .select('supervisor_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    supervisor = svcSupervisor;
-  }
-
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
 
-  const { data, error } = await supabase
+  const { data, error } = await service
     .from('student_assignments')
     .select(`student_id, students ( student_number, course, users ( full_name ) )`)
     .eq('supervisor_id', supervisor.supervisor_id);

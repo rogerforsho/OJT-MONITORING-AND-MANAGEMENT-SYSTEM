@@ -486,17 +486,17 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             </div>
 
             {/* Role Filter Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
               {ROLE_TABS.map((tab) => {
                 const isActive = roleFilter === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => handleRoleChange(tab.id)}
-                    className={`px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 ${
                       isActive
-                        ? 'bg-[#0A3D24] text-[#FFCC00] shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                        ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm border border-[#FFCC00]/30'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
                     {tab.label}
@@ -534,7 +534,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     </tr>
                   ) : (
                     users.map((u) => (
-                      <tr key={u.user_id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={u.user_id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <p className="font-medium text-slate-900">{u.full_name}</p>
@@ -564,55 +564,57 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                             {u.account_status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
-                          {u.account_status === 'pending' && (
-                            <Button
-                              size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5 cursor-pointer"
-                              onClick={() => handleStatusChange(u.user_id, 'active')}
-                              disabled={loadingId === u.user_id}
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            {u.account_status === 'pending' && (
+                              <Button
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
+                                onClick={() => handleStatusChange(u.user_id, 'active')}
+                                disabled={loadingId === u.user_id}
+                              >
+                                Approve
+                              </Button>
+                            )}
+                            {u.account_status === 'active' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-8 px-3 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
+                                onClick={() => handleStatusChange(u.user_id, 'inactive')}
+                                disabled={loadingId === u.user_id}
+                              >
+                                Deactivate
+                              </Button>
+                            )}
+                            {u.account_status === 'inactive' && (
+                              <Button
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 cursor-pointer shadow-xs hover:shadow-sm active:scale-95"
+                                onClick={() => handleStatusChange(u.user_id, 'active')}
+                                disabled={loadingId === u.user_id}
+                              >
+                                Reactivate
+                              </Button>
+                            )}
+                            <button
+                              type="button"
+                              title="Reset User Password (Direct Override)"
+                              onClick={() => handleOpenResetPasswordModal(u)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 hover:border-amber-400 border border-amber-300 transition-all duration-150 cursor-pointer shadow-xs hover:shadow-sm active:scale-95 align-middle"
                             >
-                              Approve
-                            </Button>
-                          )}
-                          {u.account_status === 'active' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7 px-2.5 border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
-                              onClick={() => handleStatusChange(u.user_id, 'inactive')}
-                              disabled={loadingId === u.user_id}
+                              <Key className="w-3.5 h-3.5 text-amber-700" />
+                              <span>Reset PW</span>
+                            </button>
+                            <button
+                              type="button"
+                              title="Delete User"
+                              onClick={() => { setDeleteError(''); setDeleteTarget(u); }}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent transition-all duration-150 align-middle cursor-pointer active:scale-95"
                             >
-                              Deactivate
-                            </Button>
-                          )}
-                          {u.account_status === 'inactive' && (
-                            <Button
-                              size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5 cursor-pointer"
-                              onClick={() => handleStatusChange(u.user_id, 'active')}
-                              disabled={loadingId === u.user_id}
-                            >
-                              Reactivate
-                            </Button>
-                          )}
-                          <button
-                            type="button"
-                            title="Reset User Password (Direct Override)"
-                            onClick={() => handleOpenResetPasswordModal(u)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-all cursor-pointer shadow-2xs align-middle"
-                          >
-                            <Key className="w-3.5 h-3.5 text-amber-700" />
-                            <span>Reset PW</span>
-                          </button>
-                          <button
-                            type="button"
-                            title="Delete User"
-                            onClick={() => { setDeleteError(''); setDeleteTarget(u); }}
-                            className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 border border-transparent hover:border-red-200 transition-colors align-middle cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
