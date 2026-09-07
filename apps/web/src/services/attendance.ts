@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -305,6 +305,10 @@ export async function getSelfieUrl(selfie_path: string): Promise<AppResult<{ url
   const { user, profile } = await getAuthUserWithRole();
   if (!user || !['Supervisor', 'Coordinator', 'Admin'].includes(profile?.role ?? ''))
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  if (selfie_path.startsWith('http://') || selfie_path.startsWith('https://')) {
+    return { data: { url: selfie_path }, error: null };
+  }
 
   const service = serviceClient();
 

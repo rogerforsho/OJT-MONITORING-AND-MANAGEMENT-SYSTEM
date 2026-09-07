@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -138,6 +138,11 @@ export async function getSignedDocumentUrl(
 
   if (!profile || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  }
+
+  // If path is already a direct Firebase or external URL, return directly
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    return { data: { signedUrl: filePath }, error: null };
   }
 
   const service = serviceClient();

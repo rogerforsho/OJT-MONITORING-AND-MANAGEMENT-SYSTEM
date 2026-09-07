@@ -111,7 +111,7 @@ export async function uploadSelfieToStorage(
           firebasePath
         )}?alt=media&token=${fbData.downloadTokens || ''}`;
         console.log('[uploadSelfieToStorage] Uploaded to Google Firebase Storage:', downloadUrl);
-        return { data: { path: firebasePath, url: downloadUrl }, error: null };
+        return { data: { path: downloadUrl, url: downloadUrl }, error: null };
       }
       console.warn('[uploadSelfieToStorage] Firebase upload failed, falling back to Supabase');
     }
@@ -180,7 +180,7 @@ export async function uploadReportToStorage(
         const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_BUCKET}/o/${encodeURIComponent(
           firebasePath
         )}?alt=media&token=${fbData.downloadTokens || ''}`;
-        return { data: { path: firebasePath, url: downloadUrl }, error: null };
+        return { data: { path: downloadUrl, url: downloadUrl }, error: null };
       }
     }
 
