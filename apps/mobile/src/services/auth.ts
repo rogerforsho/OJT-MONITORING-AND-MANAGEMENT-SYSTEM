@@ -16,6 +16,16 @@ export async function registerStudent(input: RegisterStudentInput): Promise<AppR
   if (!input.year_level || input.year_level < 1 || input.year_level > 4)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Valid year level is required.' } };
 
+  // Check if student number is already taken
+  const { data: existingStudent } = await supabase
+    .from('students')
+    .select('student_id')
+    .eq('student_number', input.student_number.trim())
+    .maybeSingle();
+
+  if (existingStudent)
+    return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Student number already registered.' } };
+
   const { data, error } = await supabase.auth.signUp({
     email: input.email.trim(),
     password: input.password,
@@ -35,6 +45,8 @@ export async function registerStudent(input: RegisterStudentInput): Promise<AppR
       return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email already registered.' } };
     if (error.message?.includes('rate limit'))
       return { data: null, error: { code: 'SERVER_FAILURE', message: 'Email rate limit exceeded. Please turn off "Confirm email" in Supabase Auth settings.' } };
+    if (error.message?.toLowerCase().includes('database error saving new user'))
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Account creation failed: this email or student number may already be in use. Please check your credentials or contact your OJT Coordinator.' } };
     return { data: null, error: { code: 'SERVER_FAILURE', message: error.message || 'Registration failed. Please try again.' } };
   }
 

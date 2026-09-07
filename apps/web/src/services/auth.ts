@@ -151,7 +151,7 @@ export async function registerStudent(
 
   const service = serviceClient();
 
-  // Check duplicate student number
+  // 1. Check duplicate student number
   const { data: existing } = await service
     .from('students')
     .select('student_id')
@@ -161,7 +161,25 @@ export async function registerStudent(
   if (existing)
     return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Student number already registered.' } };
 
-  // Create auth user — trigger will insert into users table
+  // 2. Check and reconcile any orphaned user record in public.users (not present in auth.users)
+  const { data: existingUser } = await service
+    .from('users')
+    .select('user_id')
+    .eq('email', input.email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (existingUser) {
+    const { data: authUserCheck } = await service.auth.admin.getUserById(existingUser.user_id);
+    if (authUserCheck?.user) {
+      return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email already registered.' } };
+    } else {
+      // Orphaned record: clean up from public.students and public.users to avoid unique constraint collisions
+      await service.from('students').delete().eq('user_id', existingUser.user_id);
+      await service.from('users').delete().eq('user_id', existingUser.user_id);
+    }
+  }
+
+  // 3. Create auth user with full metadata
   const { data: authData, error: authError } = await service.auth.admin.createUser({
     email: input.email.trim(),
     password: input.password,
@@ -169,6 +187,9 @@ export async function registerStudent(
     user_metadata: {
       full_name: input.full_name.trim(),
       role: 'Student',
+      student_number: input.student_number.trim(),
+      course: input.course.trim(),
+      year_level: input.year_level,
     },
   });
 
@@ -188,18 +209,18 @@ export async function registerStudent(
         },
       };
     }
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Registration failed. Please try again.' } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: authError?.message || 'Registration failed. Please try again.' } };
   }
 
-  // Insert student profile via service role
+  // 4. Upsert student profile (handles both trigger-created row and ensures all fields are cleanly stored)
   // required_hours is not set at registration — coordinator configures it per assignment (FR-PROG-004)
-  const { error: studentError } = await service.from('students').insert({
+  const { error: studentError } = await service.from('students').upsert({
     user_id: authData.user.id,
     student_number: input.student_number.trim(),
     course: input.course.trim(),
     year_level: input.year_level,
     status: 'active',
-  });
+  }, { onConflict: 'user_id' });
 
   if (studentError) {
     // Rollback auth user
