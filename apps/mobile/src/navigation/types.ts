@@ -11,7 +11,3 @@ export type StudentTabParamList = {
   Notifications: undefined;
   Profile: undefined;
 };
-
-export type AppStackParamList = {
-  StudentTabs: undefined;
-};

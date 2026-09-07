@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import { decodeBase64ToArrayBuffer } from '../lib/base64';
 import { isNetworkAvailable } from '../lib/syncEngine';
 import { uploadSelfieToStorage } from '../lib/storage';
 import {
@@ -8,16 +7,6 @@ import {
   getOfflineAttendanceForToday,
 } from '../lib/offlineQueue';
 import type { AppResult, DbAttendance } from '@ojt/shared';
-
-// ─── Storage ──────────────────────────────────────────────────────────────────
-
-async function uploadSelfie(
-  imagePayload: string,
-  student_id: string,
-  type: 'time_in' | 'time_out'
-): Promise<AppResult<{ path: string }>> {
-  return uploadSelfieToStorage(imagePayload, student_id, type);
-}
 
 // ─── Late Status ──────────────────────────────────────────────────────────────
 
@@ -120,7 +109,7 @@ export async function recordTimeIn(
     return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'You already have an attendance record for today.' } };
   }
 
-  const selfieResult = await uploadSelfie(selfie_uri, student.student_id, 'time_in');
+  const selfieResult = await uploadSelfieToStorage(selfie_uri, student.student_id, 'time_in');
   if (selfieResult.error) {
     // Fallback to offline queue if upload fails due to network drop
     try {
@@ -222,7 +211,7 @@ export async function recordTimeOut(
     return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Time Out has already been recorded for today.' } };
   }
 
-  const selfieResult = await uploadSelfie(selfie_uri, student.student_id, 'time_out');
+  const selfieResult = await uploadSelfieToStorage(selfie_uri, student.student_id, 'time_out');
   if (selfieResult.error) {
     try {
       const savedPath = await saveImageToSandbox(selfie_uri, `time_out_${Date.now()}.jpg`);

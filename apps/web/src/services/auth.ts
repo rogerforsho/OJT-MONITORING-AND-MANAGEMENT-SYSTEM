@@ -652,19 +652,6 @@ export async function changeUserPassword(currentPassword: string, newPassword: s
   return { data: null, error: null };
 }
 
-export async function updatePassword(newPassword: string): Promise<AppResult<null>> {
-  if (!newPassword || newPassword.length < 8)
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password must be at least 8 characters.' } };
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
-
-  if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update password.' } };
-
-  return { data: null, error: null };
-}
-
 export async function getAuthUser() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

@@ -177,12 +177,12 @@ export async function overrideEvaluation(
   return { data: null, error: null };
 }
 
-export async function listAssignedStudentsForEvaluation(): Promise<AppResult<{ student_id: string; full_name: string; student_number: string; course: string }[]>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+export async function listAssignedStudents(): Promise<AppResult<{ student_id: string; full_name: string; student_number: string; course: string }[]>> {
+  const { user, profile } = await getAuthUserWithRole();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-    const service = serviceClient();
+  const service = serviceClient();
   let { data: supervisor } = await service
     .from('supervisors')
     .select('supervisor_id')
@@ -210,6 +210,4 @@ export async function listAssignedStudentsForEvaluation(): Promise<AppResult<{ s
   };
 }
 
-export async function listAssignedStudents() {
-  return listAssignedStudentsForEvaluation();
-}
+export const listAssignedStudentsForEvaluation = listAssignedStudents;

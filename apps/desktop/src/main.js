@@ -78,7 +78,7 @@ function autoStartWebServerIfNeeded(url) {
   checkServerReady(url).then((isReady) => {
     if (!isReady) {
       console.log('Local server not detected at ' + url + '. Attempting background startup...');
-      const projectRoot = path.resolve(__dirname, '..', '..');
+      const projectRoot = path.resolve(__dirname, '..', '..', '..');
       try {
         const isWindows = process.platform === 'win32';
         const npmCmd = isWindows ? 'npm.cmd' : 'npm';
