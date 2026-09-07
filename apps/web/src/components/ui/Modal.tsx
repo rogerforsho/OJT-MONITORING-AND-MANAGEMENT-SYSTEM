@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   title: string;
@@ -13,16 +14,29 @@ interface ModalProps {
 
 export default function Modal({ title, open, onClose, children, footer, size = 'default' }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
-    if (open) document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    if (open) {
+      document.addEventListener('keydown', onKey);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = 'unset';
+    };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const sizeClasses = {
     default: 'max-w-lg',
@@ -31,10 +45,10 @@ export default function Modal({ title, open, onClose, children, footer, size = '
     '2xl': 'max-w-4xl',
   };
 
-  return (
+  const modalContent = (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto"
       onClick={e => { if (e.target === overlayRef.current) onClose(); }}
     >
       <div className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col my-auto border border-slate-200/80 overflow-hidden`}>
@@ -64,4 +78,6 @@ export default function Modal({ title, open, onClose, children, footer, size = '
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
