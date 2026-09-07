@@ -48,10 +48,12 @@ export async function listStudentFeed(): Promise<AppResult<MobileFeedItem[]>> {
   });
 
   (notifications ?? []).forEach((n) => {
+    const isAlert = n.message.startsWith('🚨') || n.message.includes('[Alert]');
+    const isAnnc = n.message.startsWith('📢') || n.message.includes('[Announcement]');
     feed.push({
       id: n.notification_id,
-      type: 'notification',
-      title: 'Personal Notification',
+      type: isAnnc ? 'announcement' : 'notification',
+      title: isAlert ? '🚨 Urgent Alert' : isAnnc ? '📢 Announcement' : 'Personal Notification',
       message: n.message,
       date: n.notification_date,
       status: n.status as 'unread' | 'read',

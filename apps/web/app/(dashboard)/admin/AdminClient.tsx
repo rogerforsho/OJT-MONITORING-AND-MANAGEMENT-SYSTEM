@@ -106,7 +106,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
   const [anncTitle, setAnncTitle] = useState('');
   const [anncContent, setAnncContent] = useState('');
   const [anncDept, setAnncDept] = useState('All');
-  const [anncDispatchAlert, setAnncDispatchAlert] = useState(false);
+  const [anncDeliveryType, setAnncDeliveryType] = useState<'announcement' | 'alert'>('announcement');
   const [anncLoading, setAnncLoading] = useState(false);
   const [announcements, setAnnouncements] = useState<DbAnnouncement[]>([]);
   const [anncListLoading, setAnncListLoading] = useState(true);
@@ -318,7 +318,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
       content: anncContent,
       target_department: anncDept,
       target_role: 'All',
-      dispatch_alert: anncDispatchAlert,
+      delivery_type: anncDeliveryType,
     });
     setAnncLoading(false);
 
@@ -327,12 +327,11 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
     } else {
       setAnncTitle('');
       setAnncContent('');
-      setAnncDispatchAlert(false);
       setMsg({
         type: 'success',
-        text: anncDispatchAlert
-          ? 'Announcement published to bulletin board and urgent alerts dispatched to inboxes!'
-          : 'Announcement posted to campus bulletin board (no alert notifications dispatched).',
+        text: anncDeliveryType === 'alert'
+          ? 'Urgent alert published and dispatched with 🚨 icon to all user inboxes!'
+          : 'Announcement published and dispatched with 📢 icon to all user inboxes!',
       });
       loadAnnouncements();
       loadAudit();
@@ -710,43 +709,43 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Notification & Delivery Mode</label>
+                  <label className="text-xs font-semibold text-slate-700">Notification Category & Symbol</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <button
                       type="button"
-                      onClick={() => setAnncDispatchAlert(false)}
+                      onClick={() => setAnncDeliveryType('announcement')}
                       className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1 ${
-                        !anncDispatchAlert
+                        anncDeliveryType === 'announcement'
                           ? 'border-[#0A3D24] bg-emerald-50/60 ring-2 ring-[#0A3D24]/20 shadow-2xs'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-[#0A3D24] bg-white px-1.5 py-0.5 rounded border border-[#0A3D24]/20">
-                          📌 Bulletin Only (Default)
+                        <span className="text-xs font-bold text-[#0A3D24] bg-white px-2 py-0.5 rounded border border-[#0A3D24]/20">
+                          📢 General Announcement
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-600 leading-tight">
-                        Displays on campus bulletin board only. Does <strong>not</strong> send alert notifications to user inboxes.
+                        Dispatches inbox notification with the <strong>📢 [Announcement]</strong> symbol and posts to bulletin board.
                       </p>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => setAnncDispatchAlert(true)}
+                      onClick={() => setAnncDeliveryType('alert')}
                       className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1 ${
-                        anncDispatchAlert
+                        anncDeliveryType === 'alert'
                           ? 'border-amber-600 bg-amber-50/70 ring-2 ring-amber-600/20 shadow-2xs'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-amber-700 bg-white px-1.5 py-0.5 rounded border border-amber-600/20">
-                          🚨 Urgent Alert Broadcast
+                        <span className="text-xs font-bold text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-600/20">
+                          🚨 Urgent Alert
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-600 leading-tight">
-                        Posts to bulletin board <strong>and</strong> generates unread notification alerts in all student & faculty inboxes.
+                        Dispatches high-priority inbox notification with the <strong>🚨 [Alert]</strong> symbol and posts to bulletin board.
                       </p>
                     </button>
                   </div>
@@ -757,15 +756,15 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                   className="w-full bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold cursor-pointer"
                   loading={anncLoading}
                 >
-                  {anncDispatchAlert ? (
+                  {anncDeliveryType === 'alert' ? (
                     <>
                       <Bell className="w-4 h-4 mr-2 text-amber-400" />
-                      Publish & Dispatch Urgent Alerts
+                      Publish & Broadcast Urgent Alert (🚨)
                     </>
                   ) : (
                     <>
                       <Megaphone className="w-4 h-4 mr-2" />
-                      Publish to Bulletin Board Only
+                      Publish & Broadcast Announcement (📢)
                     </>
                   )}
                 </Button>

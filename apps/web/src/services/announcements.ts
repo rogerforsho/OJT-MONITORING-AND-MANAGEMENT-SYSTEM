@@ -29,6 +29,7 @@ export interface AnnouncementInput {
   content: string;
   target_role?: string;
   target_department?: string;
+  delivery_type?: 'announcement' | 'alert';
   dispatch_alert?: boolean;
 }
 
@@ -78,60 +79,61 @@ export async function createAnnouncement(input: AnnouncementInput): Promise<AppR
   if (error)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to publish announcement.' } };
 
-  // Only fan out individual notification alerts if explicitly requested as an urgent alert
-  if (input.dispatch_alert) {
-    try {
-      let usersQuery = service.from('users').select('user_id, role').eq('account_status', 'active');
-      if (targetRole !== 'All') {
-        usersQuery = usersQuery.eq('role', targetRole);
-      }
-      const { data: targetUsers, error: usersErr } = await usersQuery;
-      if (usersErr) {
-        console.error('[createAnnouncement] Error fetching target users:', usersErr);
-      }
+  // Fan out notification alerts to active recipients with the selected symbol/mode
+  try {
+    const isUrgent = input.delivery_type === 'alert' || input.dispatch_alert === true;
+    const prefix = isUrgent ? '🚨 [Alert]' : '📢 [Announcement]';
 
-      if (targetUsers && targetUsers.length > 0) {
-        let recipientUserIds: string[] = [];
-
-        if (targetDept === 'All') {
-          recipientUserIds = targetUsers.map((u) => u.user_id);
-        } else {
-          // Cross-reference department from students (course) and coordinators (department)
-          const [{ data: students }, { data: coordinators }] = await Promise.all([
-            service.from('students').select('user_id, course'),
-            service.from('coordinators').select('user_id, department'),
-          ]);
-
-          const deptUserIds = new Set<string>();
-          (students ?? []).forEach((s) => {
-            if (targetDept === 'ICS' && isICSCourse(s.course)) deptUserIds.add(s.user_id);
-            if (targetDept === 'IBE' && isIBECourse(s.course)) deptUserIds.add(s.user_id);
-          });
-          (coordinators ?? []).forEach((c) => {
-            if (c.department === targetDept) deptUserIds.add(c.user_id);
-          });
-
-          recipientUserIds = targetUsers
-            .filter((u) => u.role === 'Admin' || deptUserIds.has(u.user_id))
-            .map((u) => u.user_id);
-        }
-
-        if (recipientUserIds.length > 0) {
-          const notifPayload = recipientUserIds.map((uid) => ({
-            receiver_user_id: uid,
-            message: `🚨 [Urgent Alert] ${input.title.trim()}: ${input.content.trim().slice(0, 100)}${input.content.length > 100 ? '...' : ''}`,
-            notification_date: new Date().toISOString(),
-            status: 'unread',
-          }));
-          const { error: notifErr } = await service.from('notifications').insert(notifPayload);
-          if (notifErr) {
-            console.error('[createAnnouncement] Error inserting notifications:', notifErr);
-          }
-        }
-      }
-    } catch (dispatchError) {
-      console.error('[createAnnouncement] Exception during alert notification dispatch:', dispatchError);
+    let usersQuery = service.from('users').select('user_id, role').eq('account_status', 'active');
+    if (targetRole !== 'All') {
+      usersQuery = usersQuery.eq('role', targetRole);
     }
+    const { data: targetUsers, error: usersErr } = await usersQuery;
+    if (usersErr) {
+      console.error('[createAnnouncement] Error fetching target users:', usersErr);
+    }
+
+    if (targetUsers && targetUsers.length > 0) {
+      let recipientUserIds: string[] = [];
+
+      if (targetDept === 'All') {
+        recipientUserIds = targetUsers.map((u) => u.user_id);
+      } else {
+        // Cross-reference department from students (course) and coordinators (department)
+        const [{ data: students }, { data: coordinators }] = await Promise.all([
+          service.from('students').select('user_id, course'),
+          service.from('coordinators').select('user_id, department'),
+        ]);
+
+        const deptUserIds = new Set<string>();
+        (students ?? []).forEach((s) => {
+          if (targetDept === 'ICS' && isICSCourse(s.course)) deptUserIds.add(s.user_id);
+          if (targetDept === 'IBE' && isIBECourse(s.course)) deptUserIds.add(s.user_id);
+        });
+        (coordinators ?? []).forEach((c) => {
+          if (c.department === targetDept) deptUserIds.add(c.user_id);
+        });
+
+        recipientUserIds = targetUsers
+          .filter((u) => u.role === 'Admin' || deptUserIds.has(u.user_id))
+          .map((u) => u.user_id);
+      }
+
+      if (recipientUserIds.length > 0) {
+        const notifPayload = recipientUserIds.map((uid) => ({
+          receiver_user_id: uid,
+          message: `${prefix} ${input.title.trim()}: ${input.content.trim().slice(0, 100)}${input.content.length > 100 ? '...' : ''}`,
+          notification_date: new Date().toISOString(),
+          status: 'unread',
+        }));
+        const { error: notifErr } = await service.from('notifications').insert(notifPayload);
+        if (notifErr) {
+          console.error('[createAnnouncement] Error inserting notifications:', notifErr);
+        }
+      }
+    }
+  } catch (dispatchError) {
+    console.error('[createAnnouncement] Exception during notification dispatch:', dispatchError);
   }
 
   return { data: data as DbAnnouncement, error: null };
