@@ -10,6 +10,7 @@
  * consumption negligible (<90KB per photo) and uploads instantaneous.
  */
 
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import { decodeBase64ToArrayBuffer } from './base64';
 import { optimizeSelfie, optimizeDocumentImage } from './imageOptimizer';
@@ -17,6 +18,47 @@ import type { AppResult } from '@ojt/shared';
 
 // Environment variable for Firebase Storage (Optional: defaults to Supabase)
 const FIREBASE_BUCKET = process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET;
+
+function resolveMimeType(fileName: string, providedMime?: string): string {
+  if (providedMime && providedMime !== 'application/octet-stream' && providedMime.includes('/')) {
+    return providedMime;
+  }
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf':
+      return 'application/pdf';
+    case 'doc':
+      return 'application/msword';
+    case 'docx':
+      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    default:
+      return providedMime || 'application/pdf';
+  }
+}
+
+async function convertSourceToArrayBuffer(source: string): Promise<ArrayBuffer> {
+  // Remote HTTP/HTTPS URL
+  if (source.startsWith('http://') || source.startsWith('https://')) {
+    const response = await fetch(source);
+    return await response.arrayBuffer();
+  }
+
+  // Local file URI or Android content URI
+  if (source.startsWith('file://') || source.startsWith('content://')) {
+    const base64 = await FileSystem.readAsStringAsync(source, {
+      encoding: 'base64',
+    });
+    return decodeBase64ToArrayBuffer(base64);
+  }
+
+  // Raw base64 string or data URI
+  return decodeBase64ToArrayBuffer(source);
+}
 
 /**
  * Upload an Attendance Selfie with on-device compression
@@ -32,19 +74,12 @@ export async function uploadSelfieToStorage(
     let finalPayload = imagePayload;
 
     // If source is a local file URI, compress it first
-    if (imagePayload.startsWith('file://')) {
+    if (imagePayload.startsWith('file://') || imagePayload.startsWith('content://')) {
       const optimized = await optimizeSelfie(imagePayload, { includeBase64: true });
       finalPayload = optimized.base64 || optimized.uri;
     }
 
-    let arrayBuffer: ArrayBuffer;
-    if (finalPayload.startsWith('file://') || finalPayload.startsWith('http')) {
-      const response = await fetch(finalPayload);
-      const blob = await response.blob();
-      arrayBuffer = await blob.arrayBuffer();
-    } else {
-      arrayBuffer = decodeBase64ToArrayBuffer(finalPayload);
-    }
+    const arrayBuffer = await convertSourceToArrayBuffer(finalPayload);
 
     // 1. If Firebase Storage Bucket is configured, upload via Firebase REST API
     if (FIREBASE_BUCKET) {
@@ -98,9 +133,10 @@ export async function uploadReportToStorage(
 ): Promise<AppResult<{ path: string; url?: string }>> {
   try {
     let sourceUri = fileUri;
+    const resolvedMime = resolveMimeType(fileName, mimeType);
 
     // If document is an image (scanned report), compress it on-device first
-    if (mimeType.startsWith('image/')) {
+    if (resolvedMime.startsWith('image/')) {
       const optimized = await optimizeDocumentImage(fileUri);
       sourceUri = optimized.uri;
     }
@@ -108,9 +144,7 @@ export async function uploadReportToStorage(
     const cleanFileName = `${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     const storagePath = `${studentId}/${cleanFileName}`;
 
-    const response = await fetch(sourceUri);
-    const blob = await response.blob();
-    const arrayBuffer = await blob.arrayBuffer();
+    const arrayBuffer = await convertSourceToArrayBuffer(sourceUri);
 
     // 1. If Firebase Storage Bucket is configured, upload via Firebase REST API
     if (FIREBASE_BUCKET) {
@@ -121,7 +155,7 @@ export async function uploadReportToStorage(
 
       const fbRes = await fetch(uploadUrl, {
         method: 'POST',
-        headers: { 'Content-Type': mimeType },
+        headers: { 'Content-Type': resolvedMime },
         body: arrayBuffer,
       });
 
@@ -137,7 +171,7 @@ export async function uploadReportToStorage(
     // 2. Default: Supabase Storage
     const { data, error } = await supabase.storage
       .from('private-documents')
-      .upload(storagePath, arrayBuffer, { contentType: mimeType, upsert: false });
+      .upload(storagePath, arrayBuffer, { contentType: resolvedMime, upsert: false });
 
     if (error) {
       console.error('[uploadReportToStorage] Storage upload error:', error);

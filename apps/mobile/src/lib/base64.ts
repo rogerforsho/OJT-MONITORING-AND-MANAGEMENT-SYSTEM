@@ -3,7 +3,7 @@
  * Guarantees zero runtime crashes when uploading binary image buffers to Supabase Storage.
  */
 export function decodeBase64ToArrayBuffer(base64String: string): ArrayBuffer {
-  const clean = base64String.replace(/^data:image\/[a-z]+;base64,/, '').trim();
+  const clean = base64String.replace(/^data:[^;]+;base64,/, '').trim();
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   const lookup = new Uint8Array(256);
   for (let i = 0; i < chars.length; i++) {

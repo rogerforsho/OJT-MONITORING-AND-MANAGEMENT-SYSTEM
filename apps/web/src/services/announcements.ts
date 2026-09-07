@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -28,6 +28,7 @@ export interface AnnouncementInput {
   content: string;
   target_role?: string;
   target_department?: string;
+  dispatch_alert?: boolean;
 }
 
 export async function listAnnouncements(): Promise<AppResult<DbAnnouncement[]>> {
@@ -76,24 +77,29 @@ export async function createAnnouncement(input: AnnouncementInput): Promise<AppR
   if (error)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to publish announcement.' } };
 
-  // Fan out individual notification alerts to active recipients
-  try {
-    let usersQuery = service.from('users').select('user_id, role').eq('account_status', 'active');
-    if (targetRole !== 'All') {
-      usersQuery = usersQuery.eq('role', targetRole);
+  // Only fan out individual notification alerts if explicitly requested as an urgent alert
+  if (input.dispatch_alert) {
+    try {
+      let usersQuery = service.from('users').select('user_id, role, department_or_program').eq('account_status', 'active');
+      if (targetRole !== 'All') {
+        usersQuery = usersQuery.eq('role', targetRole);
+      }
+      if (targetDept !== 'All') {
+        usersQuery = usersQuery.eq('department_or_program', targetDept);
+      }
+      const { data: targetUsers } = await usersQuery;
+      if (targetUsers && targetUsers.length > 0) {
+        const notifPayload = targetUsers.map((u) => ({
+          receiver_user_id: u.user_id,
+          message: `🚨 [Urgent Alert] ${input.title.trim()}: ${input.content.trim().slice(0, 100)}${input.content.length > 100 ? '...' : ''}`,
+          notification_date: new Date().toISOString(),
+          status: 'unread',
+        }));
+        await service.from('notifications').insert(notifPayload);
+      }
+    } catch {
+      // Non-blocking notification dispatch
     }
-    const { data: targetUsers } = await usersQuery;
-    if (targetUsers && targetUsers.length > 0) {
-      const notifPayload = targetUsers.map((u) => ({
-        receiver_user_id: u.user_id,
-        message: `📢 [Announcement] ${input.title.trim()}: ${input.content.trim().slice(0, 100)}${input.content.length > 100 ? '...' : ''}`,
-        notification_date: new Date().toISOString(),
-        status: 'unread',
-      }));
-      await service.from('notifications').insert(notifPayload);
-    }
-  } catch {
-    // Non-blocking notification dispatch
   }
 
   return { data: data as DbAnnouncement, error: null };
