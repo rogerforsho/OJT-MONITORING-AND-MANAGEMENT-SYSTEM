@@ -16,6 +16,7 @@
     "uuid": "^11.1.1"
   },
   "scripts": {
+    "build": "npm run build:web",
     "dev:web": "npm run dev -w apps/web",
     "dev:mobile": "npm run dev -w apps/mobile",
     "dev:desktop": "concurrently -k \"npm run dev -w apps/web\" \"wait-on http://localhost:3000 && electron apps/desktop\"",
