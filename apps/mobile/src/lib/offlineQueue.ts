@@ -1,4 +1,4 @@
-﻿import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as SecureStore from 'expo-secure-store';
 
 const QUEUE_KEY = 'cdm_ojt_offline_attendance_queue';
@@ -13,6 +13,11 @@ export interface OfflineQueueItem {
   captured_at: string;
   attendance_date: string;
   created_at: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  distance_meters?: number | null;
+  location_status?: 'verified' | 'flagged_out_of_bounds' | 'location_unavailable' | 'not_applicable';
+  flag_reason?: string | null;
 }
 
 /**

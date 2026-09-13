@@ -4,3 +4,4 @@ export * from './types/errors';
 export * from './types/auth';
 export * from './types/attendance';
 export * from './validation';
+export * from './geo';

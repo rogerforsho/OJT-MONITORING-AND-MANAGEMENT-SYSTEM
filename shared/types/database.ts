@@ -1,4 +1,4 @@
-﻿import type { UserRole, AccountStatus } from './roles';
+import type { UserRole, AccountStatus } from './roles';
 
 export type { UserRole, AccountStatus };
 
@@ -61,6 +61,10 @@ export interface DbCompany {
   contact_email: string;
   contact_number: string;
   status: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  geofence_radius_meters?: number;
+  geofence_enabled?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -80,6 +84,7 @@ export type QrValidationStatus = 'valid' | 'invalid' | 'expired';
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
 export type LateStatus = 'on_time' | 'late' | 'unknown';
 export type SyncStatus = 'synced' | 'pending_sync' | 'conflict';
+export type LocationStatus = 'verified' | 'flagged_out_of_bounds' | 'location_unavailable' | 'not_applicable';
 
 export interface DbAttendance {
   attendance_id: string;
@@ -94,6 +99,17 @@ export interface DbAttendance {
   verification_status: VerificationStatus;
   late_status: LateStatus;
   sync_status: SyncStatus;
+  time_in_lat?: number | null;
+  time_in_lng?: number | null;
+  time_in_distance_meters?: number | null;
+  time_in_location_status?: LocationStatus;
+  time_in_flag_reason?: string | null;
+  time_out_lat?: number | null;
+  time_out_lng?: number | null;
+  time_out_distance_meters?: number | null;
+  time_out_location_status?: LocationStatus;
+  time_out_flag_reason?: string | null;
+  synced_at?: string | null;
   created_at: string;
   updated_at: string;
 }

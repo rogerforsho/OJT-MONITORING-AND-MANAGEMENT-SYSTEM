@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import { listAttendanceForSupervisor, verifyAttendance, getSelfieUrl, batchVerifyAttendance, type AttendanceWithStudent } from '@/src/services/attendance';
@@ -142,6 +142,7 @@ export default function SupervisorAttendancePage() {
                   <th className="px-5 py-3.5 font-medium text-slate-600">Date</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Time In</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Time Out</th>
+                  <th className="px-5 py-3.5 font-medium text-slate-600">GPS Location</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Schedule</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Status</th>
                   <th className="px-5 py-3.5 text-right font-medium text-slate-600">Action</th>
@@ -171,6 +172,19 @@ export default function SupervisorAttendancePage() {
                       </td>
                       <td className="px-5 py-4 text-slate-700 font-mono text-xs">
                         {r.time_out ? new Date(r.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                      </td>
+                      <td className="px-5 py-4">
+                        {r.time_in_location_status === 'flagged_out_of_bounds' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                            ⚠️ Out-of-Bounds ({r.time_in_distance_meters ?? '?'}m)
+                          </span>
+                        ) : r.time_in_location_status === 'verified' && r.time_in_distance_meters != null ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            📍 Verified ({r.time_in_distance_meters}m)
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <Badge status={r.late_status} />
@@ -216,11 +230,62 @@ export default function SupervisorAttendancePage() {
                 <div>
                   <p className="text-xs font-bold text-amber-900">Recorded Offline & Synchronized</p>
                   <p className="text-xs text-amber-700 mt-0.5">
-                    This attendance record was captured on the trainee&apos;s device offline and automatically synchronized once internet was restored. Please verify physical presence.
+                    This attendance record was captured on the trainee&apos;s device offline and automatically synchronized once internet was restored.
+                    {selected.synced_at && ` (Cloud sync at ${new Date(selected.synced_at).toLocaleString()})`}
                   </p>
                 </div>
               </div>
             )}
+
+            {/* GPS Location Inspection */}
+            {selected.time_in_location_status === 'flagged_out_of_bounds' ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+                <span className="text-base">⚠️</span>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-amber-900">
+                    Out-of-Bounds Punch Detected ({selected.time_in_distance_meters ?? '?'}m from workplace)
+                  </p>
+                  {selected.time_in_flag_reason ? (
+                    <p className="text-xs text-amber-800 mt-1 italic">
+                      Student Reason: &ldquo;{selected.time_in_flag_reason}&rdquo;
+                    </p>
+                  ) : (
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      This punch was recorded outside the company perimeter. Please verify trainee whereabouts.
+                    </p>
+                  )}
+                  {selected.time_in_lat != null && selected.time_in_lng != null && (
+                    <a
+                      href={`https://www.openstreetmap.org/?mlat=${selected.time_in_lat}&mlon=${selected.time_in_lng}#map=18/${selected.time_in_lat}/${selected.time_in_lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block mt-1.5 text-xs text-emerald-800 underline font-semibold"
+                    >
+                      View Coordinates on OpenStreetMap ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : selected.time_in_location_status === 'verified' && selected.time_in_distance_meters != null ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-900">
+                <div className="flex items-center gap-2">
+                  <span>📍</span>
+                  <span className="font-semibold">
+                    GPS Verified: Recorded {selected.time_in_distance_meters}m from assigned workplace.
+                  </span>
+                </div>
+                {selected.time_in_lat != null && selected.time_in_lng != null && (
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${selected.time_in_lat}&mlon=${selected.time_in_lng}#map=18/${selected.time_in_lat}/${selected.time_in_lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-emerald-700 underline font-medium"
+                  >
+                    Map Pin ↗
+                  </a>
+                )}
+              </div>
+            ) : null}
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">

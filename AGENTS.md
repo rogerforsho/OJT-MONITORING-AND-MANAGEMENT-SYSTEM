@@ -5,7 +5,7 @@
 ### Target Scope & Boundary
 - **Institution:** Colegio de Montalban
 - **Target Beneficiaries:** 4th-Year students under **Institute of Computing Studies (ICS)** and **Institute of Business and Entrepreneurship (IBE)**.
-- **Explicit Exclusions:** No 1st-3rd year students, no outside institutions, no job application/recruitment systems, no MOA transactions, no payroll, no general HR, and **no offline functionality** (requires stable internet connection).
+- **Explicit Exclusions:** No 1st-3rd year students, no outside institutions, no job application/recruitment systems, no MOA transactions, no payroll, and no general HR. (Offline functionality is limited specifically to mobile attendance logging with GPS satellite verification and automatic sync upon internet reconnection; all other modules require an active internet connection).
 
 ### Approved Technology Stack
 - **Web App:** Next.js (App Router) + TypeScript + Tailwind CSS
@@ -14,7 +14,7 @@
 - **Do not replace or invent additional frameworks/technologies without explicit instructions.**
 
 ### 6 Approved Roles
-1. **Student:** Online attendance, selfie submission, hour tracking, digital report submission, notifications.
+1. **Student:** Online and offline attendance logging with GPS verification, selfie submission, hour tracking, digital report submission, notifications.
 2. **OJT Coordinator:** Student approval, company & supervisor assignment, attendance validation, report grading, progress monitoring.
 3. **Company Supervisor:** Trainee attendance verification, selfie evidence review, feedback, performance evaluations.
 4. **Program Head:** Department-level progress monitoring and summary reports (ICS / IBE).

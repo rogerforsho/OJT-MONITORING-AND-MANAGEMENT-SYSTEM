@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ActivityIndicator,
-  ScrollView, StyleSheet, FlatList, RefreshControl,
+  ScrollView, StyleSheet, FlatList, RefreshControl, TextInput, Modal,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { recordTimeIn, recordTimeOut, getTodayAttendance, fetchOwnAttendance } from '../../services/attendance';
+import { recordTimeIn, recordTimeOut, getTodayAttendance, fetchOwnAttendance, getActiveAssignment, type LocationPayload } from '../../services/attendance';
+import { getCurrentCoordinates } from '../../services/location';
 import { syncPendingOfflineAttendance, isNetworkAvailable } from '../../lib/syncEngine';
 import { getOfflineQueue } from '../../lib/offlineQueue';
 import { optimizeSelfie } from '../../lib/imageOptimizer';
+import { isWithinGeofence } from '@ojt/shared';
 import NetworkToast from '../../components/NetworkToast';
 import type { DbAttendance } from '@ojt/shared';
 
@@ -33,6 +35,19 @@ export default function AttendanceScreen() {
   const [success, setSuccess] = useState('');
   const [mode, setMode] = useState<'time_in' | 'time_out'>('time_in');
   const cameraRef = useRef<CameraView>(null);
+
+  // GPS verification state
+  const [checkingLocation, setCheckingLocation] = useState(false);
+  const [pendingLocationData, setPendingLocationData] = useState<LocationPayload | null>(null);
+  const [outOfBoundsModal, setOutOfBoundsModal] = useState(false);
+  const [flagReasonInput, setFlagReasonInput] = useState('');
+  const [tempLocationData, setTempLocationData] = useState<{
+    coords: { latitude: number; longitude: number };
+    distanceMeters: number;
+    companyName: string;
+    radiusMeters: number;
+    satelliteTimestamp?: string;
+  } | null>(null);
 
   useEffect(() => {
     loadState();
@@ -99,17 +114,97 @@ export default function AttendanceScreen() {
     }
   }
 
-  function startTimeIn() {
+  async function startAttendance(targetMode: 'time_in' | 'time_out') {
     setError('');
     setSuccess('');
-    setMode('time_in');
-    setStep('selfie');
+    setCheckingLocation(true);
+    setMode(targetMode);
+
+    try {
+      const assignment = await getActiveAssignment();
+      const locRes = await getCurrentCoordinates();
+
+      if (locRes.status === 'services_disabled') {
+        setError('Device GPS is turned off. Please turn on Location services in device settings to clock in.');
+        setCheckingLocation(false);
+        return;
+      }
+
+      if (locRes.status === 'permission_denied') {
+        setError('Location permission is required to verify workplace attendance. Please allow location access in your device settings.');
+        setCheckingLocation(false);
+        return;
+      }
+
+      if (locRes.status === 'unavailable' || !locRes.coords) {
+        setError(locRes.errorMessage || 'Could not acquire GPS satellite fix. Please move near a window or outdoors and retry.');
+        setCheckingLocation(false);
+        return;
+      }
+
+      // Check geofence if company has coordinates configured & enabled
+      let locationStatus: 'verified' | 'flagged_out_of_bounds' | 'location_unavailable' | 'not_applicable' = 'verified';
+      let distanceMeters: number | null = null;
+
+      if (
+        assignment &&
+        assignment.geofence_enabled &&
+        assignment.latitude != null &&
+        assignment.longitude != null
+      ) {
+        const check = isWithinGeofence(
+          locRes.coords.latitude,
+          locRes.coords.longitude,
+          assignment.latitude,
+          assignment.longitude,
+          assignment.geofence_radius_meters || 150
+        );
+        distanceMeters = check.distanceMeters;
+
+        if (!check.isWithin) {
+          // Out of Bounds flag triggered
+          setTempLocationData({
+            coords: locRes.coords,
+            distanceMeters: check.distanceMeters,
+            companyName: assignment.company_name,
+            radiusMeters: assignment.geofence_radius_meters || 150,
+            satelliteTimestamp: locRes.satelliteTimestamp,
+          });
+          setFlagReasonInput('');
+          setOutOfBoundsModal(true);
+          setCheckingLocation(false);
+          return;
+        }
+      }
+
+      // Within perimeter or geofence not enabled
+      setPendingLocationData({
+        latitude: locRes.coords.latitude,
+        longitude: locRes.coords.longitude,
+        distanceMeters,
+        locationStatus,
+        satelliteTimestamp: locRes.satelliteTimestamp,
+      });
+
+      setStep('selfie');
+    } catch (err: any) {
+      setError(err?.message || 'Error acquiring GPS location.');
+    } finally {
+      setCheckingLocation(false);
+    }
   }
 
-  function startTimeOut() {
-    setError('');
-    setSuccess('');
-    setMode('time_out');
+  function handleConfirmOutOfBounds() {
+    if (!tempLocationData) return;
+    setPendingLocationData({
+      latitude: tempLocationData.coords.latitude,
+      longitude: tempLocationData.coords.longitude,
+      distanceMeters: tempLocationData.distanceMeters,
+      locationStatus: 'flagged_out_of_bounds',
+      flagReason: flagReasonInput.trim() || 'Recorded outside designated perimeter',
+      satelliteTimestamp: tempLocationData.satelliteTimestamp,
+    });
+    setOutOfBoundsModal(false);
     setStep('selfie');
   }
 
@@ -132,14 +227,14 @@ export default function AttendanceScreen() {
 
     let result;
     if (mode === 'time_in') {
-      result = await recordTimeIn(imagePayload);
+      result = await recordTimeIn(imagePayload, pendingLocationData || undefined);
     } else {
       if (!todayRecord?.attendance_id) {
         setError('No Time In record found for today.');
         setStep('idle');
         return;
       }
-      result = await recordTimeOut(todayRecord.attendance_id, imagePayload);
+      result = await recordTimeOut(todayRecord.attendance_id, imagePayload, pendingLocationData || undefined);
     }
 
     if (result.error) {
@@ -368,6 +463,21 @@ export default function AttendanceScreen() {
                   </Text>
                 </View>
                 <View style={s.statusRow}>
+                  <Text style={s.statusLabel}>GPS Verification</Text>
+                  <Text style={[
+                    s.statusValue,
+                    todayRecord.time_in_location_status === 'flagged_out_of_bounds'
+                      ? { color: '#b45309' }
+                      : { color: '#0A3D24' }
+                  ]}>
+                    {todayRecord.time_in_location_status === 'flagged_out_of_bounds'
+                      ? `⚠️ Out-of-Bounds (${todayRecord.time_in_distance_meters ?? '?'}m)`
+                      : todayRecord.time_in_distance_meters != null
+                      ? `📍 Verified (${todayRecord.time_in_distance_meters}m)`
+                      : 'Verified'}
+                  </Text>
+                </View>
+                <View style={s.statusRow}>
                   <Text style={s.statusLabel}>Verification Status</Text>
                   <View style={[
                     s.badge,
@@ -395,25 +505,55 @@ export default function AttendanceScreen() {
           {/* Action Buttons */}
           <View style={s.actionSection}>
             {!todayRecord && (
-              <TouchableOpacity onPress={startTimeIn} style={s.btnTimeIn} activeOpacity={0.85}>
+              <TouchableOpacity
+                onPress={() => startAttendance('time_in')}
+                disabled={checkingLocation}
+                style={[s.btnTimeIn, checkingLocation && { opacity: 0.7 }]}
+                activeOpacity={0.85}
+              >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Ionicons name="camera" size={22} color="#FFCC00" />
-                  <Text style={s.btnTimeInText}>Time In</Text>
+                  {checkingLocation && mode === 'time_in' ? (
+                    <ActivityIndicator size="small" color="#FFCC00" />
+                  ) : (
+                    <Ionicons name="location" size={22} color="#FFCC00" />
+                  )}
+                  <Text style={s.btnTimeInText}>
+                    {checkingLocation && mode === 'time_in' ? 'Acquiring GPS Fix...' : 'Time In'}
+                  </Text>
                 </View>
                 <Text style={s.btnSubtext}>
-                  {isOffline ? 'Will record offline selfie evidence' : 'Front-camera selfie verification required'}
+                  {checkingLocation && mode === 'time_in'
+                    ? 'Connecting to satellites...'
+                    : isOffline
+                    ? 'GPS lock & offline selfie verification'
+                    : 'GPS location & front-camera selfie required'}
                 </Text>
               </TouchableOpacity>
             )}
 
             {todayRecord && !todayRecord.time_out && (
-              <TouchableOpacity onPress={startTimeOut} style={s.btnTimeOut} activeOpacity={0.85}>
+              <TouchableOpacity
+                onPress={() => startAttendance('time_out')}
+                disabled={checkingLocation}
+                style={[s.btnTimeOut, checkingLocation && { opacity: 0.7 }]}
+                activeOpacity={0.85}
+              >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Ionicons name="log-out-outline" size={22} color="#0A3D24" />
-                  <Text style={s.btnTimeOutText}>Time Out</Text>
+                  {checkingLocation && mode === 'time_out' ? (
+                    <ActivityIndicator size="small" color="#0A3D24" />
+                  ) : (
+                    <Ionicons name="log-out-outline" size={22} color="#0A3D24" />
+                  )}
+                  <Text style={s.btnTimeOutText}>
+                    {checkingLocation && mode === 'time_out' ? 'Acquiring GPS Fix...' : 'Time Out'}
+                  </Text>
                 </View>
                 <Text style={s.btnSubtextMuted}>
-                  {isOffline ? 'Will record offline selfie evidence' : 'Front-camera selfie verification required'}
+                  {checkingLocation && mode === 'time_out'
+                    ? 'Connecting to satellites...'
+                    : isOffline
+                    ? 'GPS lock & offline selfie verification'
+                    : 'GPS location & front-camera selfie required'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -455,18 +595,29 @@ export default function AttendanceScreen() {
                 <Text style={s.dateText}>
                   {new Date(item.attendance_date).toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                 </Text>
-                <View style={[
-                  s.badge,
-                  item.verification_status === 'verified' ? s.badgeGreen :
-                  item.verification_status === 'rejected' ? s.badgeRed : s.badgeAmber
-                ]}>
-                  <Text style={[
-                    s.badgeText,
-                    item.verification_status === 'verified' ? s.badgeTextGreen :
-                    item.verification_status === 'rejected' ? s.badgeTextRed : s.badgeTextAmber
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {item.time_in_location_status === 'flagged_out_of_bounds' ? (
+                    <View style={[s.badge, { backgroundColor: '#fef3c7' }]}>
+                      <Text style={[s.badgeText, { color: '#b45309', fontSize: 10 }]}>⚠️ Out-of-Bounds</Text>
+                    </View>
+                  ) : item.time_in_distance_meters != null ? (
+                    <View style={[s.badge, { backgroundColor: '#ecfdf5' }]}>
+                      <Text style={[s.badgeText, { color: '#047857', fontSize: 10 }]}>📍 {item.time_in_distance_meters}m</Text>
+                    </View>
+                  ) : null}
+                  <View style={[
+                    s.badge,
+                    item.verification_status === 'verified' ? s.badgeGreen :
+                    item.verification_status === 'rejected' ? s.badgeRed : s.badgeAmber
                   ]}>
-                    {item.verification_status}
-                  </Text>
+                    <Text style={[
+                      s.badgeText,
+                      item.verification_status === 'verified' ? s.badgeTextGreen :
+                      item.verification_status === 'rejected' ? s.badgeTextRed : s.badgeTextAmber
+                    ]}>
+                      {item.verification_status}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
@@ -496,6 +647,53 @@ export default function AttendanceScreen() {
           )}
         />
       )}
+
+      {/* Out-of-Bounds Reason Modal */}
+      <Modal
+        visible={outOfBoundsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOutOfBoundsModal(false)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <View style={s.modalHeaderRow}>
+              <Ionicons name="warning" size={26} color="#b45309" />
+              <Text style={s.modalTitle}>Perimeter Notice</Text>
+            </View>
+            <Text style={s.modalDesc}>
+              You are currently <Text style={{ fontWeight: 'bold', color: '#062415' }}>{tempLocationData?.distanceMeters}m</Text> away from {tempLocationData?.companyName} (assigned radius: {tempLocationData?.radiusMeters}m).
+            </Text>
+            <Text style={s.modalPrompt}>
+              If you are on an authorized field errand, working remotely, or experiencing indoor GPS drift, provide a brief reason note:
+            </Text>
+            <TextInput
+              style={s.modalInput}
+              placeholder="e.g. Sent on errand / Indoor GPS drift / WFH"
+              placeholderTextColor="#94a3b8"
+              value={flagReasonInput}
+              onChangeText={setFlagReasonInput}
+              multiline
+            />
+            <View style={s.modalBtnRow}>
+              <TouchableOpacity
+                style={s.modalCancelBtn}
+                onPress={() => setOutOfBoundsModal(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={s.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.modalConfirmBtn}
+                onPress={handleConfirmOutOfBounds}
+                activeOpacity={0.8}
+              >
+                <Text style={s.modalConfirmText}>Proceed to Selfie</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <NetworkToast isOffline={isOffline} />
     </View>
@@ -747,4 +945,86 @@ const s = StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingVertical: 48 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#334155' },
   emptySub: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4, paddingHorizontal: 20 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 22,
+    padding: 22,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#062415',
+  },
+  modalDesc: {
+    fontSize: 14,
+    color: '#334155',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  modalPrompt: {
+    fontSize: 12,
+    color: '#64748b',
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  modalInput: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 13,
+    color: '#0f172a',
+    minHeight: 70,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  modalConfirmBtn: {
+    flex: 1.5,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: '#0A3D24',
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFCC00',
+  },
 });

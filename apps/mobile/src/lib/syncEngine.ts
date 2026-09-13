@@ -1,4 +1,4 @@
-﻿import * as Network from 'expo-network';
+import * as Network from 'expo-network';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import { decodeBase64ToArrayBuffer } from './base64';
@@ -84,6 +84,12 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
             verification_status: 'pending',
             late_status: 'unknown',
             sync_status: 'synced',
+            time_in_lat: item.latitude ?? null,
+            time_in_lng: item.longitude ?? null,
+            time_in_distance_meters: item.distance_meters ?? null,
+            time_in_location_status: item.location_status ?? 'verified',
+            time_in_flag_reason: item.flag_reason ?? null,
+            synced_at: new Date().toISOString(),
           })
           .select('attendance_id')
           .single();
@@ -108,6 +114,12 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
             time_out: item.captured_at,
             time_out_selfie_path: storagePath,
             sync_status: 'synced',
+            time_out_lat: item.latitude ?? null,
+            time_out_lng: item.longitude ?? null,
+            time_out_distance_meters: item.distance_meters ?? null,
+            time_out_location_status: item.location_status ?? 'verified',
+            time_out_flag_reason: item.flag_reason ?? null,
+            synced_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           });
 

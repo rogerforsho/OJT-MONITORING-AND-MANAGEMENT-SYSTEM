@@ -37,10 +37,97 @@ async function determineLateStatus(
   }
 }
 
+import * as SecureStore from 'expo-secure-store';
+
+const CACHED_ASSIGNMENT_KEY = 'cdm_ojt_cached_assignment';
+
+export interface CachedCompanyAssignment {
+  assignment_id: string;
+  company_id: string;
+  company_name: string;
+  latitude: number | null;
+  longitude: number | null;
+  geofence_radius_meters: number;
+  geofence_enabled: boolean;
+}
+
+export interface LocationPayload {
+  latitude?: number | null;
+  longitude?: number | null;
+  distanceMeters?: number | null;
+  locationStatus?: 'verified' | 'flagged_out_of_bounds' | 'location_unavailable' | 'not_applicable';
+  flagReason?: string | null;
+  satelliteTimestamp?: string | null;
+}
+
+export async function getActiveAssignment(): Promise<CachedCompanyAssignment | null> {
+  try {
+    const online = await isNetworkAvailable();
+    if (online) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: student } = await supabase
+          .from('students')
+          .select('student_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (student) {
+          const { data: assignment } = await supabase
+            .from('student_assignments')
+            .select(`
+              assignment_id,
+              company_id,
+              companies (
+                company_name,
+                latitude,
+                longitude,
+                geofence_radius_meters,
+                geofence_enabled
+              )
+            `)
+            .eq('student_id', student.student_id)
+            .eq('assignment_status', 'active')
+            .maybeSingle();
+
+          if (assignment && assignment.companies) {
+            const comp = assignment.companies as any;
+            const result: CachedCompanyAssignment = {
+              assignment_id: assignment.assignment_id,
+              company_id: assignment.company_id,
+              company_name: comp.company_name,
+              latitude: comp.latitude ?? null,
+              longitude: comp.longitude ?? null,
+              geofence_radius_meters: comp.geofence_radius_meters ?? 150,
+              geofence_enabled: comp.geofence_enabled ?? false,
+            };
+            await SecureStore.setItemAsync(CACHED_ASSIGNMENT_KEY, JSON.stringify(result));
+            return result;
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore network errors and try cache
+  }
+
+  // Fallback to locally cached assignment
+  try {
+    const cached = await SecureStore.getItemAsync(CACHED_ASSIGNMENT_KEY);
+    if (cached) {
+      return JSON.parse(cached) as CachedCompanyAssignment;
+    }
+  } catch {
+    // Ignore cache errors
+  }
+  return null;
+}
+
 // ─── Time In ──────────────────────────────────────────────────────────────────
 
 export async function recordTimeIn(
-  selfie_uri: string
+  selfie_uri: string,
+  locationData?: LocationPayload
 ): Promise<AppResult<{ attendance_id: string; isOffline?: boolean }>> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -57,13 +144,7 @@ export async function recordTimeIn(
     return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
   }
 
-  const { data: assignment } = await supabase
-    .from('student_assignments')
-    .select('assignment_id, company_id')
-    .eq('student_id', student.student_id)
-    .eq('assignment_status', 'active')
-    .maybeSingle();
-
+  const assignment = await getActiveAssignment();
   if (!assignment) {
     return { data: null, error: { code: 'NOT_FOUND', message: 'No active company assignment found. Please contact your coordinator.' } };
   }
@@ -77,7 +158,7 @@ export async function recordTimeIn(
   }
 
   const online = await isNetworkAvailable();
-  const capturedAt = new Date().toISOString();
+  const capturedAt = locationData?.satelliteTimestamp || new Date().toISOString();
 
   // If OFFLINE: queue locally
   if (!online) {
@@ -90,6 +171,11 @@ export async function recordTimeIn(
         local_photo_uri: savedPath,
         captured_at: capturedAt,
         attendance_date: today,
+        latitude: locationData?.latitude ?? null,
+        longitude: locationData?.longitude ?? null,
+        distance_meters: locationData?.distanceMeters ?? null,
+        location_status: locationData?.locationStatus ?? 'verified',
+        flag_reason: locationData?.flagReason ?? null,
       });
       return { data: { attendance_id: 'offline_pending', isOffline: true }, error: null };
     } catch {
@@ -121,6 +207,11 @@ export async function recordTimeIn(
         local_photo_uri: savedPath,
         captured_at: capturedAt,
         attendance_date: today,
+        latitude: locationData?.latitude ?? null,
+        longitude: locationData?.longitude ?? null,
+        distance_meters: locationData?.distanceMeters ?? null,
+        location_status: locationData?.locationStatus ?? 'verified',
+        flag_reason: locationData?.flagReason ?? null,
       });
       return { data: { attendance_id: 'offline_pending', isOffline: true }, error: null };
     } catch {
@@ -141,6 +232,12 @@ export async function recordTimeIn(
       verification_status: 'pending',
       late_status,
       sync_status: 'synced',
+      time_in_lat: locationData?.latitude ?? null,
+      time_in_lng: locationData?.longitude ?? null,
+      time_in_distance_meters: locationData?.distanceMeters ?? null,
+      time_in_location_status: locationData?.locationStatus ?? 'verified',
+      time_in_flag_reason: locationData?.flagReason ?? null,
+      synced_at: new Date().toISOString(),
     })
     .select('attendance_id')
     .single();
@@ -156,7 +253,8 @@ export async function recordTimeIn(
 
 export async function recordTimeOut(
   attendance_id: string,
-  selfie_uri: string
+  selfie_uri: string,
+  locationData?: LocationPayload
 ): Promise<AppResult<{ isOffline?: boolean }>> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -174,7 +272,7 @@ export async function recordTimeOut(
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const capturedAt = new Date().toISOString();
+  const capturedAt = locationData?.satelliteTimestamp || new Date().toISOString();
   const online = await isNetworkAvailable();
 
   // If OFFLINE: queue locally
@@ -189,6 +287,11 @@ export async function recordTimeOut(
         local_photo_uri: savedPath,
         captured_at: capturedAt,
         attendance_date: today,
+        latitude: locationData?.latitude ?? null,
+        longitude: locationData?.longitude ?? null,
+        distance_meters: locationData?.distanceMeters ?? null,
+        location_status: locationData?.locationStatus ?? 'verified',
+        flag_reason: locationData?.flagReason ?? null,
       });
       return { data: { isOffline: true }, error: null };
     } catch {
@@ -223,6 +326,11 @@ export async function recordTimeOut(
         local_photo_uri: savedPath,
         captured_at: capturedAt,
         attendance_date: today,
+        latitude: locationData?.latitude ?? null,
+        longitude: locationData?.longitude ?? null,
+        distance_meters: locationData?.distanceMeters ?? null,
+        location_status: locationData?.locationStatus ?? 'verified',
+        flag_reason: locationData?.flagReason ?? null,
       });
       return { data: { isOffline: true }, error: null };
     } catch {
@@ -235,6 +343,12 @@ export async function recordTimeOut(
     .update({
       time_out: capturedAt,
       time_out_selfie_path: selfieResult.data!.path,
+      time_out_lat: locationData?.latitude ?? null,
+      time_out_lng: locationData?.longitude ?? null,
+      time_out_distance_meters: locationData?.distanceMeters ?? null,
+      time_out_location_status: locationData?.locationStatus ?? 'verified',
+      time_out_flag_reason: locationData?.flagReason ?? null,
+      synced_at: new Date().toISOString(),
       updated_at: capturedAt,
     })
     .eq('attendance_id', attendance_id)

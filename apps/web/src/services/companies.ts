@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { recordAuditEvent } from './audit';
@@ -10,6 +10,10 @@ export interface CompanyInput {
   contact_person: string;
   contact_email: string;
   contact_number: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  geofence_radius_meters?: number;
+  geofence_enabled?: boolean;
 }
 
 export interface CompanyWithSupervisors extends DbCompany {
@@ -23,6 +27,15 @@ function validateCompanyInput(input: CompanyInput): string | null {
   if (!input.contact_person?.trim()) return 'Contact person is required.';
   if (!input.contact_email?.trim()) return 'Contact email is required.';
   if (!input.contact_number?.trim()) return 'Contact number is required.';
+  if (input.latitude != null && (isNaN(input.latitude) || input.latitude < -90 || input.latitude > 90)) {
+    return 'Latitude must be a valid number between -90 and 90.';
+  }
+  if (input.longitude != null && (isNaN(input.longitude) || input.longitude < -180 || input.longitude > 180)) {
+    return 'Longitude must be a valid number between -180 and 180.';
+  }
+  if (input.geofence_radius_meters != null && (input.geofence_radius_meters < 50 || input.geofence_radius_meters > 5000)) {
+    return 'Geofence radius must be between 50 and 5,000 meters.';
+  }
   return null;
 }
 
@@ -96,6 +109,10 @@ export async function createCompany(input: CompanyInput): Promise<AppResult<DbCo
       contact_person: input.contact_person.trim(),
       contact_email: input.contact_email.trim(),
       contact_number: input.contact_number.trim(),
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
+      geofence_radius_meters: input.geofence_radius_meters ?? 150,
+      geofence_enabled: input.geofence_enabled ?? false,
       status: 'active',
     })
     .select()
@@ -108,7 +125,7 @@ export async function createCompany(input: CompanyInput): Promise<AppResult<DbCo
     action: 'COMPANY_CREATED',
     entity_type: 'company',
     entity_id: data.company_id,
-    details: { company_name: data.company_name },
+    details: { company_name: data.company_name, geofence_enabled: data.geofence_enabled },
   });
 
   return { data: data as DbCompany, error: null };
@@ -133,6 +150,10 @@ export async function updateCompany(
       contact_person: input.contact_person.trim(),
       contact_email: input.contact_email.trim(),
       contact_number: input.contact_number.trim(),
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
+      geofence_radius_meters: input.geofence_radius_meters ?? 150,
+      geofence_enabled: input.geofence_enabled ?? false,
       updated_at: new Date().toISOString(),
     })
     .eq('company_id', company_id)
