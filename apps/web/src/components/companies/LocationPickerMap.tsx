@@ -122,6 +122,7 @@ export default function LocationPickerMap({
       map.remove();
       mapInstanceRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update marker and circle position when props change
@@ -173,6 +174,7 @@ export default function LocationPickerMap({
         circleRef.current = null;
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude, radiusMeters]);
 
   // Handle Search via OpenStreetMap Nominatim

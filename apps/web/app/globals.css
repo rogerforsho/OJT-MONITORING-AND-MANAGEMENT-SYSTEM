@@ -2,12 +2,14 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #F4F6F9;
-  --foreground: #0f172a;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --cdm-dark: #062415;
   --cdm-green: #0A3D24;
-  --cdm-gold: #FFCC00;
-  --cdm-accent: #FFCC00;
+  --cdm-green-light: #0d4d2e;
+  --cdm-gold: #D97706;
+  --cdm-gold-accent: #F59E0B;
+  --cdm-gold-light: #FEF3C7;
   --font-geometric: var(--font-geometric-sans), 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: var(--font-geometric-display), 'Outfit', var(--font-geometric-sans), 'Plus Jakarta Sans', system-ui, sans-serif;
 }
@@ -15,39 +17,58 @@
 @theme {
   --color-cdm-dark: #062415;
   --color-cdm-green: #0A3D24;
-  --color-cdm-gold: #FFCC00;
-  --color-cdm-bg: #F4F6F9;
+  --color-cdm-green-light: #0d4d2e;
+  --color-cdm-gold: #D97706;
+  --color-cdm-gold-accent: #F59E0B;
+  --color-cdm-bg: #F8FAFC;
   --font-sans: var(--font-geometric);
   --font-serif: var(--font-display);
 }
 
-html, body {
+html,
+body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-geometric) !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.011em;
 }
 
 /* Custom Geometric Sans Typography Hierarchy */
-h1, h2, h3, h4, h5, h6, .font-serif {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-serif {
   font-family: var(--font-display) !important;
   letter-spacing: -0.025em;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-button, input, select, textarea, .font-sans {
+button,
+input,
+select,
+textarea,
+.font-sans {
   font-family: var(--font-geometric) !important;
   letter-spacing: -0.01em;
 }
 
-/* 200ms Smooth Graceful Fade-In Animation */
+/* Tabular figures for time, dates, numbers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth 180ms Page Fade-In Animation */
 @keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(2px);
+    transform: translateY(3px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -55,21 +76,24 @@ button, input, select, textarea, .font-sans {
 }
 
 .page-fade-in {
-  animation: pageFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom modern scrollbars */
+/* Custom Minimalist Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(10, 61, 36, 0.25);
-  border-radius: 4px;
+  background: rgba(10, 61, 36, 0.18);
+  border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(10, 61, 36, 0.5);
+  background: rgba(10, 61, 36, 0.38);
 }

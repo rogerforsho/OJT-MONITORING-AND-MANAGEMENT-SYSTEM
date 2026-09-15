@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
 import Alert from '@/src/components/ui/Alert';
-import { Eye, EyeOff, ShieldCheck, UserCheck, Trash2, ArrowRight, Clock, Monitor, Download } from '@/src/components/ui/Icons';
+import { Eye, EyeOff, UserCheck, Trash2, ArrowRight, Clock, Monitor } from '@/src/components/ui/Icons';
 import { signIn } from '@/src/services/auth';
 
 const STORAGE_KEY = 'ojt_remembered_profiles';
@@ -200,15 +200,12 @@ function SignInContent() {
 
           {/* Student Trainee Guidance Box */}
           <div className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-            <p className="text-[11px] text-slate-600 mb-1">
-              🎓 <strong>Student Trainee?</strong>
+            <p className="text-[11px] text-slate-700 font-semibold mb-0.5">
+              🎓 Student Trainee?
             </p>
-            <Link
-              href="/auth/reset-password"
-              className="text-xs font-bold text-[#0A3D24] hover:underline"
-            >
-              Reset via Student Number &amp; 6-Digit Code →
-            </Link>
+            <p className="text-[11px] text-slate-500">
+              Student account recovery is conducted exclusively via the <strong>CdM Mobile Application</strong>.
+            </p>
           </div>
 
           <button
@@ -239,15 +236,15 @@ function SignInContent() {
           </div>
         )}
 
-        <div className="mb-4 text-center">
-          <h2 className="text-xl font-black text-[#0A3D24] font-serif">Welcome Back</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Quick sign-in with your saved profile.</p>
+        <div className="mb-5 text-center">
+          <h2 className="text-2xl font-black text-slate-900 font-serif tracking-tight">Welcome Back</h2>
+          <p className="text-xs text-slate-500 mt-1">Quick sign-in with your saved institutional profile.</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-50 to-white border border-slate-200/80 shadow-xs mb-4">
+        <div className="p-4 rounded-2xl bg-slate-50/75 border border-slate-200/80 shadow-2xs mb-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-full bg-[#0A3D24] border-2 border-[#FFCC00] flex items-center justify-center shrink-0 shadow-xs">
-              <span className="font-bold text-[#FFCC00] text-base">
+            <div className="w-11 h-11 rounded-full bg-[#0A3D24] border border-amber-400/30 flex items-center justify-center shrink-0 shadow-2xs">
+              <span className="font-bold text-amber-300 text-sm">
                 {firstName.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -265,7 +262,7 @@ function SignInContent() {
               type="button"
               onClick={(e) => removeProfile(selectedProfile.email, e)}
               title="Remove profile"
-              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -297,7 +294,7 @@ function SignInContent() {
 
           {error && <Alert type="error" message={error} />}
 
-          <Button type="submit" loading={loading} className="w-full mt-1 shadow-md shadow-[#0A3D24]/20 cursor-pointer">
+          <Button type="submit" loading={loading} className="w-full mt-1 shadow-xs cursor-pointer">
             {loading ? loadingText : `Continue as ${firstName}`}
           </Button>
 
@@ -365,7 +362,7 @@ function SignInContent() {
 
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <h2 className="text-xl font-black text-[#0A3D24] font-serif">Sign In</h2>
+          <h2 className="text-2xl font-black text-slate-900 font-serif tracking-tight">Sign In</h2>
         </div>
         <p className="text-xs text-slate-500">
           Enter your institutional credentials to access your portal.
@@ -405,7 +402,7 @@ function SignInContent() {
 
         {error && <Alert type="error" message={error} />}
 
-        <Button type="submit" loading={loading} className="w-full mt-1 shadow-md shadow-[#0A3D24]/20 cursor-pointer">
+        <Button type="submit" loading={loading} className="w-full mt-1 shadow-xs cursor-pointer">
           {loading ? loadingText : 'Sign In'}
         </Button>
 

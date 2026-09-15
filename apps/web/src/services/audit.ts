@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -48,7 +48,7 @@ export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
       details: input.details || {},
       ip_address: input.ip_address || null,
     });
-  } catch (err) {
+  } catch {
     // Non-blocking fallback for resilience
     console.info(`[AUDIT] ${input.action} on ${input.entity_type}:${input.entity_id} by ${input.actor_user_id}`, input.details);
   }

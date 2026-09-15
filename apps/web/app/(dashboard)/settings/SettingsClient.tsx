@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import type { AuthUser } from '@ojt/shared';
 import { changeUserPassword } from '@/src/services/auth';
@@ -12,9 +11,6 @@ import {
   EyeOff,
   CheckCircle2,
   AlertTriangle,
-  ArrowRight,
-  User,
-  Building2,
   Lock,
   Monitor,
   Download,
@@ -90,26 +86,20 @@ export default function SettingsClient({ user, extraDetails }: Props) {
   };
 
   return (
-    <div className="p-6 sm:p-8 space-y-7 max-w-5xl page-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto page-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline mb-1.5 transition-colors cursor-pointer"
-          >
-            ← Back to Dashboard
-          </Link>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-serif">
-            Account & Security Settings
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight font-serif">
+            Account & Security
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-1">
             Manage your personal profile information and update your account password.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-1 rounded-full shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full shadow-2xs">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             Authenticated Session
           </span>
@@ -119,7 +109,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
       {/* Alert Notifications */}
       {msg && (
         <div
-          className={`p-4 rounded-2xl border text-xs font-semibold flex items-center gap-3 shadow-xs ${
+          className={`p-4 rounded-2xl border text-xs font-semibold flex items-center gap-3 shadow-2xs ${
             msg.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
               : 'bg-rose-50 border-rose-200 text-rose-900'
@@ -135,28 +125,28 @@ export default function SettingsClient({ user, extraDetails }: Props) {
       )}
 
       {/* Main Grid: Profile Info & Change Password */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left Column: User Profile Details Card */}
         <div className="lg:col-span-1 space-y-4">
-          <Card className="border-slate-200/80 shadow-xs overflow-hidden">
-            <div className="h-20 bg-gradient-to-r from-[#062415] via-[#0A3D24] to-[#041a0f] p-4 flex items-center justify-end">
-              <div className="w-8 h-8 rounded-lg bg-white/10 p-1 border border-[#FFCC00]/40 flex items-center justify-center">
+          <Card className="border-slate-200/80 shadow-2xs overflow-hidden">
+            <div className="h-16 bg-[#062415] p-4 flex items-center justify-end">
+              <div className="w-7 h-7 rounded-lg bg-white/10 p-1 border border-amber-400/30 flex items-center justify-center">
                 <Image
                   src="/logo.png"
                   alt="CdM Seal"
-                  width={24}
-                  height={24}
+                  width={20}
+                  height={20}
                   className="object-contain"
                 />
               </div>
             </div>
 
             <CardContent className="p-5 pt-0 relative">
-              <div className="-mt-10 mb-3 flex items-end justify-between">
-                <div className="w-16 h-16 rounded-2xl bg-[#0A3D24] text-[#FFCC00] border-4 border-white shadow-md flex items-center justify-center font-bold text-xl">
+              <div className="-mt-8 mb-3 flex items-end justify-between">
+                <div className="w-14 h-14 rounded-2xl bg-[#0A3D24] text-amber-300 border-4 border-white shadow-2xs flex items-center justify-center font-bold text-lg">
                   {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
                 </div>
-                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider border border-[#FFCC00]/30 shadow-2xs">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#0A3D24] text-amber-300 uppercase tracking-wider border border-amber-400/30 shadow-2xs">
                   {user.role}
                 </span>
               </div>

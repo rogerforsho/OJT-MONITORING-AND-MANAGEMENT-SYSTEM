@@ -1,9 +1,9 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { recordAuditEvent } from './audit';
-import type { AppResult, UserRole, AccountStatus, DbUser } from '@ojt/shared';
+import type { AppResult, UserRole, AccountStatus } from '@ojt/shared';
 
 function serviceClient() {
   return createServiceClient(

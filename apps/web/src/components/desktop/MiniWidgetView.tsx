@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { AuthUser } from '@ojt/shared';
 import { useDesktop } from '@/src/hooks/useDesktop';
-import { Clock, Timer, ArrowRight, X } from '@/src/components/ui/Icons';
+import { Clock, ArrowRight } from '@/src/components/ui/Icons';
 
 interface Props {
   user: AuthUser;

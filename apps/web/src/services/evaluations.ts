@@ -51,12 +51,12 @@ export async function listEvaluationsForSupervisor(
   page = 1,
   pageSize = 20
 ): Promise<AppResult<{ evaluations: EvaluationWithStudent[]; total: number }>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getAuthUserWithRole();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-    const service = serviceClient();
-  let { data: supervisor } = await service
+  const service = serviceClient();
+  const { data: supervisor } = await service
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
@@ -85,12 +85,12 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
   if (!input.student_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student is required.' } };
   if (!input.feedback?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Feedback is required.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getAuthUserWithRole();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-    const service = serviceClient();
-  let { data: supervisor } = await service
+  const service = serviceClient();
+  const { data: supervisor } = await service
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)
@@ -183,7 +183,7 @@ export async function listAssignedStudents(): Promise<AppResult<{ student_id: st
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const service = serviceClient();
-  let { data: supervisor } = await service
+  const { data: supervisor } = await service
     .from('supervisors')
     .select('supervisor_id')
     .eq('user_id', user.id)

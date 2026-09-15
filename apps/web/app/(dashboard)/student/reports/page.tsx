@@ -1,10 +1,9 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Button from '@/src/components/ui/Button';
 import Alert from '@/src/components/ui/Alert';
 import Modal from '@/src/components/ui/Modal';
-import Badge from '@/src/components/ui/Badge';
 import {
   listStudentReports, submitReport
 } from '@/src/services/reports';
@@ -165,7 +164,7 @@ export default function StudentReportsPage() {
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <span className="text-4xl mb-3">📄</span>
             <p className="text-sm font-semibold text-slate-600">No reports submitted yet.</p>
-            <p className="text-xs text-slate-400 mt-1">Click "+ Upload Requirement" above to submit your first practicum document.</p>
+            <p className="text-xs text-slate-400 mt-1">Click &ldquo;+ Upload Requirement&rdquo; above to submit your first practicum document.</p>
           </div>
         ) : (
           <table className="w-full text-sm">

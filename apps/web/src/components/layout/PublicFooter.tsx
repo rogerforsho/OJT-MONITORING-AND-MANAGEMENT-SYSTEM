@@ -147,7 +147,7 @@ export default function PublicFooter() {
           {/* Row 3: Institutional Copyright & Office Info */}
           <div className="mt-3 pt-2 text-[11px] text-slate-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
             <p>
-              Colegio de Montalban &copy; {new Date().getFullYear()} &bull; Practicum & Placement Office, Kasiglahan Village, Rodriguez, Rizal 1860
+              Colegio de Montalban &copy; {new Date().getFullYear()} &bull; Institute of Computing Studies &bull; Institute of Business &amp; Entrepreneurship &bull; Kasiglahan Village, Rodriguez, Rizal 1860
             </p>
             <p>
               Engineering Team: Ralph Roger Vicente, Jay Baui, Jovelyn Golis, Jomar Suralta

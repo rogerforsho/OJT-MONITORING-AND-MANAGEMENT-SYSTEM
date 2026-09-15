@@ -18,7 +18,7 @@ export default async function SettingsPage() {
   const supabase = await createClient();
   const service = serviceClient();
 
-  let extraDetails: {
+  const extraDetails: {
     course?: string;
     studentNumber?: string;
     employeeNumber?: string;

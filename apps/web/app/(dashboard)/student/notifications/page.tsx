@@ -3,7 +3,7 @@ import { createClient } from '@/src/lib/supabase/server';
 import { listAnnouncements } from '@/src/services/announcements';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
-import { Bell, Megaphone, Calendar, User, Info, CheckCircle } from '@/src/components/ui/Icons';
+import { Bell, Megaphone, Calendar, Info } from '@/src/components/ui/Icons';
 
 export default async function StudentNotificationsPage() {
   const supabase = await createClient();

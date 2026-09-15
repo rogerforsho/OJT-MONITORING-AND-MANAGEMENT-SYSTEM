@@ -19,7 +19,13 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some(p => path.startsWith(p));
+  
+  // Public routes: root landing page, credential verification, public downloads, and auth screens
+  const isPublic = 
+    path === '/' ||
+    path.startsWith('/verify-certificate') ||
+    path.startsWith('/downloads') ||
+    PUBLIC_PATHS.some(p => path.startsWith(p));
 
   // If Supabase credentials are missing or default placeholder, allow public paths
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-project-id')) {
@@ -59,13 +65,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/sign-in', request.url));
   }
 
-  // Authenticated — redirect away from auth pages (except reset-password, callback, and pending approval)
+  // Authenticated — redirect away from sign-in and register pages
   if (
     user &&
-    isPublic &&
-    !path.startsWith('/auth/reset-password') &&
-    !path.startsWith('/auth/callback') &&
-    !path.startsWith('/auth/pending')
+    (path === '/auth/sign-in' || path === '/auth/register')
   ) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }

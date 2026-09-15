@@ -15,12 +15,12 @@ export function Button({ loading, variant = 'primary', size = 'default', childre
   };
 
   const variants = {
-    primary: 'bg-[#0A3D24] text-white hover:bg-[#062415] hover:shadow-lg hover:shadow-[#0A3D24]/25 focus:ring-[#FFCC00] border border-[#FFCC00]/30 shadow-md shadow-[#0A3D24]/20',
-    gold: 'bg-[#FFCC00] text-[#062415] hover:bg-[#f0c000] hover:shadow-lg hover:shadow-[#FFCC00]/35 focus:ring-[#0A3D24] shadow-md shadow-[#FFCC00]/30',
-    ghost: 'bg-transparent text-[#0A3D24] hover:bg-[#0A3D24]/10 hover:text-[#062415] focus:ring-[#0A3D24]',
-    outline: 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300 focus:ring-slate-400 shadow-xs hover:shadow-sm',
-    secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200/90 hover:text-slate-950 focus:ring-slate-300 shadow-xs hover:shadow-sm',
-    destructive: 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/25 focus:ring-red-500 shadow-md shadow-red-600/20',
+    primary: 'bg-[#0A3D24] text-white hover:bg-[#062415] hover:shadow-xs focus:ring-2 focus:ring-[#0A3D24]/30 focus:ring-offset-1 border border-emerald-900/40 shadow-xs',
+    gold: 'bg-[#F59E0B] text-[#062415] hover:bg-[#D97706] hover:text-white hover:shadow-xs focus:ring-2 focus:ring-amber-500/30 focus:ring-offset-1 font-bold shadow-xs',
+    ghost: 'bg-transparent text-slate-600 hover:bg-slate-100/90 hover:text-slate-900 focus:ring-2 focus:ring-slate-300',
+    outline: 'bg-white border border-slate-200/90 text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 focus:ring-2 focus:ring-slate-300 shadow-xs',
+    secondary: 'bg-slate-100 text-slate-800 hover:bg-slate-200/80 hover:text-slate-950 focus:ring-2 focus:ring-slate-300 shadow-xs',
+    destructive: 'bg-rose-600 text-white hover:bg-rose-700 hover:shadow-xs focus:ring-2 focus:ring-rose-500/30 border border-rose-700/40 shadow-xs',
   };
 
   return (

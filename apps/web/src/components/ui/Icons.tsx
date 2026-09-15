@@ -4,6 +4,16 @@ export interface IconProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
 }
 
+export function Menu({ className = 'w-4 h-4', ...props }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </svg>
+  );
+}
+
 export function Clock({ className = 'w-4 h-4', ...props }: IconProps) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
@@ -634,5 +644,16 @@ export function ArrowLeft({ className = 'w-4 h-4', ...props }: IconProps) {
     </svg>
   );
 }
+
+export function Smartphone({ className = 'w-4 h-4', ...props }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+}
+
+
 
 

@@ -18,15 +18,12 @@ import {
   Cpu,
   Briefcase,
   TrendingUp,
-  Settings,
   ShieldAlert,
   ShieldCheck,
-  Megaphone,
   CheckCircle2,
   ArrowRight,
   FileText,
   Clock,
-  Award,
   BarChart3,
   ClipboardCheck,
 } from '@/src/components/ui/Icons';
@@ -238,51 +235,51 @@ export default async function DashboardPage() {
     .limit(3);
 
   return (
-    <div className="p-6 sm:p-8 space-y-7 max-w-7xl page-fade-in">
-      {/* Streamlined Welcome Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#062415] via-[#0A3D24] to-[#041a0f] p-6 sm:p-7 text-white shadow-xl shadow-black/15 border border-[#FFCC00]/30 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto page-fade-in">
+      {/* Streamlined Executive Welcome Card */}
+      <div className="rounded-2xl bg-[#062415] p-5 sm:p-6 text-white shadow-2xs border border-emerald-950/40 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-700/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-13 h-13 rounded-2xl bg-white/10 p-2 border border-[#FFCC00]/40 shadow-md flex items-center justify-center shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-white/10 p-1.5 border border-amber-400/30 shadow-2xs flex items-center justify-center shrink-0">
               <Image
                 src="/logo.png"
                 alt="Colegio de Montalban Seal"
-                width={48}
-                height={48}
+                width={40}
+                height={40}
                 className="w-full h-full object-contain"
                 priority
               />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FFCC00]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
                   Colegio de Montalban
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium">•</span>
-                <span className="text-[10px] text-slate-300 font-medium">
+                <span className="text-[10px] text-slate-500 font-medium">•</span>
+                <span className="text-[10px] text-slate-400 font-medium">
                   {new Date().toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-white font-serif mt-0.5 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-black text-white font-serif mt-0.5 tracking-tight">
                 Welcome back, {user.full_name}
               </h1>
-              <p className="text-xs text-slate-300 mt-0.5 font-medium">
+              <p className="text-xs text-slate-300 mt-0.5 font-normal">
                 {departmentSubtitle}
               </p>
             </div>
           </div>
 
           <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-3 py-1 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              System Active
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/80 border border-emerald-500/30 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Portal Online
             </span>
             {user.role === 'Admin' && (
               <Link
                 href="/admin"
-                className="text-xs font-bold text-[#FFCC00] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 transition-colors"
               >
                 Admin Console <ArrowRight className="w-3 h-3" />
               </Link>
@@ -290,7 +287,7 @@ export default async function DashboardPage() {
             {user.role === 'Student' && (
               <Link
                 href="/student/attendance"
-                className="text-xs font-bold text-[#FFCC00] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 transition-colors"
               >
                 Log Attendance <ArrowRight className="w-3 h-3" />
               </Link>
@@ -298,9 +295,17 @@ export default async function DashboardPage() {
             {user.role === 'Coordinator' && (
               <Link
                 href="/coordinator/approvals"
-                className="text-xs font-bold text-[#FFCC00] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 transition-colors"
               >
                 Review Approvals <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+            {user.role === 'Supervisor' && (
+              <Link
+                href="/supervisor/attendance"
+                className="text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 transition-colors"
+              >
+                Verify Logs <ArrowRight className="w-3 h-3" />
               </Link>
             )}
           </div>

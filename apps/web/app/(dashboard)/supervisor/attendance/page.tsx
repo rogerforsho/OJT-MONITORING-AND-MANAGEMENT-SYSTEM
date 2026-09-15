@@ -87,17 +87,17 @@ export default function SupervisorAttendancePage() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto page-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto page-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-black text-[#0A3D24] font-serif tracking-tight">Attendance Verification</h1>
-          <p className="text-sm text-slate-500 mt-1">Review trainee daily logs, selfie evidence, punctuality, and sync statuses.</p>
+          <h1 className="text-2xl font-black text-slate-900 font-serif tracking-tight">Attendance Verification</h1>
+          <p className="text-xs text-slate-500 mt-1">Review trainee daily logs, selfie evidence, punctuality, and sync statuses.</p>
         </div>
         {filter === 'pending' && records.length > 0 && (
           <Button
             onClick={handleBatchVerify}
             loading={batchLoading}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs shadow-sm py-2 px-4 whitespace-nowrap"
+            className="bg-[#0A3D24] hover:bg-[#062415] text-white font-bold text-xs shadow-2xs py-2 px-4 whitespace-nowrap"
           >
             ✓ Batch Verify Pending
           </Button>
@@ -107,16 +107,16 @@ export default function SupervisorAttendancePage() {
       {error && <div className="mb-4"><Alert type="error" message={error} /></div>}
       {success && <div className="mb-4"><Alert type="success" message={success} /></div>}
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-slate-200 pb-3">
+      {/* Modern Filter Pill Bar */}
+      <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 w-fit mb-5 select-none">
         {FILTERS.map(f => (
           <button
             key={f.label}
             onClick={() => { setFilter(f.value); setPage(1); }}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               filter === f.value
-                ? 'bg-[#0A3D24] text-white shadow-sm'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                ? 'bg-white text-slate-900 font-bold shadow-2xs border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
             {f.label}
@@ -124,19 +124,19 @@ export default function SupervisorAttendancePage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Loading attendance records...</div>
+          <div className="flex items-center justify-center py-20 text-slate-400 text-xs">Loading attendance records...</div>
         ) : records.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <span className="text-4xl mb-3">📋</span>
-            <p className="text-sm font-medium text-slate-600">No attendance records found for this filter.</p>
+            <p className="text-sm font-semibold text-slate-700">No attendance records found for this filter.</p>
             <p className="text-xs text-slate-400 mt-1">All trainee attendance submissions are up to date.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-100 bg-slate-50/80 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-200/80 bg-slate-50/75 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Trainee</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Date</th>

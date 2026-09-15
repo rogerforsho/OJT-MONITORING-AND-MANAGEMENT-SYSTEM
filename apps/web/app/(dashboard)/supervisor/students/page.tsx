@@ -4,7 +4,7 @@ import { listAssignedStudents } from '@/src/services/evaluations';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
-import { Users, ClipboardCheck, Calendar, ArrowRight, BookOpen } from '@/src/components/ui/Icons';
+import { Users } from '@/src/components/ui/Icons';
 import Link from 'next/link';
 
 interface Trainee {
@@ -19,7 +19,7 @@ export default async function SupervisorStudentsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth/sign-in');
 
-  const { data: students, error } = await listAssignedStudents();
+  const { data: students } = await listAssignedStudents();
   const traineeList: Trainee[] = (students ?? []) as Trainee[];
 
   return (

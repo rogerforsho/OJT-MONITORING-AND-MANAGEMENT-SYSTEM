@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type CardProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function Card({ className = '', ...props }: CardProps) {
   return (
     <div
-      className={`rounded-xl border bg-white text-slate-900 shadow-sm ${className}`}
+      className={`rounded-2xl border border-slate-200/80 bg-white text-slate-900 shadow-xs transition-all ${className}`}
       {...props}
     />
   );

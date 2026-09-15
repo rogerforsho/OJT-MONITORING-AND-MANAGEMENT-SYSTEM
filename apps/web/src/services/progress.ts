@@ -1,7 +1,6 @@
-﻿'use server';
+'use server';
 
-import { isICSCourse, isIBECourse } from '@/src/lib/departments';
-
+import { isICSCourse } from '@/src/lib/departments';
 import { createClient } from '@/src/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import type { AppResult, ProgressStatus } from '@ojt/shared';
@@ -73,8 +72,7 @@ export interface DepartmentSummaryData {
 export async function listCohortProgress(
   page = 1,
   pageSize = 20,
-  courseFilter?: string,
-  statusFilter?: ProgressStatus
+  courseFilter?: string
 ): Promise<AppResult<{ students: StudentProgressDetail[]; total: number }>> {
   const { profile } = await getAuthUserWithRole();
   if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')

@@ -1,5 +1,11 @@
-import { redirect } from 'next/navigation';
+import { Metadata } from 'next';
+import LandingPageClient from '@/src/components/landing/LandingPageClient';
+
+export const metadata: Metadata = {
+  title: 'Colegio de Montalban - Official OJT Monitoring & Management Portal',
+  description: 'The authoritative cross-platform practicum monitoring and compliance ecosystem for 4th-year ICS and IBE students of Colegio de Montalban.',
+};
 
 export default function RootPage() {
-  redirect('/auth/sign-in');
+  return <LandingPageClient />;
 }

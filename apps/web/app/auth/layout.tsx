@@ -3,90 +3,99 @@ import PublicFooter from '@/src/components/layout/PublicFooter';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col w-full bg-slate-900">
-      {/* 🟢 TOP SECTION: 60/40 Split Screen Experience */}
+    <div className="min-h-screen flex flex-col justify-between bg-[#F8FAFC]">
       <div className="flex-1 flex flex-col lg:flex-row w-full">
-        {/* 🟢 LEFT SIDE (60% Width): The Identity & Culture Zone */}
-        <div className="lg:w-[58%] xl:w-[60%] relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-gradient-to-br from-[#062415] via-[#0A3D24] to-[#041a0f] text-white min-h-[360px] lg:min-h-[calc(100vh-100px)] overflow-hidden select-none">
-          {/* Ambient Glows */}
-          <div className="absolute top-0 left-0 w-96 h-96 bg-[#FFCC00]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#0A3D24]/80 rounded-full blur-3xl pointer-events-none" />
+        {/* LEFT SIDE: Institutional Identity & Atmosphere */}
+        <div className="lg:w-[54%] xl:w-[58%] relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-[#062415] text-white min-h-[340px] lg:min-h-screen overflow-hidden select-none border-r border-emerald-950/40">
+          {/* Subtle radial ambient glow */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-700/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Top Left: Single Prominent Brand Heading */}
+          {/* Top: Institutional Brand */}
           <div className="relative z-10 flex items-center gap-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1 border-2 border-[#FFCC00] shadow-xl shadow-black/40 flex items-center justify-center shrink-0">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 p-2 border border-amber-400/30 shadow-xs flex items-center justify-center shrink-0">
               <Image
                 src="/logo.png"
                 alt="Colegio de Montalban Seal"
-                width={72}
-                height={72}
-                className="w-full h-full object-contain rounded-full"
+                width={56}
+                height={56}
+                className="w-full h-full object-contain"
                 priority
               />
             </div>
             <div>
-              <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#FFCC00] block mb-0.5">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-amber-400 block mb-0.5">
                 Official Practicum Portal
               </span>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#FFCC00] font-serif uppercase tracking-wider">
+              <h1 className="text-xl sm:text-2xl font-black text-white font-serif tracking-tight">
                 Colegio de Montalban
               </h1>
-              <p className="text-xs sm:text-sm font-medium text-slate-200 tracking-wide mt-0.5">
-                Institute of Computer Studies &bull; Institute of Business and Education
+              <p className="text-xs text-slate-300 font-medium tracking-wide mt-0.5">
+                Institute of Computing Studies &bull; Institute of Business and Entrepreneurship
               </p>
             </div>
           </div>
 
           {/* Center: Inspiring Academic Statement */}
-          <div className="relative z-10 my-8 lg:my-auto max-w-lg space-y-3">
-            <div className="w-12 h-1 bg-[#FFCC00] rounded-full" />
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight font-serif">
+          <div className="relative z-10 my-10 lg:my-auto max-w-lg space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-[11px] font-semibold text-emerald-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Academic Year Practicum Management</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight font-serif tracking-tight">
               Empowering the Next Generation of Industry Leaders
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-              A unified OJT management platform designed to monitor, verify, and evaluate student internship milestones with institutional integrity.
+            <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed">
+              A unified, cross-platform OJT monitoring system ensuring authentic milestone verification, punctuality tracking, and academic compliance for graduating students.
             </p>
           </div>
 
-          {/* Bottom Left: Legal & Campus Compliance Footer */}
-          <div className="relative z-10 pt-4 border-t border-white/10 text-[11px] text-slate-300 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          {/* Bottom Left: Legal & Campus Compliance Footnote */}
+          <div className="relative z-10 pt-4 border-t border-white/10 text-[11px] text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <span>Rodriguez, Rizal</span>
-              <span className="mx-2 text-slate-500">&bull;</span>
-              <span className="text-slate-300">Kasiglahan Village</span>
+              <span className="mx-2 text-slate-600">&bull;</span>
+              <span>Kasiglahan Village</span>
             </div>
-            <div className="text-[#FFCC00] font-bold">
-              Republic Act 10173 (Data Privacy Act) Compliant
+            <div className="text-slate-300 font-medium">
+              RA 10173 (Data Privacy) &bull; ISO/IEC 25010:2023
             </div>
           </div>
         </div>
 
-        {/* ⚪ RIGHT SIDE (40% Width): The Action Zone */}
-        <div className="lg:w-[42%] xl:w-[40%] bg-white flex flex-col justify-between p-6 sm:p-10 lg:p-12 min-h-[500px] lg:min-h-[calc(100vh-100px)] relative z-10 shadow-2xl">
-          {/* Top Right Access Badge */}
-          <div className="hidden lg:flex justify-between items-center">
-            <span className="text-[10px] font-bold text-slate-400">
-              CdM OJT System v1.2.0
-            </span>
-            <span className="text-[10px] font-bold text-[#0A3D24] uppercase tracking-wider bg-[#0A3D24]/10 px-3 py-1 rounded-full border border-[#0A3D24]/20">
-              Secure Institutional Access
+        {/* RIGHT SIDE: Focused Action Zone */}
+        <div className="lg:w-[46%] xl:w-[42%] bg-white flex flex-col justify-between p-6 sm:p-10 lg:p-12 min-h-[520px] lg:min-h-screen relative z-10">
+          {/* Top Right Status Bar */}
+          <div className="flex items-center justify-between text-xs text-slate-400 pb-4">
+            <span className="font-semibold text-slate-500 text-[11px]">CdM Portal v1.2.0</span>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Institutional Access
             </span>
           </div>
 
-          {/* Centered Form Component */}
+          {/* Form Container */}
           <div className="w-full max-w-sm mx-auto my-auto py-4">
             {children}
           </div>
 
-          {/* Subtle Institutional MIS indicator */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Colegio de Montalban</span>
-            <span>MIS Helpdesk: mis@cdm.edu.ph</span>
+          {/* Minimalist Footnote */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
+            <span>Colegio de Montalban MIS</span>
+            <div className="flex items-center gap-3">
+              <a href="/downloads/CdM-OJT-Portal-Setup-1.0.0.exe" download className="hover:text-slate-700 transition-colors">
+                Desktop App (.exe)
+              </a>
+              <span>&bull;</span>
+              <a href="mailto:mis@cdm.edu.ph" className="hover:text-slate-700 transition-colors">
+                Support
+              </a>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 🟢 BOTTOM SECTION: Interactive Multi-Column Directory Footer with Modals */}
+      {/* Interactive Multi-Column Directory Footer with Modals (Guides, Privacy, Terms, ISO Evaluator Docs) */}
       <PublicFooter />
     </div>
   );

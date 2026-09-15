@@ -4,28 +4,29 @@ type BadgeVariant =
   | 'synced' | 'pending_sync' | 'conflict'
   | 'valid' | 'invalid' | 'expired';
 
-const styles: Record<BadgeVariant, string> = {
-  active:       'bg-teal-50 text-teal-700 border-teal-200',
-  verified:     'bg-teal-50 text-teal-700 border-teal-200',
-  synced:       'bg-teal-50 text-teal-700 border-teal-200',
-  valid:        'bg-teal-50 text-teal-700 border-teal-200',
-  on_time:      'bg-teal-50 text-teal-700 border-teal-200',
-  completed:    'bg-blue-50 text-blue-700 border-blue-200',
-  pending:      'bg-amber-50 text-amber-700 border-amber-200',
-  pending_sync: 'bg-amber-50 text-amber-700 border-amber-200',
-  unknown:      'bg-amber-50 text-amber-700 border-amber-200',
-  late:         'bg-red-50 text-red-600 border-red-200',
-  rejected:     'bg-red-50 text-red-600 border-red-200',
-  cancelled:    'bg-red-50 text-red-600 border-red-200',
-  invalid:      'bg-red-50 text-red-600 border-red-200',
-  expired:      'bg-red-50 text-red-600 border-red-200',
-  conflict:     'bg-red-50 text-red-600 border-red-200',
-  inactive:     'bg-slate-100 text-slate-500 border-slate-200',
+const styles: Record<BadgeVariant, { pill: string; dot: string }> = {
+  active:       { pill: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', dot: 'bg-emerald-500' },
+  verified:     { pill: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', dot: 'bg-emerald-500' },
+  synced:       { pill: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', dot: 'bg-emerald-500' },
+  valid:        { pill: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', dot: 'bg-emerald-500' },
+  on_time:      { pill: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', dot: 'bg-emerald-500' },
+  completed:    { pill: 'bg-sky-50 text-sky-700 border-sky-200/80', dot: 'bg-sky-500' },
+  pending:      { pill: 'bg-amber-50 text-amber-800 border-amber-200/80', dot: 'bg-amber-500' },
+  pending_sync: { pill: 'bg-amber-50 text-amber-800 border-amber-200/80', dot: 'bg-amber-500' },
+  unknown:      { pill: 'bg-amber-50 text-amber-800 border-amber-200/80', dot: 'bg-amber-500' },
+  late:         { pill: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
+  rejected:     { pill: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
+  cancelled:    { pill: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
+  invalid:      { pill: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
+  expired:      { pill: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
+  conflict:     { pill: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
+  inactive:     { pill: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
 };
 
 const labels: Partial<Record<BadgeVariant, string>> = {
   on_time:      'On Time',
   pending_sync: 'Pending Sync',
+  pending:      'Pending Review',
 };
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -34,18 +35,23 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export function Badge({ status, variant, className = '', children, ...props }: BadgeProps) {
-  if (status) {
-    const style = styles[status as BadgeVariant] ?? 'bg-slate-100 text-slate-500 border-slate-200';
-    const label = labels[status as BadgeVariant] ?? status;
+  const activeKey = (status || variant) as BadgeVariant | undefined;
+  if (activeKey) {
+    const item = styles[activeKey] ?? {
+      pill: 'bg-slate-100 text-slate-600 border-slate-200',
+      dot: 'bg-slate-400',
+    };
+    const label = labels[activeKey] ?? activeKey.replace(/_/g, ' ');
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${style} ${className}`} {...props}>
-        {children || label}
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border capitalize ${item.pill} ${className}`} {...props}>
+        <span className={`w-1.5 h-1.5 rounded-full ${item.dot} shrink-0`} />
+        <span>{children || label}</span>
       </span>
     );
   }
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border border-slate-200 bg-slate-100 text-slate-700 ${className}`} {...props}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-700 ${className}`} {...props}>
       {children}
     </span>
   );

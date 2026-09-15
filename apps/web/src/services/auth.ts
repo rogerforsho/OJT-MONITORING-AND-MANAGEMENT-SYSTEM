@@ -379,7 +379,7 @@ export async function requestPasswordReset(
       data: null,
       error: {
         code: 'VALIDATION_FAILURE',
-        message: 'This account is registered as a Student. Please switch to the "Student" tab to reset your password.',
+        message: 'This account is registered as a Student Trainee. Password recovery for students is conducted exclusively through the CdM Mobile Application.',
       },
     };
   }

@@ -7,7 +7,7 @@ import Modal from '@/src/components/ui/Modal';
 import { Badge } from '@/src/components/ui/Badge';
 import {
   createEvaluation, listAssignedStudentsForEvaluation, listEvaluationsForSupervisor,
-  type EvaluationInput, type EvaluationRubricCriteria
+  type EvaluationRubricCriteria
 } from '@/src/services/evaluations';
 
 const PAGE_SIZE = 20;

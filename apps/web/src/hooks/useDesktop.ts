@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getElectronAPI, type ElectronAPI } from '@/src/lib/desktop';
+import { getElectronAPI } from '@/src/lib/desktop';
 
 export function useDesktop() {
   const [isDesktop, setIsDesktop] = useState(false);

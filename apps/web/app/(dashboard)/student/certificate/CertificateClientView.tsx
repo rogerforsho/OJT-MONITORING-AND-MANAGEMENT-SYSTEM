@@ -1,10 +1,9 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import Button from '@/src/components/ui/Button';
-import Badge from '@/src/components/ui/Badge';
 import { Card, CardContent } from '@/src/components/ui/Card';
-import { Award, Check, Clock, Shield, AlertCircle, FileText } from '@/src/components/ui/Icons';
+import { Award, Check, Clock, Shield, FileText } from '@/src/components/ui/Icons';
 import type { ClearanceCheckResult } from '@/src/services/certificates';
 
 interface Props {

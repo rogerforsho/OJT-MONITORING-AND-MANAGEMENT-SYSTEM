@@ -15,16 +15,15 @@ function ResetPasswordForm() {
 
   // Query params prefill
   const initialEmail = searchParams.get('email') || '';
-  const initialRole = (searchParams.get('role') as 'Student' | 'Staff') || 'Student';
   const initialStep = searchParams.get('step') === 'verify' && initialEmail ? 2 : 1;
 
   // Wizard state
   const [step, setStep] = useState<1 | 2>(initialStep);
-  const [role, setRole] = useState<'Student' | 'Staff'>(initialRole);
+  const role = 'Staff' as const;
 
   // Step 1 fields
   const [email, setEmail] = useState(initialEmail);
-  const [identifier, setIdentifier] = useState(''); // Student ID or Employee ID
+  const [identifier, setIdentifier] = useState(''); // CdM Employee ID
   const [maskedEmail, setMaskedEmail] = useState('');
 
   // Step 2 fields
@@ -104,11 +103,7 @@ function ResetPasswordForm() {
 
     if (!identifier.trim()) {
       setIsError(true);
-      setMessage(
-        role === 'Student'
-          ? 'Please enter your official Student Number for identity verification.'
-          : 'Please enter your official Employee ID for identity verification.'
-      );
+      setMessage('Please enter your official CdM Employee ID for identity verification.');
       return;
     }
 
@@ -210,12 +205,12 @@ function ResetPasswordForm() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <h2 className="text-xl font-black text-[#0A3D24] font-serif">
-            {step === 1 ? 'Reset Account Password' : 'Enter Verification Code'}
+            {step === 1 ? 'Staff Account Recovery' : 'Enter Verification Code'}
           </h2>
         </div>
         <p className="text-xs text-slate-500">
           {step === 1
-            ? 'Verify your institutional identity to receive a secure 6-digit verification code.'
+            ? 'Verify your institutional credentials with your CdM Employee ID to receive a secure 6-digit verification code.'
             : `Enter the 6-digit code sent to ${maskedEmail || email} and set your new password.`}
         </p>
       </div>
@@ -237,42 +232,10 @@ function ResetPasswordForm() {
       {/* STEP 1: Identity Proofing Form */}
       {step === 1 && (
         <form onSubmit={handleRequestOtp} className="flex flex-col gap-4">
-          {/* Role Selector Tabs */}
-          <div className="flex rounded-lg bg-slate-100 p-1 border border-slate-200">
-            <button
-              type="button"
-              onClick={() => {
-                setRole('Student');
-                setMessage('');
-              }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                role === 'Student'
-                  ? 'bg-white text-[#0A3D24] shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Student / Trainee
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setRole('Staff');
-                setMessage('');
-              }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                role === 'Staff'
-                  ? 'bg-white text-[#0A3D24] shadow-sm'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Coordinator / Faculty
-            </button>
-          </div>
-
           <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-900 text-xs flex items-start gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <p className="text-[11px] leading-relaxed text-emerald-800">
-              <strong>Two-Point Verification:</strong> To protect institutional accounts, please provide both your registered email and official {role === 'Student' ? 'Student Number' : 'Employee ID'}.
+              <strong>Institutional Verification:</strong> To protect faculty, coordinator, and administrator accounts, please provide both your registered email and official CdM Employee ID Number.
             </p>
           </div>
 
@@ -281,16 +244,16 @@ function ResetPasswordForm() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={role === 'Student' ? 'student@cdm.edu.ph' : 'faculty@cdm.edu.ph'}
+            placeholder="faculty@cdm.edu.ph"
             required
           />
 
           <Input
-            label={role === 'Student' ? 'CdM Student Number' : 'CdM Employee ID'}
+            label="CdM Employee ID Number"
             type="text"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            placeholder={role === 'Student' ? 'e.g. 2021-00123' : 'e.g. 2024-001'}
+            placeholder="e.g. 2024-001"
             required
           />
 
@@ -304,6 +267,16 @@ function ResetPasswordForm() {
             <Mail className="w-4 h-4 mr-1.5" />
             Send 6-Digit Code
           </Button>
+
+          {/* Student Advisory Card */}
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+            <div className="font-bold text-amber-950 flex items-center gap-1.5 mb-1">
+              <span>📱</span> Student Trainee Notice
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-800">
+              Student Trainee account recovery is conducted exclusively through the <strong>CdM Mobile Application</strong>. Please launch the mobile app to verify your Student Number.
+            </p>
+          </div>
 
           <div className="text-center pt-1">
             <Link

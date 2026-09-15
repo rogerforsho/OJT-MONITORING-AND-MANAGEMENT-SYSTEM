@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/src/lib/supabase/client';
 import { Button } from '@/src/components/ui/Button';
 import { Clock, LogOut } from '@/src/components/ui/Icons';
@@ -16,8 +15,7 @@ const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes total inactivity
 const WARNING_THRESHOLD_MS = 13 * 60 * 1000; // 13 minutes (2-minute warning window)
 const THROTTLE_INTERVAL_MS = 2000; // Throttle event listeners to 0% CPU impact
 
-export default function IdleSessionGuard({ user }: Props) {
-  const router = useRouter();
+export default function IdleSessionGuard({ user: _user }: Props) {
   const [showWarning, setShowWarning] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(120);
 

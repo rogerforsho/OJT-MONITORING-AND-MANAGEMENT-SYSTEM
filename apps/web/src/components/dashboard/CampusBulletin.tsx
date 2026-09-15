@@ -71,19 +71,19 @@ export default function CampusBulletin({ announcements = [] }: Props) {
     : [];
 
   return (
-    <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col gap-4">
+    <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0 shadow-xs">
-            <Megaphone className="w-4 h-4 text-[#FFCC00]" />
+          <div className="w-8 h-8 rounded-xl bg-[#0A3D24] text-amber-300 flex items-center justify-center shrink-0 shadow-2xs">
+            <Megaphone className="w-4 h-4 text-amber-300" />
           </div>
           <div>
-            <h3 className="text-xs font-extrabold text-slate-900">Campus Bulletin</h3>
-            <p className="text-[10px] text-slate-400">Institutional Announcements</p>
+            <h3 className="text-xs font-bold text-slate-900">Campus Bulletin</h3>
+            <p className="text-[10px] text-slate-500">Institutional Announcements</p>
           </div>
         </div>
-        <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#FFCC00]/15 text-[#0A3D24] border border-[#FFCC00]/40 uppercase tracking-wider">
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wider">
           Notice Board
         </span>
       </div>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import ClientProviders from "@/src/components/providers/ClientProviders";
 import "./globals.css";
@@ -22,9 +21,15 @@ export const metadata: Metadata = {
   title: "Colegio de Montalban - OJT Monitoring System",
   description: "Cross-Platform OJT Monitoring and Management System for ICS & IBE Trainees - Colegio de Montalban",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/logo.png", sizes: "any", type: "image/png" },
+      { url: "/logo.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo.png", sizes: "192x192", type: "image/png" },
+    ],
     shortcut: "/logo.png",
-    apple: "/logo.png",
+    apple: [
+      { url: "/logo.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
