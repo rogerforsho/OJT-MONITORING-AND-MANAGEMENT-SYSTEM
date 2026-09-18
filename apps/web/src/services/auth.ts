@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { sendOtpEmail } from '@/src/lib/email/send-otp';
 import type { AppResult } from '@ojt/shared';
 import type { RegisterStudentInput, SignInInput } from '@ojt/shared';
+import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 
 let cachedServiceClient: any = null;
 
@@ -135,8 +136,10 @@ export async function registerStudent(
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student number is required.' } };
   if (!input.course?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Course is required.' } };
-  if (!input.year_level || input.year_level < 1 || input.year_level > 5)
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Valid year level is required.' } };
+  if (!isICSCourse(input.course) && !isIBECourse(input.course))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Practicum enrollment is strictly reserved for Institute of Computing Studies (ICS) and Institute of Business and Entrepreneurship (IBE) departments.' } };
+  if (input.year_level !== 4)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'OJT registration is exclusively restricted to 4th-Year graduating students.' } };
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl || supabaseUrl.includes('your-project-id')) {

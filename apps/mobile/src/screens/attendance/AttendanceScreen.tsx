@@ -137,7 +137,16 @@ export default function AttendanceScreen() {
       }
 
       if (locRes.status === 'unavailable' || !locRes.coords) {
-        setError(locRes.errorMessage || 'Could not acquire GPS satellite fix. Please move near a window or outdoors and retry.');
+        // Fallback: If indoors / satellite unavailable, allow user to proceed with a location note
+        setTempLocationData({
+          coords: { latitude: 0, longitude: 0 },
+          distanceMeters: 0,
+          companyName: assignment?.company_name || 'Designated Workplace',
+          radiusMeters: assignment?.geofence_radius_meters || 150,
+          satelliteTimestamp: new Date().toISOString(),
+        });
+        setFlagReasonInput('GPS fix unavailable indoors / basement');
+        setOutOfBoundsModal(true);
         setCheckingLocation(false);
         return;
       }
@@ -196,12 +205,13 @@ export default function AttendanceScreen() {
 
   function handleConfirmOutOfBounds() {
     if (!tempLocationData) return;
+    const isUnavail = tempLocationData.coords.latitude === 0 && tempLocationData.coords.longitude === 0;
     setPendingLocationData({
-      latitude: tempLocationData.coords.latitude,
-      longitude: tempLocationData.coords.longitude,
-      distanceMeters: tempLocationData.distanceMeters,
-      locationStatus: 'flagged_out_of_bounds',
-      flagReason: flagReasonInput.trim() || 'Recorded outside designated perimeter',
+      latitude: isUnavail ? null : tempLocationData.coords.latitude,
+      longitude: isUnavail ? null : tempLocationData.coords.longitude,
+      distanceMeters: isUnavail ? null : tempLocationData.distanceMeters,
+      locationStatus: isUnavail ? 'location_unavailable' : 'flagged_out_of_bounds',
+      flagReason: flagReasonInput.trim() || (isUnavail ? 'GPS unavailable indoors' : 'Recorded outside designated perimeter'),
       satelliteTimestamp: tempLocationData.satelliteTimestamp,
     });
     setOutOfBoundsModal(false);
@@ -214,7 +224,7 @@ export default function AttendanceScreen() {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: false });
       if (!photo) return;
       const optimized = await optimizeSelfie(photo.uri, { includeBase64: true });
-      await submitAttendance(optimized.base64 || optimized.uri);
+      await submitAttendance(optimized.uri || photo.uri);
     } catch {
       setError('Failed to capture selfie. Please try again.');
       setStep('idle');
@@ -658,18 +668,32 @@ export default function AttendanceScreen() {
         <View style={s.modalOverlay}>
           <View style={s.modalCard}>
             <View style={s.modalHeaderRow}>
-              <Ionicons name="warning" size={26} color="#b45309" />
-              <Text style={s.modalTitle}>Perimeter Notice</Text>
+              <Ionicons
+                name={tempLocationData?.coords.latitude === 0 ? "location-outline" : "warning"}
+                size={26}
+                color={tempLocationData?.coords.latitude === 0 ? "#0284c7" : "#b45309"}
+              />
+              <Text style={s.modalTitle}>
+                {tempLocationData?.coords.latitude === 0 ? 'Location Notice' : 'Perimeter Notice'}
+              </Text>
             </View>
             <Text style={s.modalDesc}>
-              You are currently <Text style={{ fontWeight: 'bold', color: '#062415' }}>{tempLocationData?.distanceMeters}m</Text> away from {tempLocationData?.companyName} (assigned radius: {tempLocationData?.radiusMeters}m).
+              {tempLocationData?.coords.latitude === 0 ? (
+                'Could not obtain an active satellite GPS lock. This is common indoors, inside concrete structures, or in basement facilities.'
+              ) : (
+                <>You are currently <Text style={{ fontWeight: 'bold', color: '#062415' }}>{tempLocationData?.distanceMeters}m</Text> away from {tempLocationData?.companyName} (assigned radius: {tempLocationData?.radiusMeters}m).</>
+              )}
             </Text>
             <Text style={s.modalPrompt}>
-              If you are on an authorized field errand, working remotely, or experiencing indoor GPS drift, provide a brief reason note:
+              {tempLocationData?.coords.latitude === 0 ? (
+                'Please provide a brief note explaining your current workplace location to proceed with your selfie:'
+              ) : (
+                'If you are on an authorized field errand, working remotely, or experiencing indoor GPS drift, provide a brief reason note:'
+              )}
             </Text>
             <TextInput
               style={s.modalInput}
-              placeholder="e.g. Sent on errand / Indoor GPS drift / WFH"
+              placeholder={tempLocationData?.coords.latitude === 0 ? "e.g. Inside basement / Office 3rd floor" : "e.g. Sent on errand / Indoor GPS drift / WFH"}
               placeholderTextColor="#94a3b8"
               value={flagReasonInput}
               onChangeText={setFlagReasonInput}

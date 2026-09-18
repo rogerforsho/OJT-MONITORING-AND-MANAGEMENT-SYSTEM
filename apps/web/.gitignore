@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch scripts with credentials
+diagnose_auth.mjs
+raw_fetch.mjs
+test_repair_auth.mjs
+

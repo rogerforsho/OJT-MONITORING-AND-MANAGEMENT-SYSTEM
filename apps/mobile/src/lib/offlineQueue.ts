@@ -22,8 +22,9 @@ export interface OfflineQueueItem {
 
 /**
  * Saves photo to app private document sandbox directory to avoid OS temp cache deletion.
+ * Supports both local file URIs (file://, content://) and raw/data-URL base64 strings.
  */
-export async function saveImageToSandbox(sourceUri: string, filename: string): Promise<string> {
+export async function saveImageToSandbox(source: string, filename: string): Promise<string> {
   const dir = `${FileSystem.documentDirectory}offline_selfies/`;
   const dirInfo = await FileSystem.getInfoAsync(dir);
   if (!dirInfo.exists) {
@@ -31,7 +32,18 @@ export async function saveImageToSandbox(sourceUri: string, filename: string): P
   }
 
   const destination = `${dir}${filename}`;
-  await FileSystem.copyAsync({ from: sourceUri, to: destination });
+
+  if (source.startsWith('file://') || source.startsWith('content://') || source.startsWith('/')) {
+    const fromUri = source.startsWith('/') ? `file://${source}` : source;
+    await FileSystem.copyAsync({ from: fromUri, to: destination });
+  } else {
+    // Clean base64 header if present (e.g. data:image/jpeg;base64,...)
+    const base64Data = source.replace(/^data:[^;]+;base64,/, '').trim();
+    await FileSystem.writeAsStringAsync(destination, base64Data, {
+      encoding: 'base64',
+    });
+  }
+
   return destination;
 }
 

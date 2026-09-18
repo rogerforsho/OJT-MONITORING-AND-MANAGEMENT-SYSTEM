@@ -5,3 +5,7 @@ node_modules/
 .next/
 dist/
 apps/desktop/dist/
+apps/web/diagnose_auth.mjs
+apps/web/raw_fetch.mjs
+apps/web/test_repair_auth.mjs
+

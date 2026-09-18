@@ -65,16 +65,20 @@ export async function getCurrentCoordinates(): Promise<LocationResult> {
       };
     }
 
-    // 3. Race GPS acquisition against a 5-second timeout
-    const timeoutPromise = new Promise<null>((resolve) =>
-      setTimeout(() => resolve(null), 5000)
-    );
+    // 3. Multi-tier GPS acquisition:
+    // Tier 1: Try High Accuracy (Satellite GPS) with an 8-second timeout
+    let position = await Promise.race([
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+    ]);
 
-    const positionPromise = Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
-
-    const position = await Promise.race([positionPromise, timeoutPromise]);
+    // Tier 2: If satellite lock timed out (indoors, cloud cover, emulator), try Balanced (Wi-Fi/Cellular/Network)
+    if (!position) {
+      position = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+      ]);
+    }
 
     if (position) {
       return {
@@ -88,7 +92,7 @@ export async function getCurrentCoordinates(): Promise<LocationResult> {
       };
     }
 
-    // 4. Fallback: try last known position if real-time GPS timed out
+    // Tier 3: Fallback to last known position
     const lastKnown = await Location.getLastKnownPositionAsync();
     if (lastKnown) {
       return {
@@ -104,7 +108,7 @@ export async function getCurrentCoordinates(): Promise<LocationResult> {
 
     return {
       status: 'unavailable',
-      errorMessage: 'Could not obtain satellite GPS lock. Please ensure you are not underground or in an elevator.',
+      errorMessage: 'Could not acquire GPS satellite fix. Please move near a window, step outside, or proceed with location note.',
     };
   } catch (err) {
     return {

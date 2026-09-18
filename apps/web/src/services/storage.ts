@@ -140,6 +140,14 @@ export async function getSignedDocumentUrl(
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
   }
 
+  // IDOR Guard: Trainees can strictly only access their own private document keys
+  if (profile.role === 'Student' && !filePath.startsWith(`${user.id}/`)) {
+    return {
+      data: null,
+      error: { code: 'FORBIDDEN', message: 'Unauthorized access. You may only inspect your own submitted documents.' },
+    };
+  }
+
   // If path is already a direct Firebase or external URL, return directly
   if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
     return { data: { signedUrl: filePath }, error: null };

@@ -92,6 +92,17 @@ export async function signIn(input: SignInInput): Promise<AppResult<AuthUser>> {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account has been deactivated.' } };
   }
 
+  if (user.role !== 'Student') {
+    await supabase.auth.signOut();
+    return {
+      data: null,
+      error: {
+        code: 'FORBIDDEN',
+        message: `The CdM mobile app is exclusively for Student Trainees. As a ${user.role}, please access the system through the Web Portal.`,
+      },
+    };
+  }
+
   return { data: user as AuthUser, error: null };
 }
 

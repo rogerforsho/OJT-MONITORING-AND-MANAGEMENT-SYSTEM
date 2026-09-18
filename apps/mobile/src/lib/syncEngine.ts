@@ -30,19 +30,31 @@ async function uploadOfflineSelfie(
   type: 'time_in' | 'time_out'
 ): Promise<string | null> {
   try {
-    const base64 = await FileSystem.readAsStringAsync(localUri, {
-      encoding: 'base64',
-    });
-    const arrayBuffer = decodeBase64ToArrayBuffer(base64);
+    let arrayBuffer: ArrayBuffer;
+    if (localUri.startsWith('file://') || localUri.startsWith('content://') || localUri.startsWith('/')) {
+      const uriToRead = localUri.startsWith('/') ? `file://${localUri}` : localUri;
+      const base64 = await FileSystem.readAsStringAsync(uriToRead, {
+        encoding: 'base64',
+      });
+      arrayBuffer = decodeBase64ToArrayBuffer(base64);
+    } else {
+      // Direct base64 string or data URL
+      arrayBuffer = decodeBase64ToArrayBuffer(localUri);
+    }
+
     const filename = `${studentId}/${type}_offline_${Date.now()}.jpg`;
 
     const { data, error } = await supabase.storage
       .from('attendance-selfies')
       .upload(filename, arrayBuffer, { contentType: 'image/jpeg', upsert: false });
 
-    if (error || !data) return null;
+    if (error || !data) {
+      console.error('[uploadOfflineSelfie] Storage upload error:', error);
+      return null;
+    }
     return data.path;
-  } catch {
+  } catch (err) {
+    console.error('[uploadOfflineSelfie] Exception:', err);
     return null;
   }
 }
@@ -123,7 +135,7 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
             updated_at: new Date().toISOString(),
           });
 
-        if (item.attendance_id) {
+        if (item.attendance_id && item.attendance_id !== 'offline_pending') {
           updateQuery = updateQuery.eq('attendance_id', item.attendance_id);
         } else {
           updateQuery = updateQuery
