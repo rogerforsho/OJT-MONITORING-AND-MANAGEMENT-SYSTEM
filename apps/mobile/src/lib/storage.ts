@@ -48,6 +48,16 @@ async function convertSourceToArrayBuffer(source: string): Promise<ArrayBuffer> 
     return await response.arrayBuffer();
   }
 
+  // Base64 string or data URI (JPEG base64 starts with /9j/)
+  const isBase64 =
+    source.startsWith('data:') ||
+    source.startsWith('/9j/') ||
+    (!source.startsWith('file://') && !source.startsWith('content://') && source.length > 500);
+
+  if (isBase64) {
+    return decodeBase64ToArrayBuffer(source);
+  }
+
   // Local file URI, Android content URI, or absolute file path
   if (source.startsWith('file://') || source.startsWith('content://') || source.startsWith('/')) {
     const uriToRead = source.startsWith('/') ? `file://${source}` : source;
@@ -67,7 +77,7 @@ async function convertSourceToArrayBuffer(source: string): Promise<ArrayBuffer> 
     }
   }
 
-  // Raw base64 string or data URI
+  // Fallback direct base64 decode
   return decodeBase64ToArrayBuffer(source);
 }
 

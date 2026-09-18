@@ -1,22 +1,15 @@
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
 import { createClient } from '@/src/lib/supabase/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/src/lib/supabase/service';
 import SettingsClient from './SettingsClient';
-
-function serviceClient() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export default async function SettingsPage() {
   const user = await getAuthUser();
   if (!user) redirect('/auth/sign-in');
 
   const supabase = await createClient();
-  const service = serviceClient();
+  const service = getServiceClient();
 
   const extraDetails: {
     course?: string;

@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/src/lib/supabase/service';
 import type { AppResult } from '@ojt/shared';
 
 export interface SupervisorInput {
@@ -103,10 +103,7 @@ export async function createSupervisor(input: SupervisorInput): Promise<AppResul
   const { authorized } = await assertCoordinator();
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const service = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const service = getServiceClient();
 
   const { data: authData, error: authError } = await service.auth.admin.createUser({
     email: input.email.trim(),

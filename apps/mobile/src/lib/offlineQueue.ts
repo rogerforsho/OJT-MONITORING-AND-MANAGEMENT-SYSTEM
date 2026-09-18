@@ -33,15 +33,21 @@ export async function saveImageToSandbox(source: string, filename: string): Prom
 
   const destination = `${dir}${filename}`;
 
-  if (source.startsWith('file://') || source.startsWith('content://') || source.startsWith('/')) {
-    const fromUri = source.startsWith('/') ? `file://${source}` : source;
-    await FileSystem.copyAsync({ from: fromUri, to: destination });
-  } else {
+  // Detect if source is base64 (data URI or raw base64 like JPEG /9j/) vs local file URI
+  const isBase64 =
+    source.startsWith('data:') ||
+    source.startsWith('/9j/') ||
+    (!source.startsWith('file://') && !source.startsWith('content://') && source.length > 500);
+
+  if (isBase64) {
     // Clean base64 header if present (e.g. data:image/jpeg;base64,...)
     const base64Data = source.replace(/^data:[^;]+;base64,/, '').trim();
     await FileSystem.writeAsStringAsync(destination, base64Data, {
       encoding: 'base64',
     });
+  } else {
+    const fromUri = source.startsWith('/') ? `file://${source}` : source;
+    await FileSystem.copyAsync({ from: fromUri, to: destination });
   }
 
   return destination;
@@ -85,13 +91,20 @@ export async function removeOfflineQueueItem(id: string): Promise<void> {
   const queue = await getOfflineQueue();
   const item = queue.find(q => q.id === id);
   if (item && item.local_photo_uri) {
-    try {
-      const fileInfo = await FileSystem.getInfoAsync(item.local_photo_uri);
-      if (fileInfo.exists) {
-        await FileSystem.deleteAsync(item.local_photo_uri, { idempotent: true });
+    const isFileUri =
+      (item.local_photo_uri.startsWith('file://') || item.local_photo_uri.startsWith('/')) &&
+      !item.local_photo_uri.startsWith('/9j/') &&
+      item.local_photo_uri.length < 1000;
+
+    if (isFileUri) {
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(item.local_photo_uri);
+        if (fileInfo.exists) {
+          await FileSystem.deleteAsync(item.local_photo_uri, { idempotent: true });
+        }
+      } catch {
+        // Ignore file deletion errors
       }
-    } catch {
-      // Ignore file deletion errors
     }
   }
 

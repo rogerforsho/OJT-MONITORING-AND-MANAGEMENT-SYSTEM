@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   ActivityIndicator, RefreshControl, TouchableOpacity,
@@ -157,9 +157,9 @@ const s = StyleSheet.create({
   headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   title: { fontSize: 24, fontWeight: '900', color: '#062415' },
   subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  alertError: { backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 16 },
-  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600' },
-  retryText: { color: '#dc2626', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  alertError: { backgroundColor: '#fbf2f2', borderWidth: 1, borderColor: '#f1cdcd', borderRadius: 12, padding: 12, marginBottom: 16 },
+  alertErrorText: { color: '#7f1d1d', fontSize: 13, fontWeight: '600' },
+  retryText: { color: '#991b1b', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   progressCard: {
     backgroundColor: '#0A3D24',
     borderRadius: 24,

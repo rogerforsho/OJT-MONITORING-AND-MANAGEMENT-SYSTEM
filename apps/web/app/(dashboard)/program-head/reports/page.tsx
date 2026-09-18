@@ -1,22 +1,15 @@
-﻿import { redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/src/lib/supabase/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/src/lib/supabase/service';
 import { getDepartmentSummary, listCohortProgress } from '@/src/services/progress';
 import DepartmentReportsClient from './DepartmentReportsClient';
-
-function serviceClient() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export default async function ProgramHeadReportsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth/sign-in');
 
-  const service = serviceClient();
+  const service = getServiceClient();
 
   const [{ data: profile }, { data: progHead }] = await Promise.all([
     service.from('users').select('role, account_status').eq('user_id', user.id).single(),

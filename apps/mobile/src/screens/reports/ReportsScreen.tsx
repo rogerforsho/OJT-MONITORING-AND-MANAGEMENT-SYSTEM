@@ -175,8 +175,16 @@ export default function ReportsScreen() {
       )}
       {!!error && (
         <View style={s.alertError}>
-          <Ionicons name="alert-circle" size={18} color="#dc2626" />
+          <Ionicons name="alert-circle" size={18} color="#991b1b" />
           <Text style={s.alertErrorText}>{error}</Text>
+          <TouchableOpacity
+            onPress={() => setError('')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss error"
+          >
+            <Ionicons name="close" size={16} color="#7f1d1d" />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -256,7 +264,7 @@ export default function ReportsScreen() {
 
             {!!modalError && (
               <View style={s.alertError}>
-                <Ionicons name="alert-circle" size={16} color="#dc2626" />
+                <Ionicons name="alert-circle" size={16} color="#991b1b" />
                 <Text style={s.alertErrorText}>{modalError}</Text>
               </View>
             )}
@@ -423,9 +431,9 @@ const s = StyleSheet.create({
   },
   alertSuccessText: { color: '#0A3D24', fontSize: 13, fontWeight: '700', flex: 1 },
   alertError: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: '#fbf2f2',
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: '#f1cdcd',
     borderRadius: 14,
     padding: 14,
     marginHorizontal: 20,
@@ -434,7 +442,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600', flex: 1 },
+  alertErrorText: { color: '#7f1d1d', fontSize: 13, fontWeight: '600', flex: 1, lineHeight: 18 },
   reportCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,

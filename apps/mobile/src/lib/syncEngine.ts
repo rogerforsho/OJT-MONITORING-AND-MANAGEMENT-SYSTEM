@@ -31,7 +31,14 @@ async function uploadOfflineSelfie(
 ): Promise<string | null> {
   try {
     let arrayBuffer: ArrayBuffer;
-    if (localUri.startsWith('file://') || localUri.startsWith('content://') || localUri.startsWith('/')) {
+    const isBase64 =
+      localUri.startsWith('data:') ||
+      localUri.startsWith('/9j/') ||
+      (!localUri.startsWith('file://') && !localUri.startsWith('content://') && localUri.length > 500);
+
+    if (isBase64) {
+      arrayBuffer = decodeBase64ToArrayBuffer(localUri);
+    } else if (localUri.startsWith('file://') || localUri.startsWith('content://') || localUri.startsWith('/')) {
       const uriToRead = localUri.startsWith('/') ? `file://${localUri}` : localUri;
       const base64 = await FileSystem.readAsStringAsync(uriToRead, {
         encoding: 'base64',

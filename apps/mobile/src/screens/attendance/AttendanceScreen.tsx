@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { recordTimeIn, recordTimeOut, getTodayAttendance, fetchOwnAttendance, getActiveAssignment, type LocationPayload } from '../../services/attendance';
 import { getCurrentCoordinates } from '../../services/location';
@@ -14,12 +16,14 @@ import { optimizeSelfie } from '../../lib/imageOptimizer';
 import { isWithinGeofence } from '@ojt/shared';
 import NetworkToast from '../../components/NetworkToast';
 import type { DbAttendance } from '@ojt/shared';
+import type { StudentTabParamList } from '../../navigation/types';
 
 type Step = 'idle' | 'selfie' | 'submitting';
 type SubTab = 'check_in' | 'history';
 
 export default function AttendanceScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<BottomTabNavigationProp<StudentTabParamList>>();
   const [activeTab, setActiveTab] = useState<SubTab>('check_in');
   const [permission, requestPermission] = useCameraPermissions();
   const [step, setStep] = useState<Step>('idle');
@@ -125,7 +129,7 @@ export default function AttendanceScreen() {
       const locRes = await getCurrentCoordinates();
 
       if (locRes.status === 'services_disabled') {
-        setError('Device GPS is turned off. Please turn on Location services in device settings to clock in.');
+        setError('Device GPS is turned off. Please turn on Location services in your device settings to clock in.');
         setCheckingLocation(false);
         return;
       }
@@ -197,7 +201,7 @@ export default function AttendanceScreen() {
 
       setStep('selfie');
     } catch (err: any) {
-      setError(err?.message || 'Error acquiring GPS location.');
+      setError(err?.message || 'Unable to acquire GPS location. Please ensure location services are enabled and try again.');
     } finally {
       setCheckingLocation(false);
     }
@@ -222,11 +226,15 @@ export default function AttendanceScreen() {
     if (!cameraRef.current) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: false });
-      if (!photo) return;
+      if (!photo) {
+        setError('Error processing selfie image. Please ensure your face is clearly visible within the frame and try again.');
+        setStep('idle');
+        return;
+      }
       const optimized = await optimizeSelfie(photo.uri, { includeBase64: true });
       await submitAttendance(optimized.uri || photo.uri);
     } catch {
-      setError('Failed to capture selfie. Please try again.');
+      setError('Error processing selfie image. Please ensure your face is clearly visible within the frame and try again.');
       setStep('idle');
     }
   }
@@ -240,7 +248,7 @@ export default function AttendanceScreen() {
       result = await recordTimeIn(imagePayload, pendingLocationData || undefined);
     } else {
       if (!todayRecord?.attendance_id) {
-        setError('No Time In record found for today.');
+        setError('No Time In record found for today. Please record Time In first before clocking out.');
         setStep('idle');
         return;
       }
@@ -248,7 +256,7 @@ export default function AttendanceScreen() {
     }
 
     if (result.error) {
-      setError(result.error.message);
+      setError(result.error.message || 'Error processing attendance submission. Please try again.');
       setStep('idle');
       return;
     }
@@ -354,21 +362,38 @@ export default function AttendanceScreen() {
     <View style={[s.root, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={s.header}>
-        <Text style={s.headerKicker}>Colegio de Montalban OJT</Text>
-        <Text style={s.headerTitle}>Attendance Portal</Text>
-        <Text style={s.headerDate}>{todayFormatted}</Text>
+        <View style={s.headerTopRow}>
+          <View style={s.headerTextCol}>
+            <Text style={s.headerKicker}>Colegio de Montalban OJT</Text>
+            <Text style={s.headerTitle}>Attendance Portal</Text>
+            <Text style={s.headerDate}>{todayFormatted}</Text>
+          </View>
+          <TouchableOpacity
+            style={s.settingsBtn}
+            onPress={() => navigation.navigate('Profile')}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings and profile"
+            activeOpacity={0.75}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="settings-outline" size={20} color="#0A3D24" />
+          </TouchableOpacity>
+        </View>
 
         {/* Segmented Top Tab Switcher */}
         <View style={s.segmentedContainer}>
           <TouchableOpacity
-            style={[s.segmentBtn, activeTab === 'check_in' && s.segmentBtnActive]}
+            style={[
+              s.segmentBtn,
+              activeTab === 'check_in' ? s.segmentBtnActive : s.segmentBtnInactive,
+            ]}
             onPress={() => setActiveTab('check_in')}
             activeOpacity={0.8}
           >
             <Ionicons
               name={activeTab === 'check_in' ? 'camera' : 'camera-outline'}
               size={15}
-              color={activeTab === 'check_in' ? '#0A3D24' : '#64748b'}
+              color={activeTab === 'check_in' ? '#0A3D24' : '#475569'}
             />
             <Text style={[s.segmentText, activeTab === 'check_in' && s.segmentTextActive]}>
               Live Check-In
@@ -376,14 +401,17 @@ export default function AttendanceScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[s.segmentBtn, activeTab === 'history' && s.segmentBtnActive]}
+            style={[
+              s.segmentBtn,
+              activeTab === 'history' ? s.segmentBtnActive : s.segmentBtnInactive,
+            ]}
             onPress={() => setActiveTab('history')}
             activeOpacity={0.8}
           >
             <Ionicons
               name={activeTab === 'history' ? 'time' : 'time-outline'}
               size={15}
-              color={activeTab === 'history' ? '#0A3D24' : '#64748b'}
+              color={activeTab === 'history' ? '#0A3D24' : '#475569'}
             />
             <Text style={[s.segmentText, activeTab === 'history' && s.segmentTextActive]}>
               History Logs
@@ -427,12 +455,28 @@ export default function AttendanceScreen() {
             <View style={s.alertSuccess}>
               <Ionicons name="checkmark-circle" size={18} color="#0A3D24" />
               <Text style={s.alertSuccessText}>{success}</Text>
+              <TouchableOpacity
+                onPress={() => setSuccess('')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss success message"
+              >
+                <Ionicons name="close" size={16} color="#0A3D24" />
+              </TouchableOpacity>
             </View>
           )}
           {!!error && (
             <View style={s.alertError}>
-              <Ionicons name="alert-circle" size={18} color="#dc2626" />
+              <Ionicons name="alert-circle" size={18} color="#991b1b" />
               <Text style={s.alertErrorText}>{error}</Text>
+              <TouchableOpacity
+                onPress={() => setError('')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss error message"
+              >
+                <Ionicons name="close" size={16} color="#7f1d1d" />
+              </TouchableOpacity>
             </View>
           )}
 
@@ -517,23 +561,34 @@ export default function AttendanceScreen() {
             {!todayRecord && (
               <TouchableOpacity
                 onPress={() => startAttendance('time_in')}
-                disabled={checkingLocation}
-                style={[s.btnTimeIn, checkingLocation && { opacity: 0.7 }]}
+                disabled={checkingLocation || !!error}
+                style={[
+                  s.btnTimeIn,
+                  (checkingLocation || !!error) && (error ? s.btnDisabled : { opacity: 0.7 }),
+                ]}
                 activeOpacity={0.85}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   {checkingLocation && mode === 'time_in' ? (
-                    <ActivityIndicator size="small" color="#FFCC00" />
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : error ? (
+                    <Ionicons name="alert-circle-outline" size={22} color="#ffffff" />
                   ) : (
-                    <Ionicons name="location" size={22} color="#FFCC00" />
+                    <Ionicons name="location" size={22} color="#ffffff" />
                   )}
-                  <Text style={s.btnTimeInText}>
-                    {checkingLocation && mode === 'time_in' ? 'Acquiring GPS Fix...' : 'Time In'}
+                  <Text style={[s.btnTimeInText, error ? s.btnDisabledText : null]}>
+                    {checkingLocation && mode === 'time_in'
+                      ? 'Acquiring GPS Fix...'
+                      : error
+                      ? 'Check-In Blocked'
+                      : 'Time In'}
                   </Text>
                 </View>
-                <Text style={s.btnSubtext}>
+                <Text style={[s.btnSubtext, error ? s.btnDisabledSubtext : null]}>
                   {checkingLocation && mode === 'time_in'
                     ? 'Connecting to satellites...'
+                    : error
+                    ? 'Resolve the error message above to enable Time In'
                     : isOffline
                     ? 'GPS lock & offline selfie verification'
                     : 'GPS location & front-camera selfie required'}
@@ -544,23 +599,34 @@ export default function AttendanceScreen() {
             {todayRecord && !todayRecord.time_out && (
               <TouchableOpacity
                 onPress={() => startAttendance('time_out')}
-                disabled={checkingLocation}
-                style={[s.btnTimeOut, checkingLocation && { opacity: 0.7 }]}
+                disabled={checkingLocation || !!error}
+                style={[
+                  s.btnTimeOut,
+                  (checkingLocation || !!error) && (error ? s.btnDisabled : { opacity: 0.7 }),
+                ]}
                 activeOpacity={0.85}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   {checkingLocation && mode === 'time_out' ? (
                     <ActivityIndicator size="small" color="#0A3D24" />
+                  ) : error ? (
+                    <Ionicons name="alert-circle-outline" size={22} color="#64748b" />
                   ) : (
                     <Ionicons name="log-out-outline" size={22} color="#0A3D24" />
                   )}
-                  <Text style={s.btnTimeOutText}>
-                    {checkingLocation && mode === 'time_out' ? 'Acquiring GPS Fix...' : 'Time Out'}
+                  <Text style={[s.btnTimeOutText, error ? { color: '#64748b' } : null]}>
+                    {checkingLocation && mode === 'time_out'
+                      ? 'Acquiring GPS Fix...'
+                      : error
+                      ? 'Check-Out Blocked'
+                      : 'Time Out'}
                   </Text>
                 </View>
                 <Text style={s.btnSubtextMuted}>
                   {checkingLocation && mode === 'time_out'
                     ? 'Connecting to satellites...'
+                    : error
+                    ? 'Resolve the error message above to enable Time Out'
                     : isOffline
                     ? 'GPS lock & offline selfie verification'
                     : 'GPS location & front-camera selfie required'}
@@ -728,16 +794,39 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#f4f6f9' },
   content: { padding: 20, paddingBottom: 40 },
   center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 40 },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 10 },
+  header: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10 },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  headerTextCol: { flex: 1, paddingRight: 12 },
   headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
   headerTitle: { fontSize: 24, fontWeight: '900', color: '#062415' },
-  headerDate: { fontSize: 12, color: '#64748b', marginTop: 2, marginBottom: 12 },
+  headerDate: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  settingsBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
   segmentedContainer: {
     flexDirection: 'row',
     backgroundColor: '#e2e8f0',
-    padding: 3,
+    padding: 4,
     borderRadius: 14,
     marginTop: 4,
+    gap: 4,
   },
   segmentBtn: {
     flex: 1,
@@ -750,16 +839,23 @@ const s = StyleSheet.create({
   },
   segmentBtnActive: {
     backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
+  },
+  segmentBtnInactive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(203, 213, 225, 0.7)',
   },
   segmentText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748b',
+    color: '#475569',
   },
   segmentTextActive: {
     color: '#0A3D24',
@@ -811,9 +907,9 @@ const s = StyleSheet.create({
   },
   alertSuccessText: { color: '#0A3D24', fontSize: 13, fontWeight: '700', flex: 1 },
   alertError: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: '#fbf2f2',
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: '#f1cdcd',
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
@@ -821,7 +917,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600', flex: 1 },
+  alertErrorText: { color: '#7f1d1d', fontSize: 13, fontWeight: '600', flex: 1, lineHeight: 18 },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
@@ -855,22 +951,34 @@ const s = StyleSheet.create({
   actionSection: { gap: 12 },
   btnTimeIn: {
     backgroundColor: '#0A3D24',
-    borderRadius: 18,
+    borderRadius: 20,
     paddingVertical: 18,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#FFCC00',
+    borderColor: '#166534',
     shadowColor: '#0A3D24',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
-  btnTimeInText: { color: '#FFCC00', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
-  btnSubtext: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '600', marginTop: 4 },
+  btnTimeInText: { color: '#ffffff', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
+  btnSubtext: { color: '#ffffff', fontSize: 11, fontWeight: '600', marginTop: 4 },
+  btnDisabled: {
+    backgroundColor: '#94a3b8',
+    borderColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  btnDisabledText: {
+    color: '#ffffff',
+  },
+  btnDisabledSubtext: {
+    color: 'rgba(255,255,255,0.9)',
+  },
   btnTimeOut: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: 20,
     paddingVertical: 18,
     alignItems: 'center',
     borderWidth: 2,
@@ -885,7 +993,7 @@ const s = StyleSheet.create({
   btnSubtextMuted: { color: '#64748b', fontSize: 11, fontWeight: '600', marginTop: 4 },
   completeCard: {
     backgroundColor: 'rgba(10,61,36,0.06)',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 18,
     alignItems: 'center',
     borderWidth: 1,

@@ -1,16 +1,11 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/src/lib/supabase/service';
 import type { AppResult, DbAnnouncement } from '@ojt/shared';
 import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 
-function serviceClient() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+const serviceClient = getServiceClient;
 
 async function getAuthUserWithRole() {
   const supabase = await createClient();

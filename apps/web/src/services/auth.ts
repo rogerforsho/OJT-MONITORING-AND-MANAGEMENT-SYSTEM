@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/src/lib/supabase/service';
 import { redirect } from 'next/navigation';
 import crypto from 'crypto';
 import { sendOtpEmail } from '@/src/lib/email/send-otp';
@@ -13,13 +13,7 @@ let cachedServiceClient: any = null;
 
 function serviceClient() {
   if (!cachedServiceClient) {
-    cachedServiceClient = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: { persistSession: false, autoRefreshToken: false },
-      }
-    );
+    cachedServiceClient = getServiceClient();
   }
   return cachedServiceClient;
 }

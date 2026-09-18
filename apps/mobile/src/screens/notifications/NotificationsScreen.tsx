@@ -135,8 +135,16 @@ export default function NotificationsScreen() {
 
       {!!error && (
         <View style={s.alertError}>
-          <Ionicons name="alert-circle" size={18} color="#dc2626" />
+          <Ionicons name="alert-circle" size={18} color="#991b1b" />
           <Text style={s.alertErrorText}>{error}</Text>
+          <TouchableOpacity
+            onPress={() => setError('')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss error"
+          >
+            <Ionicons name="close" size={16} color="#7f1d1d" />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -206,8 +214,8 @@ const s = StyleSheet.create({
   filterPillActive: { backgroundColor: '#0A3D24', borderColor: '#0A3D24' },
   filterText: { fontSize: 12, fontWeight: '700', color: '#475569' },
   filterTextActive: { color: '#FFCC00' },
-  alertError: { marginHorizontal: 20, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  alertErrorText: { color: '#dc2626', fontSize: 13, fontWeight: '600', flex: 1 },
+  alertError: { marginHorizontal: 20, backgroundColor: '#fbf2f2', borderWidth: 1, borderColor: '#f1cdcd', borderRadius: 12, padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  alertErrorText: { color: '#7f1d1d', fontSize: 13, fontWeight: '600', flex: 1 },
   listContent: { paddingHorizontal: 20, paddingBottom: 32, gap: 12 },
   feedCard: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
   feedCardUnread: { backgroundColor: 'rgba(10,61,36,0.04)', borderColor: '#0A3D24' },
