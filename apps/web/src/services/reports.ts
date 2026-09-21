@@ -87,7 +87,7 @@ export async function submitReport(input: ReportInput): Promise<AppResult<null>>
 
 export async function listReportsForCoordinator(page = 1, pageSize = 20): Promise<AppResult<{ reports: ReportWithStudent[]; total: number }>> {
   const { supabase, profile } = await getAuthUserWithRole();
-  if (!profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active')
+  if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const from = (page - 1) * pageSize;
@@ -112,7 +112,7 @@ export async function reviewReport(
   if (!report_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Report ID is required.' } };
 
   const { supabase, user, profile } = await getAuthUserWithRole();
-  if (!user || !profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active')
+  if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const { error } = await supabase.from('reports').update({

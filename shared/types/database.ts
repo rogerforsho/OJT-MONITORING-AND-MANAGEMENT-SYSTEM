@@ -175,3 +175,19 @@ export interface DbAnnouncement {
   target_department: string;
   created_at: string;
 }
+
+export type CertificateStatus = 'active' | 'revoked';
+
+export interface DbCertificate {
+  certificate_id: string;
+  student_id: string;
+  verification_code: string;
+  hours_rendered: number;
+  host_company_name: string;
+  academic_year: string;
+  status: CertificateStatus;
+  revocation_reason?: string | null;
+  issued_at: string;
+  issued_by_user_id?: string | null;
+}
+

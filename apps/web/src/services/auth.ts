@@ -27,7 +27,10 @@ async function assertCoordinator() {
     .select('role, account_status')
     .eq('user_id', user.id)
     .single();
-  return { supabase, authorized: data?.role === 'Coordinator' && data?.account_status === 'active' };
+  return {
+    supabase,
+    authorized: ['Coordinator', 'Admin'].includes(data?.role ?? '') && data?.account_status === 'active',
+  };
 }
 
 export async function listPendingStudents(
