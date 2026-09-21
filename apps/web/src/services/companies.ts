@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
+import { getServiceClient } from '@/src/lib/supabase/service';
 import { recordAuditEvent } from './audit';
 import type { AppResult, DbCompany } from '@ojt/shared';
 
@@ -236,3 +237,178 @@ export async function getCompanyCapacity(
     error: null,
   };
 }
+
+export async function deleteCompany(
+  company_id: string
+): Promise<AppResult<{ success: boolean; company_name: string }>> {
+  if (!company_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Company ID is required.' } };
+
+  const { supabase, user, authorized } = await assertCoordinator();
+  if (!authorized || !user) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  // 1. Fetch company details
+  const { data: company, error: compErr } = await supabase
+    .from('companies')
+    .select('company_id, company_name')
+    .eq('company_id', company_id)
+    .single();
+
+  if (compErr || !company) {
+    return { data: null, error: { code: 'NOT_FOUND', message: 'Company not found.' } };
+  }
+
+  // 2. Check for student assignments (which has on delete restrict)
+  const { count: assignmentCount, error: assignErr } = await supabase
+    .from('student_assignments')
+    .select('*', { count: 'exact', head: true })
+    .eq('company_id', company_id);
+
+  if (assignErr) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to check company student assignments.' } };
+  }
+
+  if (assignmentCount && assignmentCount > 0) {
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: `Cannot delete "${company.company_name}" because it is linked to ${assignmentCount} student practicum record${assignmentCount > 1 ? 's' : ''}. Please deactivate the establishment instead to preserve student OJT history.`,
+      },
+    };
+  }
+
+  // 3. Unassign any supervisors assigned to this company
+  await supabase
+    .from('supervisors')
+    .update({ company_id: null })
+    .eq('company_id', company_id);
+
+  // 4. Delete company using service client
+  const service = getServiceClient();
+  const { error: deleteError } = await service
+    .from('companies')
+    .delete()
+    .eq('company_id', company_id);
+
+  if (deleteError) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: deleteError.message || 'Failed to delete company.' } };
+  }
+
+  // 5. Record audit trail
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: 'COMPANY_DELETED',
+    entity_type: 'company',
+    entity_id: company_id,
+    details: { company_name: company.company_name },
+  });
+
+  return { data: { success: true, company_name: company.company_name }, error: null };
+}
+
+export interface MapTraineeItem {
+  student_id: string;
+  student_number: string;
+  full_name: string;
+  course: string;
+}
+
+export interface MapCompanyItem {
+  company_id: string;
+  company_name: string;
+  address: string;
+  contact_person: string;
+  contact_email: string;
+  contact_number: string;
+  status: string;
+  latitude: number | null;
+  longitude: number | null;
+  geofence_radius_meters: number;
+  geofence_enabled: boolean;
+  assigned_trainees: MapTraineeItem[];
+}
+
+export async function getDeploymentMapData(): Promise<AppResult<{
+  companies: MapCompanyItem[];
+  totalCompanies: number;
+  geofencedCount: number;
+  totalTraineesDeployed: number;
+}>> {
+  const { authorized } = await assertCoordinator();
+  if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const service = getServiceClient();
+
+  const [{ data: companies, error: compErr }, { data: assignments }] = await Promise.all([
+    service
+      .from('companies')
+      .select('company_id, company_name, address, contact_person, contact_email, contact_number, status, latitude, longitude, geofence_radius_meters, geofence_enabled')
+      .order('company_name', { ascending: true }),
+    service
+      .from('student_assignments')
+      .select(`
+        company_id,
+        assignment_status,
+        students (
+          student_id,
+          student_number,
+          course,
+          users (
+            full_name
+          )
+        )
+      `)
+      .eq('assignment_status', 'active'),
+  ]);
+
+  if (compErr) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load company deployment data.' } };
+  }
+
+  // Aggregate active trainees by company_id
+  const traineeMap: Record<string, MapTraineeItem[]> = {};
+  let totalTrainees = 0;
+
+  (assignments || []).forEach((a: any) => {
+    if (!a.company_id || !a.students) return;
+    const s = a.students;
+    const fullName = s.users?.full_name || 'Trainee';
+    if (!traineeMap[a.company_id]) {
+      traineeMap[a.company_id] = [];
+    }
+    traineeMap[a.company_id].push({
+      student_id: s.student_id,
+      student_number: s.student_number,
+      full_name: fullName,
+      course: s.course || '',
+    });
+    totalTrainees++;
+  });
+
+  const formatted: MapCompanyItem[] = (companies || []).map((c: any) => {
+    const trainees = traineeMap[c.company_id] || [];
+    return {
+      ...c,
+      latitude: c.latitude != null ? Number(c.latitude) : null,
+      longitude: c.longitude != null ? Number(c.longitude) : null,
+      geofence_radius_meters: c.geofence_radius_meters || 150,
+      geofence_enabled: !!c.geofence_enabled,
+      assigned_trainees: trainees,
+    };
+  });
+
+  const geofencedCount = formatted.filter(
+    (c) => c.latitude != null && c.longitude != null && c.geofence_enabled
+  ).length;
+
+  return {
+    data: {
+      companies: formatted,
+      totalCompanies: formatted.length,
+      geofencedCount,
+      totalTraineesDeployed: totalTrainees,
+    },
+    error: null,
+  };
+}
+

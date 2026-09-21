@@ -51,9 +51,9 @@ export default function ComplianceFramework() {
                     <MapPin className="w-3 h-3 text-emerald-400" />
                     <span>Rodriguez, Rizal &bull; Kasiglahan Village</span>
                   </div>
-                  <h4 className="text-sm font-bold text-white font-serif">
+                  <p className="text-sm font-bold text-white font-serif">
                     Colegio de Montalban
-                  </h4>
+                  </p>
                   <p className="text-[11px] text-slate-200">
                     Institute of Computing Studies &bull; Institute of Business &amp; Entrepreneurship
                   </p>
@@ -101,9 +101,9 @@ export default function ComplianceFramework() {
                     <Check className="w-3.5 h-3.5 stroke-[3]" />
                   </div>
                   <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                       {v.title}
-                    </h4>
+                    </h3>
                     <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                       {v.description}
                     </p>

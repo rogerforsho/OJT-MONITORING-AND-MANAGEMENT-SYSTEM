@@ -16,7 +16,7 @@ export default function DashboardShell({ user, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 overflow-hidden transition-colors">
       <Sidebar
         user={user}
         isOpen={sidebarOpen}

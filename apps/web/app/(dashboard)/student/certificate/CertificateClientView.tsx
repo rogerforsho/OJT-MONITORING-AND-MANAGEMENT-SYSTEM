@@ -98,12 +98,21 @@ export default function CertificateClientView({ clearance }: Props) {
               }`}>
                 {clearance.evaluation_passed ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Award className="w-3.5 h-3.5" />}
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="font-bold text-slate-800">3. Industry Evaluation</p>
-                <p className="text-slate-500 mt-0.5">Passing Score &ge; 75.0%</p>
+                <p className="text-slate-500 mt-0.5">
+                  {clearance.midterm_score !== null && `Midterm: ${clearance.midterm_score}% • `}
+                  {clearance.final_score !== null ? `Final: ${clearance.final_score}%` : 'Passing ≥ 75.0%'}
+                </p>
                 <p className={`text-[10px] font-semibold mt-1 ${clearance.evaluation_passed ? 'text-emerald-700' : 'text-slate-500'}`}>
                   {clearance.evaluation_score !== null ? `${clearance.evaluation_score}% (Passed)` : 'Awaiting Rating'}
                 </p>
+                <Link
+                  href="/student/evaluation-summary"
+                  className="text-[11px] font-bold text-[#0A3D24] hover:underline inline-flex items-center gap-1 mt-1.5"
+                >
+                  View Evaluation Summary Sheet →
+                </Link>
               </div>
             </div>
           </div>

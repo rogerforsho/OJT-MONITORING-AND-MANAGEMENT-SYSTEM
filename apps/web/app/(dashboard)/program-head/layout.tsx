@@ -1,5 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
+
+export const metadata: Metadata = {
+  title: 'Program Head Portal',
+};
 
 export default async function ProgramHeadLayout({
   children,

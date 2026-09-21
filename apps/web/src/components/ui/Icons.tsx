@@ -487,6 +487,7 @@ export function ChevronRight({ className = 'w-4 h-4', ...props }: IconProps) {
     </svg>
   );
 }
+
 export function RotateCcw({ className = 'w-4 h-4', ...props }: IconProps) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
@@ -579,6 +580,15 @@ export function MapPin({ className = 'w-4 h-4', ...props }: IconProps) {
   );
 }
 
+export function Compass({ className = 'w-4 h-4', ...props }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+    </svg>
+  );
+}
+
 export function Code({ className = 'w-4 h-4', ...props }: IconProps) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
@@ -654,6 +664,31 @@ export function Smartphone({ className = 'w-4 h-4', ...props }: IconProps) {
   );
 }
 
+export function Sun({ className = 'w-4 h-4', ...props }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <circle cx="12" cy="12" r="4" />
+      <path strokeLinecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41" />
+    </svg>
+  );
+}
 
+export function Moon({ className = 'w-4 h-4', ...props }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+export function Database({ className = 'w-4 h-4', ...props }: IconProps) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+      <path d="M3 12A9 3 0 0 0 21 12" />
+    </svg>
+  );
+}
 
 

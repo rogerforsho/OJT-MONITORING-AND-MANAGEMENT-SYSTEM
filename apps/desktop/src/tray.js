@@ -24,6 +24,16 @@ function createTray(mainWindow) {
       },
     },
     {
+      label: 'Reload Portal (Ctrl+R / F5)',
+      click: () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.show();
+          mainWindow.focus();
+          mainWindow.webContents.reloadIgnoringCache();
+        }
+      },
+    },
+    {
       label: 'Pending Queue',
       click: () => {
         mainWindow.show();

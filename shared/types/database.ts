@@ -124,9 +124,13 @@ export interface DbReport {
   submission_date: string;
   status: ReportStatus;
   remarks: string | null;
+  supervisor_feedback?: string | null;
+  supervisor_endorsed_at?: string | null;
   created_at: string;
   updated_at: string;
 }
+
+export type EvaluationType = 'midterm' | 'final';
 
 export interface DbEvaluation {
   evaluation_id: string;
@@ -135,6 +139,8 @@ export interface DbEvaluation {
   performance_score: number | null;
   feedback: string;
   evaluation_date: string;
+  evaluation_type?: EvaluationType;
+  rubric_scores?: Record<string, number> | null;
   created_at: string;
 }
 

@@ -22,6 +22,7 @@ import {
   Star,
   Settings,
   ShieldCheck,
+  MapPin,
   type IconProps,
 } from '@/src/components/ui/Icons';
 
@@ -45,6 +46,7 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: 'Approvals', href: '/coordinator/approvals', icon: UserCheck },
     { label: 'Students', href: '/coordinator/students', icon: Users },
     { label: 'Companies', href: '/coordinator/companies', icon: Building2 },
+    { label: 'Deployment Map', href: '/map', icon: MapPin },
     { label: 'Supervisors', href: '/coordinator/supervisors', icon: UserCheck },
     { label: 'Assignments', href: '/coordinator/assignments', icon: FileSignature },
     { label: 'Submissions', href: '/coordinator/submissions', icon: ClipboardCheck },
@@ -53,14 +55,17 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   Supervisor: [
     { label: 'My Students', href: '/supervisor/students', icon: Users },
     { label: 'Attendance', href: '/supervisor/attendance', icon: Clock },
+    { label: 'Weekly Reports', href: '/supervisor/reports', icon: FileText },
     { label: 'Evaluations', href: '/supervisor/evaluations', icon: Star },
   ],
   ProgramHead: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Deployment Map', href: '/map', icon: MapPin },
     { label: 'Reports', href: '/program-head/reports', icon: BarChart3 },
   ],
   Admin: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Deployment Map', href: '/map', icon: MapPin },
     { label: 'Administration', href: '/admin', icon: ShieldCheck },
   ],
 };

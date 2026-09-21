@@ -1,7 +1,12 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/src/lib/supabase/server';
 import { listAllUsers, getSystemOverview } from '@/src/services/admin';
 import AdminClient from './AdminClient';
+
+export const metadata: Metadata = {
+  title: 'System Administration',
+};
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -19,7 +24,7 @@ export default async function AdminPage() {
   }
 
   const [usersResult, overviewResult] = await Promise.all([
-    listAllUsers(1, 100),
+    listAllUsers(1, 10),
     getSystemOverview(),
   ]);
 

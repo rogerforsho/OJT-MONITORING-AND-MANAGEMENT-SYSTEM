@@ -1,10 +1,11 @@
-﻿import { redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/src/lib/supabase/server';
 import { listCohortProgress } from '@/src/services/progress';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Users } from '@/src/components/ui/Icons';
 import Link from 'next/link';
+import ClearanceActionModal from '@/src/components/coordinator/ClearanceActionModal';
 
 interface Props {
   searchParams: Promise<{ course?: string; status?: string; page?: string }>;
@@ -175,19 +176,26 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
                         </div>
                       </td>
                       <td className="py-4 px-5 text-right">
-                        <Badge
-                          className={
-                            isDone
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold'
-                              : s.completed_hours >= 350
-                              ? 'bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs font-semibold'
-                              : s.completed_hours >= 150
-                              ? 'bg-amber-50 text-amber-700 border-amber-200 text-xs font-semibold'
-                              : 'bg-slate-100 text-slate-600 border-slate-200 text-xs font-semibold'
-                          }
-                        >
-                          {isDone ? 'Completed' : s.completed_hours >= 350 ? 'On Track' : s.completed_hours >= 150 ? 'Midway' : 'At Risk'}
-                        </Badge>
+                        <div className="flex items-center justify-end gap-2">
+                          <Badge
+                            className={
+                              isDone
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold'
+                                : s.completed_hours >= 350
+                                ? 'bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs font-semibold'
+                                : s.completed_hours >= 150
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 text-xs font-semibold'
+                                : 'bg-slate-100 text-slate-600 border-slate-200 text-xs font-semibold'
+                            }
+                          >
+                            {isDone ? 'Completed' : s.completed_hours >= 350 ? 'On Track' : s.completed_hours >= 150 ? 'Midway' : 'At Risk'}
+                          </Badge>
+                          <ClearanceActionModal
+                            studentId={s.student_id}
+                            studentName={s.full_name}
+                            completedHours={s.completed_hours}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );

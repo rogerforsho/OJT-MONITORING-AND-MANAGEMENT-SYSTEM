@@ -1,7 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import CampusBulletin from '@/src/components/dashboard/CampusBulletin';
 import { redirect } from 'next/navigation';
+
+export const metadata: Metadata = {
+  title: 'Practicum Dashboard',
+};
 import { getAuthUser } from '@/src/services/auth';
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
@@ -305,44 +310,44 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Hero: Role-Specific Primary Metric Cards (Placed immediately at top for quick glance) */}
+      {/* Hero: Role-Specific Primary Metric Cards - Standardized Height & Micro-interactions */}
       {user.role === 'Student' && stats.student && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Timer className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rendered Hours</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">
-                {stats.progress.completed_hours} <span className="text-xs font-normal text-slate-500">/ {stats.student.required_hours || 486} hrs</span>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">
+                {stats.progress.completed_hours} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">/ {stats.student.required_hours || 486} hrs</span>
               </h3>
-              <p className="text-xs text-emerald-700 font-semibold mt-0.5">
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold mt-0.5 truncate">
                 {Math.min(100, Math.round((stats.progress.completed_hours / (stats.student.required_hours || 486)) * 100))}% completed
               </p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Hourglass className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Remaining Hours</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">
-                {stats.progress.remaining_hours} <span className="text-xs font-normal text-slate-500">hrs</span>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">
+                {stats.progress.remaining_hours} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">hrs</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Target: {stats.student.required_hours || 486} hrs</p>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">Target: {stats.student.required_hours || 486} hrs</p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assigned Company</p>
-              <h3 className="text-sm font-bold text-slate-900 mt-0.5 truncate max-w-[150px]">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 truncate max-w-[150px]">
                 {stats.assignment.company_name || 'Not yet assigned'}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px]">
@@ -351,16 +356,16 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <CalendarCheck className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Today&apos;s Status</p>
-              <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 leading-tight truncate">
                 {stats.todayAttendance?.time_in ? 'Time In Recorded' : 'Not Clocked In'}
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-400 mt-0.5 truncate">
                 {stats.todayAttendance?.time_out
                   ? 'Shift Completed'
                   : stats.todayAttendance?.time_in
@@ -373,89 +378,89 @@ export default async function DashboardPage() {
       )}
 
       {user.role === 'Coordinator' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <UserCheck className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Registrations</p>
-              <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingApprovals}</h3>
-              <Link href="/coordinator/approvals" className="text-xs text-[#0A3D24] font-bold hover:underline">
+              <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5 leading-tight">{stats.pendingApprovals}</h3>
+              <Link href="/coordinator/approvals" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline truncate">
                 Review queue →
               </Link>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Trainees</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.activeStudents}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Deployed across HTEs</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.activeStudents}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">Deployed across HTEs</p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">MoA Active Establishments</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.totalCompanies}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">MoA Active Establishments</p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-red-600 flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Low Progress Alert</p>
-              <h3 className="text-2xl font-bold text-red-600 mt-0.5">{stats.atRiskCount}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">&lt; 100 hrs rendered</p>
+              <h3 className="text-2xl font-bold text-red-600 dark:text-red-400 mt-0.5 leading-tight">{stats.atRiskCount}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">&lt; 100 hrs rendered</p>
             </div>
           </div>
         </div>
       )}
 
       {user.role === 'Supervisor' && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assigned Interns</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.assignedStudents}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Active under your supervision</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.assignedStudents}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">Active under your supervision</p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Timer className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Attendance</p>
-              <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingAttendance}</h3>
-              <Link href="/supervisor/attendance" className="text-xs text-[#0A3D24] font-bold hover:underline">
+              <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5 leading-tight">{stats.pendingAttendance}</h3>
+              <Link href="/supervisor/attendance" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline truncate">
                 Verify logs →
               </Link>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Star className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Evaluations</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.completedEvaluations}</h3>
-              <Link href="/supervisor/evaluations" className="text-xs text-[#0A3D24] font-bold hover:underline">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.completedEvaluations}</h3>
+              <Link href="/supervisor/evaluations" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline truncate">
                 Rate students →
               </Link>
             </div>
@@ -464,56 +469,56 @@ export default async function DashboardPage() {
       )}
 
       {user.role === 'ProgramHead' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Interns</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalDepartmentStudents}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">{stats.dept} Department Trainees</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.totalDepartmentStudents}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">{stats.dept} Department Trainees</p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               {stats.dept === 'ICS' ? <Laptop className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 {stats.dept === 'ICS' ? 'BSIT Trainees' : 'BSBA-HRM Trainees'}
               </p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.courseCount1}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.courseCount1}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">
                 {stats.dept === 'ICS' ? 'Information Technology' : 'Human Resource Management'}
               </p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               {stats.dept === 'ICS' ? <Cpu className="w-5 h-5" /> : <TrendingUp className="w-5 h-5" />}
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 {stats.dept === 'ICS' ? 'BS-CPE Trainees' : 'BSEntrep Trainees'}
               </p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.courseCount2}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.courseCount2}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">
                 {stats.dept === 'ICS' ? 'Computer Engineering' : 'Entrepreneurship'}
               </p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner HTEs</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
-              <Link href="/program-head/reports" className="text-xs text-[#0A3D24] font-bold hover:underline inline-block mt-0.5">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.totalCompanies}</h3>
+              <Link href="/program-head/reports" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline inline-block mt-0.5 truncate">
                 View Reports →
               </Link>
             </div>
@@ -522,50 +527,50 @@ export default async function DashboardPage() {
       )}
 
       {user.role === 'Admin' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Accounts</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalUsers}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Registered system users</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.totalUsers}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">Registered system users</p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-emerald-700 flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <CheckCircle2 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Users</p>
-              <h3 className="text-2xl font-bold text-emerald-700 mt-0.5">{stats.activeUsers}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Verified active accounts</p>
+              <h3 className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mt-0.5 leading-tight">{stats.activeUsers}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">Verified active accounts</p>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-amber-600 flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <ShieldAlert className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Approvals</p>
-              <h3 className="text-2xl font-bold text-amber-600 mt-0.5">{stats.pendingUsers}</h3>
-              <Link href="/admin" className="text-xs text-amber-700 font-bold hover:underline inline-block mt-0.5">
+              <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5 leading-tight">{stats.pendingUsers}</h3>
+              <Link href="/admin" className="text-xs text-amber-700 dark:text-amber-400 font-bold hover:underline inline-block mt-0.5 truncate">
                 Review pending →
               </Link>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+          <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Companies</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.totalCompanies}</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Host Training Establishments</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.totalCompanies}</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate">Host Training Establishments</p>
             </div>
           </div>
         </div>
@@ -576,105 +581,105 @@ export default async function DashboardPage() {
         {/* Left / Primary Operations Hub (2 Columns on Large Screens) */}
         <div className="lg:col-span-2 space-y-5">
           {user.role === 'Student' && (
-            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Practicum Quick Actions</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Quickly access attendance, daily logs, and required submissions</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Practicum Quick Actions</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Quickly access attendance, daily logs, and required submissions</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <Link
                   href="/student/attendance"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
                     <Clock className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Log Attendance</span>
-                  <span className="text-[10px] text-slate-500">Record daily time-in & selfie</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Log Attendance</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Record daily time-in & selfie</span>
                 </Link>
 
                 <Link
                   href="/student/reports"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
                     <FileText className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Submit Reports</span>
-                  <span className="text-[10px] text-slate-500">Upload weekly journals & DTR</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Submit Reports</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Upload weekly journals & DTR</span>
                 </Link>
 
                 <Link
                   href="/student/progress"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
                     <BarChart3 className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Track Progress</span>
-                  <span className="text-[10px] text-slate-500">View completion milestones</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Track Progress</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">View completion milestones</span>
                 </Link>
               </div>
             </div>
           )}
 
           {user.role === 'Coordinator' && (
-            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Coordinator Oversight Actions</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Direct shortcuts to verification queues and student rosters</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Coordinator Oversight Actions</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Direct shortcuts to verification queues and student rosters</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <Link
                   href="/coordinator/approvals"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-amber-50/50 border border-slate-200/80 hover:border-amber-500/30 transition-all flex flex-col gap-2 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-amber-50/50 dark:hover:bg-amber-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/30 transition-all flex flex-col gap-2 group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-amber-700 text-white flex items-center justify-center">
                     <UserCheck className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-amber-800">Pending Registrations</span>
-                  <span className="text-[10px] text-slate-500">{stats.pendingApprovals} trainees awaiting review</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400">Pending Registrations</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{stats.pendingApprovals} trainees awaiting review</span>
                 </Link>
 
                 <Link
                   href="/coordinator/students"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
                     <Users className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Trainee Directory</span>
-                  <span className="text-[10px] text-slate-500">View active student placements</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Trainee Directory</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">View active student placements</span>
                 </Link>
 
                 <Link
                   href="/coordinator/submissions"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
                     <ClipboardCheck className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Review Submissions</span>
-                  <span className="text-[10px] text-slate-500">Grade DTRs & requirement files</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Review Submissions</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Grade DTRs & requirement files</span>
                 </Link>
               </div>
             </div>
           )}
 
           {user.role === 'Admin' && (
-            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Administrative System Console</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Manage user access, staff roles, and audit security records</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Administrative System Console</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage user access, staff roles, and audit security records</p>
                 </div>
                 <Link
                   href="/admin"
-                  className="text-xs font-bold text-[#0A3D24] hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-[#0A3D24] dark:text-emerald-400 hover:underline flex items-center gap-1"
                 >
                   Open Console <ArrowRight className="w-3 h-3" />
                 </Link>
@@ -682,27 +687,27 @@ export default async function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <Link
                   href="/admin"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
                     <Users className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">User Management</h4>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Filter, search, activate, or delete accounts</p>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">User Management</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Filter, search, activate, or delete accounts</p>
                   </div>
                 </Link>
 
                 <Link
                   href="/admin"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Security & Audit Logs</h4>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Immutable audit trail of system events</p>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Security & Audit Logs</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Immutable audit trail of system events</p>
                   </div>
                 </Link>
               </div>
@@ -710,37 +715,37 @@ export default async function DashboardPage() {
           )}
 
           {user.role === 'Supervisor' && (
-            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Industry Supervisor Workspace</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Daily trainee verification and performance evaluations</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Industry Supervisor Workspace</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Daily trainee verification and performance evaluations</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <Link
                   href="/supervisor/attendance"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Verify Attendance Logs</h4>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Review intern time-in and selfie captures</p>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Verify Attendance Logs</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Review intern time-in and selfie captures</p>
                   </div>
                 </Link>
 
                 <Link
                   href="/supervisor/evaluations"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
                     <Star className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Performance Evaluations</h4>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Grade trainees based on standard rubrics</p>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Performance Evaluations</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Grade trainees based on standard rubrics</p>
                   </div>
                 </Link>
               </div>
@@ -748,15 +753,15 @@ export default async function DashboardPage() {
           )}
 
           {user.role === 'ProgramHead' && (
-            <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Academic Program Analytics</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Institute completion rates and departmental accreditation metrics</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Academic Program Analytics</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Institute completion rates and departmental accreditation metrics</p>
                 </div>
                 <Link
                   href="/program-head/reports"
-                  className="text-xs font-bold text-[#0A3D24] hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-[#0A3D24] dark:text-emerald-400 hover:underline flex items-center gap-1"
                 >
                   Full Report <ArrowRight className="w-3 h-3" />
                 </Link>
@@ -764,27 +769,27 @@ export default async function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <Link
                   href="/program-head/reports"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
                     <BarChart3 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">Cohort Completion Rates</h4>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Compare {stats.dept} progress statistics</p>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Cohort Completion Rates</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Compare {stats.dept} progress statistics</p>
                   </div>
                 </Link>
 
                 <Link
                   href="/program-head/reports"
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-200/80 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-[#0A3D24]">HTE Partner Distribution</h4>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Inspect company deployment capacity</p>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">HTE Partner Distribution</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inspect company deployment capacity</p>
                   </div>
                 </Link>
               </div>

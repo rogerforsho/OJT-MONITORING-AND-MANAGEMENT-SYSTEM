@@ -204,9 +204,9 @@ function ResetPasswordForm() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <h2 className="text-xl font-black text-[#0A3D24] font-serif">
+          <h1 className="text-xl font-black text-[#0A3D24] font-serif">
             {step === 1 ? 'Staff Account Recovery' : 'Enter Verification Code'}
-          </h2>
+          </h1>
         </div>
         <p className="text-xs text-slate-500">
           {step === 1

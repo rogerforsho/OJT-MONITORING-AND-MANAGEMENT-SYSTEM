@@ -150,7 +150,7 @@ export default function PublicFooter() {
               Colegio de Montalban &copy; {new Date().getFullYear()} &bull; Institute of Computing Studies &bull; Institute of Business &amp; Entrepreneurship &bull; Kasiglahan Village, Rodriguez, Rizal 1860
             </p>
             <p>
-              Engineering Team: Ralph Roger Vicente, Jay Baui, Jovelyn Golis, Jomar Suralta
+              Research &amp; Development Team: Ralph Roger Vicente, Jay-e Baui, Jovelyn Golis, Jomar Suralta
             </p>
           </div>
         </div>
@@ -508,21 +508,21 @@ export default function PublicFooter() {
                 </p>
               </div>
 
-              {/* Developer Cards Grid (2x2) */}
+              {/* Developer & Research Team Cards Grid (2x2) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 1. Ralph Roger Vicente */}
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors space-y-1.5">
                   <div className="flex items-start justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">Ralph Roger Vicente</h4>
-                      <p className="text-[11px] text-slate-600 font-medium">Lead Full-Stack Developer & System Architect</p>
+                      <p className="text-[11px] text-slate-600 font-medium">System Architecture &amp; Development</p>
                     </div>
                     <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">BSIT</span>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-normal">
-                    Cloud architecture, database schemas, PostgreSQL Row-Level Security, cross-platform synchronization, and desktop client.
+                    System architecture, database modeling, backend services, and overall platform integration.
                   </p>
-                  <p className="text-[10px] text-slate-400 font-mono">Next.js &bull; Supabase &bull; Electron &bull; APIs</p>
+                  <p className="text-[10px] text-slate-400 font-mono">System Architect &bull; Backend &bull; Full-Stack</p>
                 </div>
 
                 {/* 2. Jay Baui */}
@@ -530,44 +530,44 @@ export default function PublicFooter() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">Jay Baui</h4>
-                      <p className="text-[11px] text-slate-600 font-medium">Core Systems & Full-Stack Developer</p>
+                      <p className="text-[11px] text-slate-600 font-medium">Frontend Developer</p>
                     </div>
                     <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">BSIT</span>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-normal">
-                    Mobile application engineering, responsive UI interfaces, trainee attendance workflows, and authentication ergonomics.
+                    Frontend user interfaces, client components, and layout styling across web and mobile platforms.
                   </p>
-                  <p className="text-[10px] text-slate-400 font-mono">React Native &bull; Expo &bull; TailwindCSS</p>
+                  <p className="text-[10px] text-slate-400 font-mono">Frontend &bull; UI &bull; Mobile &amp; Web</p>
                 </div>
 
-                {/* 3. Jovelyn Golis */}
-                <div className="p-3.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors space-y-1.5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900">Jovelyn Golis</h4>
-                      <p className="text-[11px] text-slate-600 font-medium">Research, Policy & Technical Documentation</p>
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">BSIT</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 leading-normal">
-                    Institutional policy alignment, CHED CMO 104 compliance, Data Privacy Act governance, and academic manuscript preparation.
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-mono">CHED CMO 104 &bull; RA 10173 &bull; Research</p>
-                </div>
-
-                {/* 4. Jomar Suralta */}
+                {/* 3. Jomar Suralta */}
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors space-y-1.5">
                   <div className="flex items-start justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">Jomar Suralta</h4>
-                      <p className="text-[11px] text-slate-600 font-medium">Systems QA & Technical Documentation</p>
+                      <p className="text-[11px] text-slate-600 font-medium">Researcher &amp; Interviewer</p>
                     </div>
                     <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">BSIT</span>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-normal">
-                    Software quality assurance testing, ISO/IEC 25010 evaluation matrices, user manual write-ups, and acceptance testing (UAT).
+                    Stakeholder interview coordination, qualitative data gathering, survey administration, and field research.
                   </p>
-                  <p className="text-[10px] text-slate-400 font-mono">ISO/IEC 25010 &bull; QA Testing &bull; Manuals</p>
+                  <p className="text-[10px] text-slate-400 font-mono">Researcher &bull; Interviewer &bull; Field Data</p>
+                </div>
+
+                {/* 4. Jovelyn Golis */}
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors space-y-1.5">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">Jovelyn Golis</h4>
+                      <p className="text-[11px] text-slate-600 font-medium">Researcher &amp; Paper Documentation</p>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">BSIT</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-normal">
+                    Thesis manuscript writing, chapter preparation, research methodology, and paper documentation.
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-mono">Researcher &bull; Documentation &bull; Manuscript</p>
                 </div>
               </div>
             </div>

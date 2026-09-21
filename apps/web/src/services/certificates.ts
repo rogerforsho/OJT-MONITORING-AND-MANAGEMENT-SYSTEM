@@ -30,6 +30,8 @@ export interface ClearanceCheckResult {
   final_report_approved: boolean;
   evaluation_passed: boolean;
   evaluation_score: number | null;
+  midterm_score: number | null;
+  final_score: number | null;
   can_issue: boolean;
   certificate?: {
     certificate_id: string;
@@ -77,19 +79,27 @@ export async function checkClearanceStatus(student_id: string): Promise<AppResul
 
   const finalReportApproved = !!finalReport;
 
-  // 4. Fetch supervisor evaluation
-  const { data: evaluation } = await service
+  // 4. Fetch supervisor evaluations (both midterm and final)
+  const { data: evaluations } = await service
     .from('evaluations')
-    .select('performance_score')
+    .select('performance_score, evaluation_type')
     .eq('student_id', student_id)
-    .order('evaluation_date', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order('evaluation_date', { ascending: false });
 
-  const evalScore = evaluation?.performance_score !== null && evaluation?.performance_score !== undefined
-    ? Number(evaluation.performance_score)
+  const evals = (evaluations ?? []) as { performance_score: number | null; evaluation_type?: string }[];
+  const midtermEval = evals.find(e => e.evaluation_type === 'midterm');
+  const finalEval = evals.find(e => e.evaluation_type === 'final') || (evals.length > 0 && !midtermEval ? evals[0] : null);
+
+  const midtermScore = midtermEval?.performance_score !== null && midtermEval?.performance_score !== undefined
+    ? Number(midtermEval.performance_score)
     : null;
-  const evaluationPassed = evalScore !== null && evalScore >= 75;
+  const finalScore = finalEval?.performance_score !== null && finalEval?.performance_score !== undefined
+    ? Number(finalEval.performance_score)
+    : null;
+
+  // Either final score >= 75 or composite >= 75
+  const evalScore = finalScore !== null ? finalScore : midtermScore;
+  const evaluationPassed = (finalScore !== null && finalScore >= 75) || (evalScore !== null && evalScore >= 75);
 
   // 5. Check if already issued
   const { data: cert } = await service
@@ -112,6 +122,8 @@ export async function checkClearanceStatus(student_id: string): Promise<AppResul
       final_report_approved: finalReportApproved,
       evaluation_passed: evaluationPassed,
       evaluation_score: evalScore,
+      midterm_score: midtermScore,
+      final_score: finalScore,
       can_issue: hoursMet && finalReportApproved && evaluationPassed && !cert,
       certificate: cert || null,
     },

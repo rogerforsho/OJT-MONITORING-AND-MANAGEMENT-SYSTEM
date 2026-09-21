@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -76,7 +76,7 @@ export default function RegisterPage() {
   return (
     <>
       <div className="mb-5">
-        <h2 className="text-xl font-black text-[#0A3D24] font-serif">Student Registration</h2>
+        <h1 className="text-xl font-black text-[#0A3D24] font-serif">Student Registration</h1>
         <p className="text-xs text-slate-500 mt-1">
           Enroll your 4th-Year OJT trainee profile (ICS / IBE).
         </p>

@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/src/services/auth';
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
 import SettingsClient from './SettingsClient';
+
+export const metadata: Metadata = {
+  title: 'Account Settings',
+};
 
 export default async function SettingsPage() {
   const user = await getAuthUser();

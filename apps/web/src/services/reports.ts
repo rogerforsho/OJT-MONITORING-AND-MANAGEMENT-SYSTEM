@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { recordAuditEvent } from './audit';
@@ -129,6 +129,81 @@ export async function reviewReport(
     entity_type: 'report',
     entity_id: report_id,
     details: { status, remarks },
+  });
+
+  return { data: null, error: null };
+}
+
+export async function listReportsForSupervisor(
+  page = 1,
+  pageSize = 20
+): Promise<AppResult<{ reports: ReportWithStudent[]; total: number }>> {
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { data: supervisor } = await supabase
+    .from('supervisors')
+    .select('supervisor_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!supervisor) return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
+
+  // Get assigned student IDs
+  const { data: assignments } = await supabase
+    .from('student_assignments')
+    .select('student_id')
+    .eq('supervisor_id', supervisor.supervisor_id);
+
+  const studentIds = (assignments ?? []).map((a) => a.student_id);
+  if (studentIds.length === 0) {
+    return { data: { reports: [], total: 0 }, error: null };
+  }
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from('reports')
+    .select(`*, students ( student_number, course, users ( full_name ) )`, { count: 'exact' })
+    .in('student_id', studentIds)
+    .order('submission_date', { ascending: false })
+    .range(from, to);
+
+  if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load trainee reports.' } };
+
+  return { data: { reports: (data ?? []) as ReportWithStudent[], total: count ?? 0 }, error: null };
+}
+
+export async function endorseReportBySupervisor(
+  report_id: string,
+  supervisor_feedback: string
+): Promise<AppResult<null>> {
+  if (!report_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Report ID is required.' } };
+  if (!supervisor_feedback?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Feedback remarks are required.' } };
+
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const { error } = await supabase
+    .from('reports')
+    .update({
+      supervisor_feedback: supervisor_feedback.trim(),
+      supervisor_endorsed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('report_id', report_id);
+
+  if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to record supervisor feedback.' } };
+
+  await recordAuditEvent({
+    actor_user_id: user.id,
+    action: 'REPORT_SUPERVISOR_ENDORSED',
+    entity_type: 'report',
+    entity_id: report_id,
+    details: { supervisor_feedback },
   });
 
   return { data: null, error: null };

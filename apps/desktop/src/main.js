@@ -29,14 +29,14 @@ function getDesktopConfig() {
     console.error('Error reading desktop-config.json:', e);
   }
   return {
-    productionUrl: 'https://ojt-monitoring-and-management-system.vercel.app',
-    developmentUrl: 'http://localhost:3000',
+    productionUrl: 'https://ojt-monitoring-and-management-syste.vercel.app/auth/sign-in',
+    developmentUrl: 'http://localhost:3000/auth/sign-in',
   };
 }
 
 const config = getDesktopConfig();
 const isProd = app.isPackaged || process.env.NODE_ENV === 'production';
-const targetUrl = process.env.DESKTOP_TARGET_URL || (isProd ? config.productionUrl : (config.developmentUrl || 'http://localhost:3000'));
+const targetUrl = process.env.DESKTOP_TARGET_URL || (isProd ? config.productionUrl : (config.developmentUrl || 'http://localhost:3000/auth/sign-in'));
 
 function checkServerReady(url) {
   return new Promise((resolve) => {
@@ -161,10 +161,43 @@ function createMainWindow() {
   // Hide default top menu for clean look
   mainWindow.setMenuBarVisibility(false);
 
+  // Enable standard keyboard shortcuts (F5, Ctrl+R to reload, F12 / Ctrl+Shift+I for DevTools)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown') {
+      // Reload: F5, Ctrl+R, Cmd+R
+      if (input.key === 'F5' || ((input.control || input.meta) && input.key.toLowerCase() === 'r')) {
+        if (input.shift) {
+          mainWindow.webContents.reloadIgnoringCache();
+        } else {
+          mainWindow.webContents.reload();
+        }
+        event.preventDefault();
+      }
+      // DevTools: F12, Ctrl+Shift+I, Cmd+Option+I
+      if (input.key === 'F12' || ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i')) {
+        mainWindow.webContents.toggleDevTools();
+        event.preventDefault();
+      }
+    }
+  });
+
   // Graceful handling of network drops / failure to load
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
     console.warn(`Portal load failed (${errorCode}: ${errorDescription}). Displaying reconnect screen...`);
     loadSplashScreen();
+  });
+
+  // Desktop guard: prevent navigating to the public marketing landing page
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    try {
+      const parsed = new URL(navigationUrl);
+      if (parsed.pathname === '/' || parsed.pathname === '') {
+        event.preventDefault();
+        mainWindow.loadURL(targetUrl);
+      }
+    } catch {
+      // ignore invalid URLs
+    }
   });
 
   // Close to Tray behavior

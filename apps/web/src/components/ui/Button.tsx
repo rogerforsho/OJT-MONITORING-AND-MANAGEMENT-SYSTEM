@@ -17,9 +17,9 @@ export function Button({ loading, variant = 'primary', size = 'default', childre
   const variants = {
     primary: 'bg-[#0A3D24] text-white hover:bg-[#062415] hover:shadow-xs focus:ring-2 focus:ring-[#0A3D24]/30 focus:ring-offset-1 border border-emerald-900/40 shadow-xs',
     gold: 'bg-[#F59E0B] text-[#062415] hover:bg-[#D97706] hover:text-white hover:shadow-xs focus:ring-2 focus:ring-amber-500/30 focus:ring-offset-1 font-bold shadow-xs',
-    ghost: 'bg-transparent text-slate-600 hover:bg-slate-100/90 hover:text-slate-900 focus:ring-2 focus:ring-slate-300',
-    outline: 'bg-white border border-slate-200/90 text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 focus:ring-2 focus:ring-slate-300 shadow-xs',
-    secondary: 'bg-slate-100 text-slate-800 hover:bg-slate-200/80 hover:text-slate-950 focus:ring-2 focus:ring-slate-300 shadow-xs',
+    ghost: 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/90 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700',
+    outline: 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 shadow-xs',
+    secondary: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700 hover:text-slate-950 dark:hover:text-white focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 shadow-xs',
     destructive: 'bg-rose-600 text-white hover:bg-rose-700 hover:shadow-xs focus:ring-2 focus:ring-rose-500/30 border border-rose-700/40 shadow-xs',
   };
 

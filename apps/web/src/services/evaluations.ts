@@ -37,6 +37,7 @@ export interface EvaluationRubricCriteria {
 
 export interface EvaluationInput {
   student_id: string;
+  evaluation_type?: 'midterm' | 'final';
   performance_score: number | null;
   feedback: string;
   criteria?: EvaluationRubricCriteria;
@@ -104,6 +105,8 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
   if (!assignment)
     return { data: null, error: { code: 'FORBIDDEN', message: 'You are not assigned to this student.' } };
 
+  const evalType = input.evaluation_type || 'final';
+
   // Calculate composite score from rubric if provided
   let computedScore = input.performance_score;
   if (input.criteria) {
@@ -116,12 +119,16 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
     ));
   }
 
-  const { data: evalRecord, error } = await service.from('evaluations').insert({
+  const { data: evalRecord, error } = await service.from('evaluations').upsert({
     student_id: input.student_id,
     supervisor_id: supervisor.supervisor_id,
+    evaluation_type: evalType,
     performance_score: computedScore,
+    rubric_scores: input.criteria || null,
     feedback: input.feedback.trim(),
     evaluation_date: new Date().toISOString().slice(0, 10),
+  }, {
+    onConflict: 'student_id,evaluation_type'
   }).select('evaluation_id').single();
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to create evaluation.' } };
@@ -131,10 +138,104 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
     action: 'EVALUATION_SUBMITTED',
     entity_type: 'evaluation',
     entity_id: evalRecord.evaluation_id,
-    details: { student_id: input.student_id, score: computedScore, criteria: input.criteria },
+    details: { student_id: input.student_id, evaluation_type: evalType, score: computedScore, criteria: input.criteria },
   });
 
   return { data: null, error: null };
+}
+
+export interface StudentEvaluationSummary {
+  student_id: string;
+  student_name: string;
+  student_number: string;
+  course: string;
+  company_name: string;
+  supervisor_name: string;
+  midterm: DbEvaluation | null;
+  final: DbEvaluation | null;
+  overall_rating: number | null;
+  has_passed: boolean;
+}
+
+export async function getStudentEvaluationSummary(student_id?: string): Promise<AppResult<StudentEvaluationSummary>> {
+  const { user, profile } = await getAuthUserWithRole();
+  if (!user || !profile || profile.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const service = serviceClient();
+  let targetStudentId = student_id;
+
+  if (profile.role === 'Student') {
+    const { data: s } = await service.from('students').select('student_id').eq('user_id', user.id).single();
+    if (!s) return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
+    targetStudentId = s.student_id;
+  }
+
+  if (!targetStudentId) {
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
+  }
+
+  // Fetch student info
+  const { data: student } = await service
+    .from('students')
+    .select('student_id, student_number, course, users ( full_name )')
+    .eq('student_id', targetStudentId)
+    .single();
+
+  if (!student) return { data: null, error: { code: 'NOT_FOUND', message: 'Student not found.' } };
+
+  // Fetch assignment & supervisor
+  const { data: assignment } = await service
+    .from('student_assignments')
+    .select('companies ( company_name ), supervisors ( users ( full_name ) )')
+    .eq('student_id', targetStudentId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const compObj = Array.isArray(assignment?.companies) ? assignment?.companies[0] : assignment?.companies;
+  const supObj = Array.isArray(assignment?.supervisors) ? assignment?.supervisors[0] : assignment?.supervisors;
+  const supUser = Array.isArray(supObj?.users) ? supObj?.users[0] : supObj?.users;
+
+  // Fetch evaluations
+  const { data: evaluations } = await service
+    .from('evaluations')
+    .select('*')
+    .eq('student_id', targetStudentId)
+    .order('evaluation_date', { ascending: false });
+
+  const evals = (evaluations ?? []) as DbEvaluation[];
+  const midterm = evals.find(e => e.evaluation_type === 'midterm') || null;
+  const final = evals.find(e => e.evaluation_type === 'final') || (evals.length > 0 && !midterm ? evals[0] : null);
+
+  let overallRating: number | null = null;
+  if (midterm?.performance_score && final?.performance_score) {
+    overallRating = Math.round((Number(midterm.performance_score) * 0.4 + Number(final.performance_score) * 0.6) * 10) / 10;
+  } else if (final?.performance_score) {
+    overallRating = Number(final.performance_score);
+  } else if (midterm?.performance_score) {
+    overallRating = Number(midterm.performance_score);
+  }
+
+  const hasPassed = (overallRating !== null && overallRating >= 75) || (final?.performance_score !== null && Number(final?.performance_score) >= 75);
+
+  const studentUser = Array.isArray(student.users) ? student.users[0] : student.users;
+
+  return {
+    data: {
+      student_id: targetStudentId,
+      student_name: studentUser?.full_name || '',
+      student_number: student.student_number,
+      course: student.course,
+      company_name: compObj?.company_name || 'Partner Host Training Establishment',
+      supervisor_name: supUser?.full_name || 'Industry Supervisor',
+      midterm,
+      final,
+      overall_rating: overallRating,
+      has_passed: hasPassed,
+    },
+    error: null,
+  };
 }
 
 export async function overrideEvaluation(

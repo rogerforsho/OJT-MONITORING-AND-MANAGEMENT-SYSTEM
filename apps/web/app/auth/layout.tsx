@@ -1,5 +1,16 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import PublicFooter from '@/src/components/layout/PublicFooter';
+
+export const metadata: Metadata = {
+  title: 'Portal Authentication',
+  description: 'Secure authentication gateway for Colegio de Montalban OJT Practicum System.',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+};
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,9 +38,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <span className="text-[10px] uppercase tracking-widest font-bold text-amber-400 block mb-0.5">
                 Official Practicum Portal
               </span>
-              <h1 className="text-xl sm:text-2xl font-black text-white font-serif tracking-tight">
+              <span className="text-xl sm:text-2xl font-black text-white font-serif tracking-tight block">
                 Colegio de Montalban
-              </h1>
+              </span>
               <p className="text-xs text-slate-300 font-medium tracking-wide mt-0.5">
                 Institute of Computing Studies &bull; Institute of Business and Entrepreneurship
               </p>

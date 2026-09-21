@@ -28,6 +28,7 @@ export default function SupervisorEvaluationsPage() {
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [studentId, setStudentId] = useState('');
+  const [evaluationType, setEvaluationType] = useState<'midterm' | 'final'>('midterm');
   const [feedback, setFeedback] = useState('');
   const [criteria, setCriteria] = useState<EvaluationRubricCriteria>(DEFAULT_CRITERIA);
   const [formError, setFormError] = useState('');
@@ -78,6 +79,7 @@ export default function SupervisorEvaluationsPage() {
     setSaving(true);
     const result = await createEvaluation({
       student_id: studentId,
+      evaluation_type: evaluationType,
       performance_score: computedTotalScore,
       feedback: feedback.trim(),
       criteria,
@@ -140,6 +142,7 @@ export default function SupervisorEvaluationsPage() {
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 <th className="text-left px-5 py-3.5">Student Trainee</th>
+                <th className="text-left px-5 py-3.5">Stage</th>
                 <th className="text-left px-5 py-3.5">Performance Rating</th>
                 <th className="text-left px-5 py-3.5">Supervisor Feedback</th>
                 <th className="text-left px-5 py-3.5">Date Submitted</th>
@@ -151,6 +154,15 @@ export default function SupervisorEvaluationsPage() {
                   <td className="px-5 py-4">
                     <p className="font-bold text-slate-900">{e.students?.users?.full_name}</p>
                     <p className="text-xs text-slate-400 font-mono mt-0.5">{e.students?.student_number} • {e.students?.course}</p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <Badge className={`text-[10px] font-extrabold uppercase ${
+                      e.evaluation_type === 'midterm'
+                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                        : 'bg-[#0A3D24]/10 text-[#0A3D24] border-[#0A3D24]/30'
+                    }`}>
+                      {e.evaluation_type === 'midterm' ? 'Midterm (243h)' : 'Final (486h)'}
+                    </Badge>
                   </td>
                   <td className="px-5 py-4">
                     {getScoreBadge(e.performance_score)}
@@ -207,6 +219,50 @@ export default function SupervisorEvaluationsPage() {
         }
       >
         <div className="space-y-4">
+          {/* Evaluation Stage Selector */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Practicum Evaluation Milestone Stage <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setEvaluationType('midterm')}
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  evaluationType === 'midterm'
+                    ? 'border-[#0A3D24] bg-emerald-50/70 ring-2 ring-[#0A3D24]'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-900">Midterm Evaluation</span>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                    243h Target
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Midway progress checkpoint (50% completion)</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEvaluationType('final')}
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  evaluationType === 'final'
+                    ? 'border-[#0A3D24] bg-emerald-50/70 ring-2 ring-[#0A3D24]'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-900">Final Exit Appraisal</span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    486h Clearance
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Final exit appraisal for degree clearance</p>
+              </button>
+            </div>
+          </div>
+
           {/* Trainee Selection */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">

@@ -7,7 +7,7 @@ export default function PendingPage() {
         <span className="text-2xl">⏳</span>
       </div>
       <div>
-        <h2 className="text-xl font-black text-[#0A3D24] font-serif">Registration Under Review</h2>
+        <h1 className="text-xl font-black text-[#0A3D24] font-serif">Registration Under Review</h1>
         <p className="text-xs text-slate-600 mt-1.5 leading-relaxed max-w-xs mx-auto">
           Your OJT trainee account has been successfully submitted and is awaiting approval by your designated OJT Coordinator.
         </p>

@@ -143,7 +143,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
             <CardContent className="p-5 pt-0 relative">
               <div className="-mt-8 mb-3 flex items-end justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-[#0A3D24] text-amber-300 border-4 border-white shadow-2xs flex items-center justify-center font-bold text-lg">
+                <div className="w-14 h-14 rounded-2xl bg-[#0A3D24] text-amber-300 border-4 border-white dark:border-slate-900 shadow-2xs flex items-center justify-center font-bold text-lg">
                   {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
                 </div>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#0A3D24] text-amber-300 uppercase tracking-wider border border-amber-400/30 shadow-2xs">
@@ -151,23 +151,23 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                 </span>
               </div>
 
-              <h3 className="text-base font-bold text-slate-900 leading-tight">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
                 {user.full_name}
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5 font-medium">{user.email}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">{user.email}</p>
 
-              <div className="mt-4 pt-4 border-t border-slate-100 space-y-2.5 text-xs">
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 font-medium">Account Status</span>
-                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 uppercase text-[10px]">
+                  <span className="text-slate-400 dark:text-slate-500 font-medium">Account Status</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase text-[10px]">
                     {user.account_status}
                   </span>
                 </div>
 
                 {extraDetails?.course && (
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-slate-400 font-medium shrink-0">Program</span>
-                    <span className="font-bold text-slate-800 text-right truncate">
+                    <span className="text-slate-400 dark:text-slate-500 font-medium shrink-0">Program</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-right truncate">
                       {extraDetails.course}
                     </span>
                   </div>
@@ -175,8 +175,8 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
                 {extraDetails?.studentNumber && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Student ID</span>
-                    <span className="font-mono font-bold text-slate-800">
+                    <span className="text-slate-400 dark:text-slate-500 font-medium">Student ID</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
                       {extraDetails.studentNumber}
                     </span>
                   </div>
@@ -184,8 +184,8 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
                 {extraDetails?.department && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Department</span>
-                    <span className="font-bold text-slate-800">
+                    <span className="text-slate-400 dark:text-slate-500 font-medium">Department</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
                       {extraDetails.department}
                     </span>
                   </div>
@@ -193,8 +193,8 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
                 {extraDetails?.companyName && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Host Company</span>
-                    <span className="font-bold text-slate-800 truncate max-w-[140px]">
+                    <span className="text-slate-400 dark:text-slate-500 font-medium">Host Company</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[140px]">
                       {extraDetails.companyName}
                     </span>
                   </div>
@@ -204,25 +204,25 @@ export default function SettingsClient({ user, extraDetails }: Props) {
           </Card>
 
           {/* Dedicated Windows Desktop Client Card */}
-          <Card className="border-slate-200/80 shadow-xs overflow-hidden bg-gradient-to-b from-white to-slate-50/50">
+          <Card className="border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50">
             <CardContent className="p-5 space-y-3">
-              <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24]/10 border border-[#0A3D24]/20 flex items-center justify-center text-[#0A3D24]">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24]/10 dark:bg-emerald-950/60 border border-[#0A3D24]/20 dark:border-emerald-800/60 flex items-center justify-center text-[#0A3D24] dark:text-emerald-400">
                     <Monitor className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 leading-tight">Desktop Client</h4>
-                    <p className="text-[10px] text-slate-500 font-medium">Windows 10 / 11 (64-bit)</p>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Desktop Client</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Windows 10 / 11 (64-bit)</p>
                   </div>
                 </div>
-                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
                   v1.0.0
                 </span>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Native Windows client for faculty with System Tray parking, background alerts, and floating WFH shift stopwatch (<kbd className="font-mono text-[10px] bg-slate-200 text-slate-700 px-1 py-0.5 rounded border border-slate-300">Ctrl+M</kbd>).
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Native Windows client for faculty with System Tray parking, background alerts, and floating WFH shift stopwatch (<kbd className="font-mono text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700">Ctrl+M</kbd>).
               </p>
 
               <div className="pt-1">
@@ -234,7 +234,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                   <Download className="w-3.5 h-3.5" />
                   Download Windows Setup (.exe)
                 </a>
-                <p className="text-[10px] text-center text-slate-400 mt-1.5 font-medium">
+                <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
                   Pre-configured for Colegio de Montalban Cloud
                 </p>
               </div>
@@ -242,12 +242,12 @@ export default function SettingsClient({ user, extraDetails }: Props) {
           </Card>
 
           {/* Security Information Box */}
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs space-y-1.5">
-            <div className="flex items-center gap-1.5 font-bold text-amber-900">
-              <Lock className="w-3.5 h-3.5 text-amber-700" />
+          <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-500/30 dark:border-amber-800/50 text-amber-900 dark:text-amber-300 text-xs space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-200">
+              <Lock className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
               <span>Temporary Password Notice</span>
             </div>
-            <p className="text-[11px] text-amber-800/90 leading-relaxed">
+            <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
               If you are logging in with a default or temporary password provided by your institution, please create a new, private password below to secure your practicum records.
             </p>
           </div>
@@ -255,15 +255,15 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
         {/* Right Column: Security & Change Password Card */}
         <div className="lg:col-span-2">
-          <Card className="border-slate-200/80 shadow-xs">
+          <Card className="border-slate-200/80 dark:border-slate-800 shadow-xs">
             <CardContent className="p-6 sm:p-7 space-y-6">
-              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0 shadow-2xs">
-                  <Key className="w-5 h-5 text-[#0A3D24]" />
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Key className="w-5 h-5 text-[#0A3D24] dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">Change Account Password</h2>
-                  <p className="text-xs text-slate-500">
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Change Account Password</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Update your password to keep your CdM practicum portal secure.
                   </p>
                 </div>
@@ -272,8 +272,8 @@ export default function SettingsClient({ user, extraDetails }: Props) {
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 {/* Current Password Field */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">
-                    Current Password <span className="text-slate-400 font-normal">(Leave blank if first-time setup)</span>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Current Password <span className="text-slate-400 dark:text-slate-500 font-normal">(Leave blank if first-time setup)</span>
                   </label>
                   <div className="relative">
                     <Input
@@ -295,7 +295,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
                 {/* New Password Field */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     New Secure Password <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -310,7 +310,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                     <button
                       type="button"
                       onClick={() => setShowNew(!showNew)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                     >
                       {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -320,16 +320,16 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                   {newPassword.length > 0 && (
                     <div className="pt-1 space-y-1">
                       <div className="flex items-center justify-between text-[10px] font-bold">
-                        <span className="text-slate-400">Password Strength:</span>
+                        <span className="text-slate-400 dark:text-slate-500">Password Strength:</span>
                         <span
                           className={
                             strength <= 25
-                              ? 'text-rose-600'
+                              ? 'text-rose-600 dark:text-rose-400'
                               : strength <= 50
-                              ? 'text-amber-600'
+                              ? 'text-amber-600 dark:text-amber-400'
                               : strength <= 75
-                              ? 'text-blue-600'
-                              : 'text-emerald-600'
+                              ? 'text-blue-600 dark:text-blue-400'
+                              : 'text-emerald-600 dark:text-emerald-400'
                           }
                         >
                           {strength <= 25
@@ -341,7 +341,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                             : 'Strong & Secure'}
                         </span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all duration-300 ${
                             strength <= 25
@@ -360,7 +360,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
                 {/* Confirm New Password Field */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Confirm New Password <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -375,7 +375,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                     <button
                       type="button"
                       onClick={() => setShowConfirm(!showConfirm)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                     >
                       {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
