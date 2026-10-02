@@ -33,8 +33,8 @@ export default function AccessPortalModal({ isOpen, onClose }: AccessPortalModal
     {
       role: 'Student Trainee',
       badge: '4th-Year ICS & IBE',
-      description: 'Daily time record (DTR), GPS geofence check-in, selfie verification, and digital journal submissions.',
-      href: '/auth/sign-in?role=student',
+      description: 'Register via web. Approved trainees log in and record attendance exclusively using the CdM OJT Mobile App.',
+      href: '/auth/register',
       icon: User,
       color: 'border-emerald-500/40 hover:border-emerald-500 bg-emerald-50/40',
       badgeColor: 'bg-emerald-100 text-emerald-800',

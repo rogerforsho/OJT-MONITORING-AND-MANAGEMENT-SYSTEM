@@ -1,7 +1,9 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
+import { getServiceClient } from '@/src/lib/supabase/service';
 import { recordAuditEvent } from './audit';
+import { GATEWAY_DOCUMENT_SPECS, matchesDoc } from '@ojt/shared';
 import type { AppResult, DbReport } from '@ojt/shared';
 
 async function getAuthUserWithRole() {
@@ -205,6 +207,234 @@ export async function endorseReportBySupervisor(
     entity_id: report_id,
     details: { supervisor_feedback },
   });
+
+  return { data: null, error: null };
+}
+
+// ─── Pre-Deployment Gateway Compliance Tracker ────────────────────────────────
+
+export interface StudentGatewayStatus {
+  student_id: string;
+  user_id: string;
+  student_number: string;
+  full_name: string;
+  email: string;
+  course: string;
+  year_level: number;
+  submitted_count: number;
+  approved_count: number;
+  total_required: number;
+  missing_documents: string[];
+  pending_documents: string[];
+  approved_documents: string[];
+  compliance_state: 'not_started' | 'in_progress' | 'ready_for_review' | 'ready_for_placement' | 'deployed';
+  assigned_company: string | null;
+  documents: {
+    spec_id: string;
+    spec_name: string;
+    status: 'missing' | 'submitted' | 'approved' | 'rejected';
+    report_id?: string;
+    file_path?: string;
+    submission_date?: string;
+    remarks?: string | null;
+  }[];
+}
+
+export interface GatewayComplianceSummary {
+  students: StudentGatewayStatus[];
+  total_students: number;
+  needs_requirements: number;
+  ready_for_review: number;
+  ready_for_placement: number;
+  deployed: number;
+}
+
+
+export async function checkStudentGatewayStatus(student_id: string): Promise<{ isCleared: boolean; approvedCount: number; missing: string[] }> {
+  const supabase = await createClient();
+  const { data: reports } = await supabase
+    .from('reports')
+    .select('report_type, status')
+    .eq('student_id', student_id)
+    .eq('status', 'approved');
+
+  const approvedReports = reports || [];
+  const approvedSpecs = new Set<string>();
+
+  for (const r of approvedReports) {
+    for (const spec of GATEWAY_DOCUMENT_SPECS) {
+      if (matchesDoc(r.report_type, spec.name)) {
+        approvedSpecs.add(spec.id);
+      }
+    }
+  }
+
+  const missing = GATEWAY_DOCUMENT_SPECS.filter(s => !approvedSpecs.has(s.id)).map(s => s.name);
+  return {
+    isCleared: approvedSpecs.size === GATEWAY_DOCUMENT_SPECS.length,
+    approvedCount: approvedSpecs.size,
+    missing,
+  };
+}
+
+export async function getGatewayComplianceSummary(): Promise<AppResult<GatewayComplianceSummary>> {
+  const { supabase, profile } = await getAuthUserWithRole();
+  if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  // 1. Fetch active students
+  const { data: studentsData, error: stuErr } = await supabase
+    .from('students')
+    .select(`
+      student_id,
+      student_number,
+      course,
+      year_level,
+      status,
+      users!inner (
+        user_id,
+        full_name,
+        email,
+        account_status
+      )
+    `)
+    .eq('users.account_status', 'active');
+
+  if (stuErr) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load students.' } };
+
+  // 2. Fetch active assignments
+  const { data: assignmentsData } = await supabase
+    .from('student_assignments')
+    .select('student_id, assignment_status, companies ( company_name )')
+    .eq('assignment_status', 'active');
+
+  const assignmentMap = new Map<string, string>();
+  (assignmentsData ?? []).forEach((a: any) => {
+    const comp = Array.isArray(a.companies) ? a.companies[0] : a.companies;
+    assignmentMap.set(a.student_id, comp?.company_name || 'Assigned Workplace');
+  });
+
+  // 3. Fetch all reports
+  const { data: reportsData } = await supabase
+    .from('reports')
+    .select('report_id, student_id, report_type, status, file_path, submission_date, remarks')
+    .order('submission_date', { ascending: false });
+
+  const studentReportsMap = new Map<string, any[]>();
+  (reportsData ?? []).forEach((r) => {
+    const arr = studentReportsMap.get(r.student_id) || [];
+    arr.push(r);
+    studentReportsMap.set(r.student_id, arr);
+  });
+
+  // 4. Build gateway compliance array
+  const students: StudentGatewayStatus[] = (studentsData ?? []).map((s: any) => {
+    const user = Array.isArray(s.users) ? s.users[0] : s.users;
+    const userReports = studentReportsMap.get(s.student_id) || [];
+    const assignedCompany = assignmentMap.get(s.student_id) || null;
+
+    let submittedCount = 0;
+    let approvedCount = 0;
+    const missingDocs: string[] = [];
+    const pendingDocs: string[] = [];
+    const approvedDocs: string[] = [];
+
+    const documents = GATEWAY_DOCUMENT_SPECS.map(spec => {
+      const match = userReports.find(r => matchesDoc(r.report_type, spec.name));
+      if (!match) {
+        missingDocs.push(spec.name);
+        return {
+          spec_id: spec.id,
+          spec_name: spec.name,
+          status: 'missing' as const,
+        };
+      }
+
+      submittedCount++;
+      if (match.status === 'approved') {
+        approvedCount++;
+        approvedDocs.push(spec.name);
+      } else if (match.status === 'rejected') {
+        missingDocs.push(spec.name);
+      } else {
+        pendingDocs.push(spec.name);
+      }
+
+      return {
+        spec_id: spec.id,
+        spec_name: spec.name,
+        status: (match.status as 'submitted' | 'approved' | 'rejected') || 'submitted',
+        report_id: match.report_id,
+        file_path: match.file_path,
+        submission_date: match.submission_date,
+        remarks: match.remarks,
+      };
+    });
+
+    let complianceState: StudentGatewayStatus['compliance_state'] = 'not_started';
+    if (assignedCompany) {
+      complianceState = 'deployed';
+    } else if (approvedCount === GATEWAY_DOCUMENT_SPECS.length) {
+      complianceState = 'ready_for_placement';
+    } else if (submittedCount === GATEWAY_DOCUMENT_SPECS.length) {
+      complianceState = 'ready_for_review';
+    } else if (submittedCount > 0) {
+      complianceState = 'in_progress';
+    }
+
+    return {
+      student_id: s.student_id,
+      user_id: user?.user_id || '',
+      student_number: s.student_number,
+      full_name: user?.full_name || 'Unnamed Trainee',
+      email: user?.email || '',
+      course: s.course,
+      year_level: s.year_level,
+      submitted_count: submittedCount,
+      approved_count: approvedCount,
+      total_required: GATEWAY_DOCUMENT_SPECS.length,
+      missing_documents: missingDocs,
+      pending_documents: pendingDocs,
+      approved_documents: approvedDocs,
+      compliance_state: complianceState,
+      assigned_company: assignedCompany,
+      documents,
+    };
+  });
+
+  return {
+    data: {
+      students,
+      total_students: students.length,
+      needs_requirements: students.filter(s => s.compliance_state === 'not_started' || s.compliance_state === 'in_progress').length,
+      ready_for_review: students.filter(s => s.compliance_state === 'ready_for_review').length,
+      ready_for_placement: students.filter(s => s.compliance_state === 'ready_for_placement').length,
+      deployed: students.filter(s => s.compliance_state === 'deployed').length,
+    },
+    error: null,
+  };
+}
+
+export async function sendRequirementReminder(studentUserId: string, missingDocs: string[]): Promise<AppResult<null>> {
+  const { profile } = await getAuthUserWithRole();
+  if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active') {
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  }
+
+  const service = getServiceClient();
+  const docsText = missingDocs.join(', ');
+  const message = `Coordinator Notice: You have pending pre-deployment requirements (${docsText}). Please upload these via your mobile app to unlock company assignment and daily attendance.`;
+
+  const { error } = await service.from('notifications').insert({
+    receiver_user_id: studentUserId,
+    message,
+    status: 'unread',
+    notification_date: new Date().toISOString(),
+  });
+
+  if (error) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to dispatch in-app reminder.' } };
+  }
 
   return { data: null, error: null };
 }

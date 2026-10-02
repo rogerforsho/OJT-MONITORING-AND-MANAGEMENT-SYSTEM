@@ -7,8 +7,8 @@ import { Check, MapPin, ArrowRight } from '@/src/components/ui/Icons';
 export default function ComplianceFramework() {
   const values = [
     {
-      title: 'Geofenced Satellite GPS Verification',
-      description: 'Trainee clock-ins are validated against assigned company workplace coordinates with geofence radius checks and selfie evidence.',
+      title: 'Point-in-Time GPS Location Verification',
+      description: 'Trainee clock-ins capture point-in-time satellite GPS coordinates and selfie evidence for supervisor verification, accommodating on-site and field duties.',
     },
     {
       title: 'Offline Attendance Logging with Auto-Sync',

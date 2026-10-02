@@ -168,7 +168,7 @@ export default function LeafletDeploymentMap({
                 ? 'background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;'
                 : 'background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;'
             }">
-              ${isGeofenced ? `📡 ${company.geofence_radius_meters}m Geofence` : '⚠️ No Geofence'}
+              ${isGeofenced ? `📡 ${company.geofence_radius_meters}m Workplace Radius` : '⚠️ No GPS Coordinates'}
             </span>
           </div>
           ${traineesPreview}
@@ -203,7 +203,7 @@ export default function LeafletDeploymentMap({
         </span>
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
           <span className="w-3 h-3 rounded-full bg-[#0A3D24] border border-white shrink-0" />
-          <span>Geofence Verified (150m Perimeter)</span>
+          <span>Workplace Perimeter (150m Radius)</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
           <span className="w-3 h-3 rounded-full bg-amber-500 border border-white shrink-0" />

@@ -1,11 +1,14 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Image,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
+import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { registerStudent } from '../../services/auth';
+import { uploadRegistrationIdCard } from '../../lib/storage';
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Register'> };
 
@@ -16,12 +19,38 @@ export default function RegisterScreen({ navigation }: Props) {
     full_name: '', email: '', password: '', confirm_password: '',
     student_number: '', course: 'BSIT', year_level: '4',
   });
+  const [idCardFile, setIdCardFile] = useState<{ uri: string; name: string; size?: number } | null>(null);
   const [dataPrivacyConsent, setDataPrivacyConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   function set(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  async function handlePickIdCard() {
+    setError('');
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        if (asset.size && asset.size > 5 * 1024 * 1024) {
+          setError('Student ID image must be less than 5 MB.');
+          return;
+        }
+        setIdCardFile({
+          uri: asset.uri,
+          name: asset.name,
+          size: asset.size,
+        });
+      }
+    } catch {
+      setError('Could not select student ID document.');
+    }
   }
 
   async function handleSubmit() {
@@ -34,6 +63,10 @@ export default function RegisterScreen({ navigation }: Props) {
       setError('Please fill in all required fields.');
       return;
     }
+    if (!idCardFile) {
+      setError('Please attach your Validated Student ID Card for verification.');
+      return;
+    }
     if (form.password !== form.confirm_password) {
       setError('Passwords do not match.');
       return;
@@ -44,6 +77,18 @@ export default function RegisterScreen({ navigation }: Props) {
     }
 
     setLoading(true);
+
+    // 1. Upload ID card file
+    let idCardPath: string | undefined = undefined;
+    const uploadRes = await uploadRegistrationIdCard(idCardFile.uri, idCardFile.name);
+    if (uploadRes.error) {
+      setLoading(false);
+      setError(uploadRes.error.message);
+      return;
+    }
+    idCardPath = uploadRes.data?.path;
+
+    // 2. Register Student
     const result = await registerStudent({
       full_name: form.full_name,
       email: form.email,
@@ -51,6 +96,7 @@ export default function RegisterScreen({ navigation }: Props) {
       student_number: form.student_number,
       course: form.course,
       year_level: 4,
+      id_card_path: idCardPath,
     });
     setLoading(false);
     if (result.error) {
@@ -129,6 +175,35 @@ export default function RegisterScreen({ navigation }: Props) {
               <View style={s.fixedPill}>
                 <Text style={s.fixedPillText}>🎓 4th Year Graduating Trainee</Text>
               </View>
+            </View>
+
+            {/* Validated Student ID Card Upload */}
+            <View style={s.fieldGroup}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <Text style={s.label}>Validated Student ID Card *</Text>
+                <Text style={{ fontSize: 10, color: '#0A3D24', fontWeight: '700' }}>Front & Back</Text>
+              </View>
+              <TouchableOpacity
+                style={[s.uploadBox, idCardFile && s.uploadBoxSelected]}
+                onPress={handlePickIdCard}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={idCardFile ? "checkmark-circle" : "cloud-upload-outline"}
+                  size={24}
+                  color={idCardFile ? "#0A3D24" : "#64748b"}
+                />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[s.uploadBoxTitle, idCardFile && { color: '#0A3D24', fontWeight: '700' }]} numberOfLines={1}>
+                    {idCardFile ? idCardFile.name : 'Select Student ID File / Photo'}
+                  </Text>
+                  <Text style={s.uploadBoxSub}>
+                    {idCardFile && idCardFile.size
+                      ? `${(idCardFile.size / 1024).toFixed(0)} KB ready • Tap to change`
+                      : 'Required for coordinator enrollment check (≤ 5MB)'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
 
             {([
@@ -257,6 +332,23 @@ const s = StyleSheet.create({
     borderColor: 'rgba(10,61,36,0.2)',
   },
   fixedPillText: { fontSize: 12, fontWeight: '700', color: '#0A3D24' },
+  uploadBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#cbd5e1',
+    backgroundColor: '#f8fafc',
+  },
+  uploadBoxSelected: {
+    borderColor: '#0A3D24',
+    backgroundColor: 'rgba(10,61,36,0.04)',
+    borderStyle: 'solid',
+  },
+  uploadBoxTitle: { fontSize: 12, fontWeight: '600', color: '#1e293b' },
+  uploadBoxSub: { fontSize: 10, color: '#64748b', marginTop: 2 },
   consentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

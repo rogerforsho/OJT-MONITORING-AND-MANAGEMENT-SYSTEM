@@ -210,3 +210,33 @@ export async function uploadReportToStorage(
     return { data: null, error: { code: 'SERVER_FAILURE', message: err?.message || 'Error processing report file.' } };
   }
 }
+
+/**
+ * Upload Validated Student ID Card during Registration
+ */
+export async function uploadRegistrationIdCard(
+  fileUri: string,
+  fileName: string
+): Promise<AppResult<{ path: string }>> {
+  try {
+    const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+    const filePath = `id-cards/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${ext}`;
+    const arrayBuffer = await convertSourceToArrayBuffer(fileUri);
+    const resolvedMime = resolveMimeType(fileName);
+
+    const { data, error } = await supabase.storage
+      .from('private-documents')
+      .upload(filePath, arrayBuffer, { contentType: resolvedMime, upsert: false });
+
+    if (error) {
+      console.error('[uploadRegistrationIdCard] Error:', error);
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to upload student ID: ' + error.message } };
+    }
+
+    return { data: { path: data.path }, error: null };
+  } catch (err: any) {
+    console.error('[uploadRegistrationIdCard] Exception:', err);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: err?.message || 'Failed to upload student ID.' } };
+  }
+}
+

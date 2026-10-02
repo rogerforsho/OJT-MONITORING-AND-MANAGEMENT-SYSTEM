@@ -17,6 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect('/auth/sign-in');
   if (user.account_status === 'pending') redirect('/auth/pending');
   if (user.account_status !== 'active') redirect('/auth/sign-in');
+  if (user.role === 'Student') redirect('/auth/sign-in?reason=mobile_only');
 
   return (
     <DashboardShell user={user}>

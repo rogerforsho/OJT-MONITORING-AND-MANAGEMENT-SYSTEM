@@ -324,7 +324,7 @@ export default function LocationPickerMap({
       <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-xs font-semibold text-slate-700">
-            Geofence Perimeter Radius: <span className="text-emerald-700 font-bold">{radiusMeters} meters</span>
+            Workplace Perimeter Radius: <span className="text-emerald-700 font-bold">{radiusMeters} meters</span>
           </label>
           <div className="flex gap-1">
             {presetRadii.map((r) => (

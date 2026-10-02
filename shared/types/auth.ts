@@ -5,6 +5,7 @@ export interface RegisterStudentInput {
   student_number: string;
   course: string;
   year_level: number;
+  id_card_path?: string;
 }
 
 export interface SignInInput {

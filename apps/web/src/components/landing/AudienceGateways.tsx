@@ -21,7 +21,7 @@ export default function AudienceGateways() {
       icon: Monitor,
       iconBg: 'bg-emerald-50 text-emerald-700',
       badge: 'ICS Department',
-      href: '/auth/sign-in?role=student',
+      href: '/auth/register',
     },
     {
       id: 'bscpe',
@@ -31,7 +31,7 @@ export default function AudienceGateways() {
       icon: Cpu,
       iconBg: 'bg-teal-50 text-teal-700',
       badge: 'ICS Department',
-      href: '/auth/sign-in?role=student',
+      href: '/auth/register',
     },
     {
       id: 'bsba-hrm',
@@ -41,7 +41,7 @@ export default function AudienceGateways() {
       icon: Briefcase,
       iconBg: 'bg-amber-50 text-amber-700',
       badge: 'IBE Department',
-      href: '/auth/sign-in?role=student',
+      href: '/auth/register',
     },
     {
       id: 'bs-entrep',
@@ -51,16 +51,16 @@ export default function AudienceGateways() {
       icon: TrendingUp,
       iconBg: 'bg-orange-50 text-orange-700',
       badge: 'IBE Department',
-      href: '/auth/sign-in?role=student',
+      href: '/auth/register',
     },
     {
       id: 'portals',
       title: 'Stakeholder Role Portals',
       category: 'System Roles & Access',
-      description: 'Dedicated portals for Students, Faculty Coordinators, Company Supervisors, Program Heads, and Admins.',
+      description: 'Dedicated web portals for Faculty Coordinators, Company Supervisors, Program Heads, and Admins.',
       icon: ShieldCheck,
       iconBg: 'bg-slate-100 text-slate-800',
-      badge: '6 Approved Roles',
+      badge: 'Staff & Admin',
       href: '/auth/sign-in',
     },
   ];
@@ -122,7 +122,7 @@ export default function AudienceGateways() {
                     href={t.href}
                     className="text-xs font-bold text-[#0A3D24] group-hover:text-amber-600 flex items-center gap-1 transition-colors"
                   >
-                    <span>Sign In</span>
+                    <span>{t.id === 'portals' ? 'Staff Portal' : 'Register'}</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>

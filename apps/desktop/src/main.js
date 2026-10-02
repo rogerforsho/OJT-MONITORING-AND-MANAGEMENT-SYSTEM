@@ -216,7 +216,7 @@ function createMainWindow() {
     }
   });
 
-  tray = createTray(mainWindow);
+  tray = createTray(mainWindow, targetUrl);
 }
 
 app.on('second-instance', () => {

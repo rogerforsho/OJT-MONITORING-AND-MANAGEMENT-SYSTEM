@@ -25,7 +25,7 @@ export default function PendingPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-[#0A3D24] font-bold">✓</span>
-            <span>You may sign in immediately once your status is changed to Active.</span>
+            <span>Once approved, sign in using the <strong>CdM OJT Mobile App</strong> on your mobile device to record attendance and submit logs.</span>
           </li>
         </ul>
       </div>

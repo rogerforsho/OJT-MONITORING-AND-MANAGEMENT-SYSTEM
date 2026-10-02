@@ -13,8 +13,9 @@ export default async function StudentLayout({
 }) {
   const user = await getAuthUser();
   if (!user) redirect('/auth/sign-in');
+  if (user.role === 'Student') redirect('/auth/sign-in?reason=mobile_only');
 
-  if (!['Student', 'Coordinator', 'Admin'].includes(user.role) || user.account_status !== 'active') {
+  if (!['Coordinator', 'Admin'].includes(user.role) || user.account_status !== 'active') {
     redirect('/dashboard');
   }
 

@@ -27,7 +27,7 @@ const LeafletDeploymentMap = dynamic(
       <div className="w-full h-full min-h-[520px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl flex flex-col items-center justify-center text-slate-400 gap-3 border border-slate-200 dark:border-slate-700">
         <div className="w-8 h-8 border-3 border-[#0A3D24] dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-          Loading Regional Map &amp; Geofence Radar...
+          Loading Regional Deployment &amp; Workplace Radar...
         </span>
       </div>
     ),
@@ -95,11 +95,11 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
               <MapPin className="w-4 h-4" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Regional Deployment &amp; Geofence Map
+              Regional Deployment &amp; Workplace Map
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Geospatial radar tracking partner training establishments (HTEs) and satellite geofence perimeters across Rodriguez, Rizal &amp; NCR.
+            Geospatial radar tracking partner training establishments (HTEs) and workplace perimeters across Rodriguez, Rizal &amp; NCR.
           </p>
         </div>
 
@@ -135,7 +135,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Geofence Active</p>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">GPS Configured</p>
               <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">{geofencedCount}</h3>
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
             }`}
           >
-            Geofenced ({geofencedCount})
+            GPS Mapped ({geofencedCount})
           </button>
           <button
             type="button"
@@ -253,7 +253,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
                   {selectedCompany.geofence_enabled ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 shrink-0">
                       <CheckCircle2 className="w-3 h-3" />
-                      150m Geofence
+                      {selectedCompany.geofence_radius_meters || 150}m Workplace Radius
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 shrink-0">
@@ -356,7 +356,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
             <div className="p-8 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center text-xs text-slate-400">
               <MapPin className="w-8 h-8 mx-auto text-slate-300 mb-2" />
               <p className="font-semibold text-slate-600 dark:text-slate-300">No Establishment Selected</p>
-              <p className="mt-1">Click any pin on the map to inspect its focal person, geofence, and intern roster.</p>
+              <p className="mt-1">Click any pin on the map to inspect its focal person, workplace radius, and intern roster.</p>
             </div>
           )}
         </div>

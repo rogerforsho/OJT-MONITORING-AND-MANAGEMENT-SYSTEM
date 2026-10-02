@@ -24,7 +24,36 @@ export interface DbStudent {
   year_level: number;
   required_hours: number | null;
   status: StudentStatus;
+  id_card_path?: string | null;
   users?: DbUser;
+}
+
+export type WorkModality = 'on_site' | 'hybrid' | 'remote';
+export type PracticumScheduleStatus = 'pending' | 'approved' | 'rejected' | 'modified';
+
+export interface DbPracticumSchedule {
+  schedule_id: string;
+  student_id: string;
+  company_id: string | null;
+  custom_company_name: string | null;
+  work_modality: WorkModality;
+  work_days: number[];
+  time_in: string;
+  time_out: string;
+  lunch_break_minutes: number;
+  daily_hours: number;
+  weekly_hours: number;
+  start_date: string;
+  end_date: string | null;
+  status: PracticumScheduleStatus;
+  student_notes: string | null;
+  coordinator_feedback: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  students?: DbStudent & { users?: DbUser };
+  companies?: DbCompany;
 }
 
 export interface DbCoordinator {

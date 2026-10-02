@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, RefreshControl,
-  Modal, TextInput, ActivityIndicator, StyleSheet,
+  Modal, TextInput, ActivityIndicator, StyleSheet, ScrollView,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,11 +13,12 @@ import NetworkToast from '../../components/NetworkToast';
 import type { DbReport } from '@ojt/shared';
 
 const REPORT_TYPES = [
+  'Pre-OJT Orientation Certificate',
+  'Endorsement Letter',
   'Daily Journal',
   'Weekly Progress',
   'Accomplishment Report',
   'Incident Report',
-  'MOA Endorsement',
   'Final Evaluation',
 ];
 
@@ -253,125 +255,149 @@ export default function ReportsScreen() {
         transparent
         onRequestClose={() => setModalOpen(false)}
       >
-        <View style={s.modalBackdrop}>
+        <KeyboardAvoidingView
+          style={s.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={s.modalContent}>
+            {/* Pinned Modal Header */}
             <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>Submit Practicum Report</Text>
-              <TouchableOpacity onPress={() => setModalOpen(false)} style={{ padding: 4 }}>
-                <Ionicons name="close-circle" size={24} color="#94a3b8" />
-              </TouchableOpacity>
-            </View>
-
-            {!!modalError && (
-              <View style={s.alertError}>
-                <Ionicons name="alert-circle" size={16} color="#991b1b" />
-                <Text style={s.alertErrorText}>{modalError}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.modalTitle}>Submit Practicum Report</Text>
+                <Text style={s.modalSubtitle}>Upload requirements, journals & submissions</Text>
               </View>
-            )}
-
-            <Text style={s.fieldLabel}>Document Type</Text>
-            <View style={s.typeWrap}>
-              {REPORT_TYPES.map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  onPress={() => setSelectedType(type)}
-                  style={[s.typePill, selectedType === type && s.typePillActive]}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[s.typePillText, selectedType === type && s.typePillTextActive]}>
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={s.fieldLabel}>Attach Document File</Text>
-            {attachedFile ? (
-              <View style={s.attachedCard}>
-                <View style={s.attachedIconWrap}>
-                  <Ionicons
-                    name={attachedFile.mimeType?.includes('image') ? 'image' : 'document-text'}
-                    size={22}
-                    color="#0A3D24"
-                  />
-                </View>
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={s.attachedFileName} numberOfLines={1}>
-                    {attachedFile.name}
-                  </Text>
-                  <Text style={s.attachedFileSize}>
-                    {formatFileSize(attachedFile.size) || 'Ready to upload'}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={handleRemoveAttachedFile}
-                  style={s.btnRemoveAttachment}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="trash-outline" size={18} color="#dc2626" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                onPress={handlePickDocument}
-                style={s.btnAttachFile}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="cloud-upload-outline" size={20} color="#0A3D24" />
-                <Text style={s.btnAttachFileText}>Choose PDF, DOCX, or Image</Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={s.orDivider}>
-              <View style={s.orLine} />
-              <Text style={s.orText}>OR PASTE LINK / URL</Text>
-              <View style={s.orLine} />
-            </View>
-
-            <Text style={s.fieldLabel}>File Link / Google Drive URL (Alternative)</Text>
-            <TextInput
-              value={filePath}
-              onChangeText={setFilePath}
-              placeholder="drive.google.com/... (optional if file attached)"
-              placeholderTextColor="#94a3b8"
-              style={s.input}
-              autoCapitalize="none"
-            />
-
-            <Text style={s.fieldLabel}>Student Remarks (Optional)</Text>
-            <TextInput
-              value={remarks}
-              onChangeText={setRemarks}
-              placeholder="Add any notes for your coordinator..."
-              placeholderTextColor="#94a3b8"
-              style={[s.input, { height: 68, textAlignVertical: 'top' }]}
-              multiline
-            />
-
-            <View style={s.modalBtnRow}>
               <TouchableOpacity
                 onPress={() => setModalOpen(false)}
-                style={s.btnCancelModal}
-                activeOpacity={0.85}
+                style={{ padding: 4 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close modal"
               >
-                <Text style={s.btnCancelModalText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleSubmit}
-                disabled={submitting}
-                style={s.btnSubmitModal}
-                activeOpacity={0.85}
-              >
-                {submitting ? (
-                  <ActivityIndicator color="#062415" />
-                ) : (
-                  <Text style={s.btnSubmitModalText}>Submit Report</Text>
-                )}
+                <Ionicons name="close-circle" size={26} color="#94a3b8" />
               </TouchableOpacity>
             </View>
+
+            {/* Scrollable Form Body */}
+            <ScrollView
+              style={s.modalScroll}
+              contentContainerStyle={s.modalScrollContent}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="handled"
+            >
+              {!!modalError && (
+                <View style={s.alertError}>
+                  <Ionicons name="alert-circle" size={16} color="#991b1b" />
+                  <Text style={s.alertErrorText}>{modalError}</Text>
+                </View>
+              )}
+
+              <Text style={s.fieldLabel}>Document Type</Text>
+              <View style={s.typeWrap}>
+                {REPORT_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => setSelectedType(type)}
+                    style={[s.typePill, selectedType === type && s.typePillActive]}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[s.typePillText, selectedType === type && s.typePillTextActive]}>
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={s.fieldLabel}>Attach Document File</Text>
+              {attachedFile ? (
+                <View style={s.attachedCard}>
+                  <View style={s.attachedIconWrap}>
+                    <Ionicons
+                      name={attachedFile.mimeType?.includes('image') ? 'image' : 'document-text'}
+                      size={22}
+                      color="#0A3D24"
+                    />
+                  </View>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={s.attachedFileName} numberOfLines={1}>
+                      {attachedFile.name}
+                    </Text>
+                    <Text style={s.attachedFileSize}>
+                      {formatFileSize(attachedFile.size) || 'Ready to upload'}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={handleRemoveAttachedFile}
+                    style={s.btnRemoveAttachment}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#dc2626" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={handlePickDocument}
+                  style={s.btnAttachFile}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="cloud-upload-outline" size={20} color="#0A3D24" />
+                  <Text style={s.btnAttachFileText}>Choose PDF, DOCX, or Image</Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={s.orDivider}>
+                <View style={s.orLine} />
+                <Text style={s.orText}>OR PASTE LINK / URL</Text>
+                <View style={s.orLine} />
+              </View>
+
+              <Text style={s.fieldLabel}>File Link / Google Drive URL (Alternative)</Text>
+              <TextInput
+                value={filePath}
+                onChangeText={setFilePath}
+                placeholder="drive.google.com/... (optional if file attached)"
+                placeholderTextColor="#94a3b8"
+                style={s.input}
+                autoCapitalize="none"
+              />
+
+              <Text style={s.fieldLabel}>Student Remarks (Optional)</Text>
+              <TextInput
+                value={remarks}
+                onChangeText={setRemarks}
+                placeholder="Add any notes for your coordinator..."
+                placeholderTextColor="#94a3b8"
+                style={[s.input, { height: 68, textAlignVertical: 'top' }]}
+                multiline
+              />
+            </ScrollView>
+
+            {/* Pinned Action Buttons (Always Visible at bottom!) */}
+            <View style={s.modalFooter}>
+              <View style={s.modalBtnRow}>
+                <TouchableOpacity
+                  onPress={() => setModalOpen(false)}
+                  style={s.btnCancelModal}
+                  activeOpacity={0.85}
+                >
+                  <Text style={s.btnCancelModalText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleSubmit}
+                  disabled={submitting}
+                  style={[s.btnSubmitModal, submitting && { opacity: 0.7 }]}
+                  activeOpacity={0.85}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color="#062415" />
+                  ) : (
+                    <Text style={s.btnSubmitModalText}>Submit Report</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <NetworkToast isOffline={isOffline} />
@@ -472,10 +498,36 @@ const s = StyleSheet.create({
   emptyBox: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0f172a', marginBottom: 4 },
   emptySub: { fontSize: 12, color: '#94a3b8', textAlign: 'center', maxWidth: 260 },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '85%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    maxHeight: '88%',
+    display: 'flex',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
   modalTitle: { fontSize: 18, fontWeight: '900', color: '#0A3D24' },
+  modalSubtitle: { fontSize: 11, color: '#64748b', fontWeight: '500', marginTop: 1 },
+  modalScroll: { flexShrink: 1 },
+  modalScrollContent: { paddingBottom: 14 },
+  modalFooter: {
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
+  },
   fieldLabel: { fontSize: 12, fontWeight: '700', color: '#334155', marginBottom: 6, marginTop: 10 },
   typeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
   typePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },
@@ -552,7 +604,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.5,
   },
   input: { borderWidth: 1.5, borderColor: '#e2e8f0', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#0f172a', backgroundColor: '#f8fafc' },
-  modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  modalBtnRow: { flexDirection: 'row', gap: 10 },
   btnCancelModal: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: '#cbd5e1' },
   btnCancelModalText: { color: '#475569', fontSize: 13, fontWeight: '800' },
   btnSubmitModal: { flex: 2, backgroundColor: '#0A3D24', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)' },

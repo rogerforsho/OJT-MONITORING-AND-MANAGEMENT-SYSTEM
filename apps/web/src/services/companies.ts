@@ -35,7 +35,7 @@ function validateCompanyInput(input: CompanyInput): string | null {
     return 'Longitude must be a valid number between -180 and 180.';
   }
   if (input.geofence_radius_meters != null && (input.geofence_radius_meters < 50 || input.geofence_radius_meters > 5000)) {
-    return 'Geofence radius must be between 50 and 5,000 meters.';
+    return 'Workplace perimeter radius must be between 50 and 5,000 meters.';
   }
   return null;
 }

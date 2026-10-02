@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import Alert from '@/src/components/ui/Alert';
 import Button from '@/src/components/ui/Button';
 import { Badge } from '@/src/components/ui/Badge';
+import Modal from '@/src/components/ui/Modal';
 import { listPendingStudents, updateStudentAccountStatus } from '@/src/services/auth';
 
 type PendingStudent = {
@@ -14,6 +15,8 @@ type PendingStudent = {
   course: string;
   year_level: number;
   created_at: string;
+  id_card_path?: string | null;
+  id_card_signed_url?: string | null;
 };
 
 const PAGE_SIZE = 20;
@@ -29,6 +32,13 @@ export default function CoordinatorApprovalsPage() {
   const [batchLoading, setBatchLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [courseFilter, setCourseFilter] = useState('All');
+  const [viewingId, setViewingId] = useState<{ url: string; name: string; number: string; course: string } | null>(null);
+
+  // Rejection modal state
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState<PendingStudent | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectSubmitting, setRejectSubmitting] = useState(false);
 
   const load = useCallback(async (pageNumber: number) => {
     setLoading(true);
@@ -59,6 +69,17 @@ export default function CoordinatorApprovalsPage() {
   async function handleAction(user_id: string, status: 'active' | 'rejected') {
     setError('');
     setSuccess('');
+
+    if (status === 'rejected') {
+      const target = students.find(s => s.user_id === user_id);
+      if (target) {
+        setRejectTarget(target);
+        setRejectionReason('');
+        setRejectModalOpen(true);
+      }
+      return;
+    }
+
     setActionLoading(user_id);
     const result = await updateStudentAccountStatus(user_id, status);
     setActionLoading('');
@@ -68,7 +89,30 @@ export default function CoordinatorApprovalsPage() {
       return;
     }
 
-    setSuccess(`Student registration ${status === 'active' ? 'approved' : 'rejected'} successfully.`);
+    setSuccess('Student registration approved successfully and notification email dispatched.');
+    load(page);
+  }
+
+  async function confirmReject() {
+    if (!rejectTarget) return;
+    setRejectSubmitting(true);
+    setError('');
+    setSuccess('');
+
+    const result = await updateStudentAccountStatus(
+      rejectTarget.user_id,
+      'rejected',
+      rejectionReason.trim() || undefined
+    );
+    setRejectSubmitting(false);
+
+    if (result.error) {
+      setError(result.error.message);
+      return;
+    }
+
+    setRejectModalOpen(false);
+    setSuccess(`Registration for ${rejectTarget.full_name} rejected and explanation email dispatched.`);
     load(page);
   }
 
@@ -82,15 +126,18 @@ export default function CoordinatorApprovalsPage() {
     setError('');
     setSuccess('');
 
+    // Concurrent chunking for 5x performance improvement
+    const chunkSize = 5;
     let approvedCount = 0;
-    for (const id of targetIds) {
-      const res = await updateStudentAccountStatus(id, 'active');
-      if (!res.error) approvedCount++;
+    for (let i = 0; i < targetIds.length; i += chunkSize) {
+      const chunk = targetIds.slice(i, i + chunkSize);
+      const results = await Promise.all(chunk.map(id => updateStudentAccountStatus(id, 'active')));
+      approvedCount += results.filter(r => !r.error).length;
     }
 
     setBatchLoading(false);
     setSelectedIds([]);
-    setSuccess(`Successfully approved ${approvedCount} student(s).`);
+    setSuccess(`Successfully approved ${approvedCount} student(s) in batch.`);
     load(page);
   }
 
@@ -181,6 +228,7 @@ export default function CoordinatorApprovalsPage() {
                   <th className="px-5 py-3.5 font-medium text-slate-600">Institutional Email</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Degree Program</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Year Level</th>
+                  <th className="px-5 py-3.5 font-medium text-slate-600">Validated ID</th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Requested Date</th>
                   <th className="px-5 py-3.5 text-right font-medium text-slate-600">Actions</th>
                 </tr>
@@ -209,6 +257,24 @@ export default function CoordinatorApprovalsPage() {
                         </Badge>
                       </td>
                       <td className="px-5 py-4 text-slate-700 font-medium">4th Year</td>
+                      <td className="px-5 py-4">
+                        {student.id_card_signed_url ? (
+                          <button
+                            type="button"
+                            onClick={() => setViewingId({
+                              url: student.id_card_signed_url!,
+                              name: student.full_name,
+                              number: student.student_number,
+                              course: student.course,
+                            })}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                          >
+                            <span>🪪</span> Inspect ID
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Not attached</span>
+                        )}
+                      </td>
                       <td className="px-5 py-4 text-slate-500 text-xs">{new Date(student.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex gap-2 justify-end">
@@ -237,6 +303,101 @@ export default function CoordinatorApprovalsPage() {
           </div>
         )}
       </div>
+
+      {viewingId && (
+        <Modal
+          title={`Validated Student ID — ${viewingId.name}`}
+          open={!!viewingId}
+          onClose={() => setViewingId(null)}
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs text-slate-600 pb-2 border-b border-slate-100">
+              <span className="font-mono font-semibold">Student No: {viewingId.number}</span>
+              <span className="font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">{viewingId.course} • 4th Year</span>
+            </div>
+
+            <div className="w-full max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center p-2">
+              {viewingId.url.toLowerCase().includes('.pdf') ? (
+                <iframe src={viewingId.url} className="w-full h-[450px] rounded-lg" title="Student ID Document" />
+              ) : (
+                <img
+                  src={viewingId.url}
+                  alt={`${viewingId.name} ID Card`}
+                  className="max-h-[450px] w-auto object-contain rounded-lg shadow-xs"
+                />
+              )}
+            </div>
+
+            <div className="flex justify-between items-center pt-2 text-xs text-slate-500">
+              <a
+                href={viewingId.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[#0A3D24] font-semibold hover:underline flex items-center gap-1"
+              >
+                <span>↗</span> Open in new tab
+              </a>
+              <Button variant="ghost" onClick={() => setViewingId(null)}>
+                Close Preview
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Reject Registration Modal */}
+      {rejectModalOpen && rejectTarget && (
+        <Modal
+          title="Reject Student Registration"
+          open={rejectModalOpen}
+          onClose={() => setRejectModalOpen(false)}
+        >
+          <div className="space-y-4">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs space-y-1">
+              <p className="font-bold text-rose-900 text-sm">{rejectTarget.full_name}</p>
+              <p className="text-rose-700">
+                {rejectTarget.student_number} • {rejectTarget.course} • 4th Year
+              </p>
+              <p className="text-rose-600 text-[11px] pt-1">
+                Rejecting this registration will notify the student at <strong className="font-semibold">{rejectTarget.email}</strong>.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Reason for Rejection / Correction Instructions
+              </label>
+              <textarea
+                value={rejectionReason}
+                onChange={e => setRejectionReason(e.target.value)}
+                placeholder="e.g., Unclear student ID photo, student number mismatch, or unverified enrollment. Please re-register with a clear copy of your CdM ID."
+                rows={3}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => setRejectModalOpen(false)}
+                disabled={rejectSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                loading={rejectSubmitting}
+                onClick={confirmReject}
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Confirm Rejection
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 text-sm text-slate-500">

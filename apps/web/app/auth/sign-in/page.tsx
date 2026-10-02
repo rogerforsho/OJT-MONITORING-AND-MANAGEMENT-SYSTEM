@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
 import Alert from '@/src/components/ui/Alert';
-import { Eye, EyeOff, UserCheck, Trash2, ArrowRight, Clock, Monitor } from '@/src/components/ui/Icons';
+import { Eye, EyeOff, UserCheck, Trash2, ArrowRight, Clock, Monitor, Smartphone } from '@/src/components/ui/Icons';
 import { signIn } from '@/src/services/auth';
 
 const STORAGE_KEY = 'ojt_remembered_profiles';
@@ -30,6 +30,7 @@ function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isInactiveLogout = searchParams.get('reason') === 'inactivity';
+  const isMobileOnly = searchParams.get('reason') === 'mobile_only';
 
   // Saved Profiles State (Facebook/Google style)
   const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>([]);
@@ -109,6 +110,11 @@ function SignInContent() {
 
     if (result.error) {
       setLoading(false);
+      if (result.error.message.includes('CdM OJT Mobile App') || result.error.message.includes('Student accounts must access')) {
+        router.push('/auth/sign-in?reason=mobile_only');
+        setError('');
+        return;
+      }
       setError(result.error.message);
       return;
     }
@@ -269,52 +275,83 @@ function SignInContent() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700">Password for {firstName}</label>
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                autoFocus
-                className="pr-10"
-              />
+        {selectedProfile.role === 'Student' ? (
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+              <Smartphone className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-[11px] leading-relaxed text-amber-800">
+                <p className="font-bold">Student Mobile App Access Only</p>
+                <p className="mt-0.5">
+                  Trainee accounts are restricted to the <strong>CdM OJT Mobile App</strong> for daily attendance, GPS verification, and requirement submissions. Web sign-in is reserved for institutional staff, coordinators, and supervisors.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs pt-1">
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                onClick={() => { setUseAnotherAccount(true); setEmail(''); setPassword(''); }}
+                className="font-bold text-[#0A3D24] hover:text-[#062415] hover:underline cursor-pointer"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                Sign In with Staff Account
+              </button>
+              <button
+                type="button"
+                onClick={(e) => removeProfile(selectedProfile.email, e)}
+                className="text-slate-400 hover:text-rose-600 cursor-pointer"
+              >
+                Remove Profile
               </button>
             </div>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">Password for {firstName}</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  autoFocus
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
 
-          {error && <Alert type="error" message={error} />}
+            {error && <Alert type="error" message={error} />}
 
-          <Button type="submit" loading={loading} className="w-full mt-1 shadow-xs cursor-pointer">
-            {loading ? loadingText : `Continue as ${firstName}`}
-          </Button>
+            <Button type="submit" loading={loading} className="w-full mt-1 shadow-xs cursor-pointer">
+              {loading ? loadingText : `Continue as ${firstName}`}
+            </Button>
 
-          <div className="flex items-center justify-between text-xs pt-1">
-            <button
-              type="button"
-              onClick={() => { setUseAnotherAccount(true); setEmail(''); setPassword(''); }}
-              className="font-bold text-[#0A3D24] hover:text-[#062415] hover:underline cursor-pointer"
-            >
-              Use Another Account
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowForgot(true); setError(''); }}
-              className="text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              Forgot password?
-            </button>
-          </div>
-        </form>
+            <div className="flex items-center justify-between text-xs pt-1">
+              <button
+                type="button"
+                onClick={() => { setUseAnotherAccount(true); setEmail(''); setPassword(''); }}
+                className="font-bold text-[#0A3D24] hover:text-[#062415] hover:underline cursor-pointer"
+              >
+                Use Another Account
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowForgot(true); setError(''); }}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                Forgot password?
+              </button>
+            </div>
+          </form>
+        )}
 
         {savedProfiles.length > 1 && (
           <div className="mt-5 pt-4 border-t border-slate-100">
@@ -357,6 +394,18 @@ function SignInContent() {
           <p className="text-[11px] leading-relaxed text-amber-800">
             <strong>Session Locked (ISO/IEC 25010:2023):</strong> You were automatically signed out after 15 minutes of inactivity to protect your account on shared campus computers.
           </p>
+        </div>
+      )}
+
+      {isMobileOnly && (
+        <div className="mb-4 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+          <Smartphone className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-[11px] leading-relaxed text-amber-800">
+            <p className="font-bold">Student Mobile App Access Only</p>
+            <p className="mt-0.5">
+              Student intern accounts are restricted to the <strong>CdM OJT Mobile App</strong> for attendance recording, GPS verification, and submission uploads. Web portal access is reserved for faculty, coordinators, supervisors, and administrators.
+            </p>
+          </div>
         </div>
       )}
 
@@ -418,6 +467,10 @@ function SignInContent() {
             Forgot password?
           </button>
         </div>
+
+        <p className="text-[11px] text-slate-400 text-center">
+          Enrolled students: Register above, then sign in using the mobile app.
+        </p>
 
         {savedProfiles.length > 0 && useAnotherAccount && (
           <button

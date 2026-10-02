@@ -253,7 +253,7 @@ export default function CoordinatorCompaniesPage() {
                 <option value="all">All Statuses ({total})</option>
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
-                <option value="geofence">GPS Geofenced</option>
+                <option value="geofence">GPS Configured</option>
                 <option value="with-supervisors">With Supervisors</option>
                 <option value="no-supervisors">No Supervisors</option>
               </select>
@@ -301,7 +301,7 @@ export default function CoordinatorCompaniesPage() {
                     Contact Details
                   </th>
                   <th className="text-left px-3.5 py-3.5 font-semibold text-slate-700 text-xs">
-                    GPS Geofence
+                    Workplace GPS
                   </th>
                   <th className="text-center px-3 py-3.5 font-semibold text-slate-700 text-xs">
                     Supervisors
@@ -348,14 +348,14 @@ export default function CoordinatorCompaniesPage() {
                       </p>
                     </td>
 
-                    {/* GPS Geofence with fallback */}
+                    {/* Workplace GPS with fallback */}
                     <td className="px-3.5 py-3.5 whitespace-nowrap">
                       {c.geofence_enabled && c.latitude != null && c.longitude != null ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                           📍 {c.geofence_radius_meters ?? 150}m
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400 font-medium" title="Geofence disabled">—</span>
+                        <span className="text-xs text-slate-400 font-medium" title="GPS Location not configured">—</span>
                       )}
                     </td>
 
@@ -461,7 +461,7 @@ export default function CoordinatorCompaniesPage() {
           <Input label="Contact Email" type="email" value={form.contact_email} onChange={e => setForm(f => ({ ...f, contact_email: e.target.value }))} required />
           <Input label="Contact Number" value={form.contact_number} onChange={e => setForm(f => ({ ...f, contact_number: e.target.value }))} required />
 
-          {/* GPS Geofence Configuration */}
+          {/* Workplace GPS Verification Configuration */}
           <div className="pt-3 border-t border-slate-100">
             <label className="flex items-center gap-2 cursor-pointer mb-3">
               <input
@@ -470,7 +470,7 @@ export default function CoordinatorCompaniesPage() {
                 onChange={e => setForm(f => ({ ...f, geofence_enabled: e.target.checked }))}
                 className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
               />
-              <span className="text-sm font-semibold text-slate-800">Enable GPS Geofencing for Trainee Attendance</span>
+              <span className="text-sm font-semibold text-slate-800">Enable Workplace GPS Verification for Trainee Attendance</span>
             </label>
 
             {form.geofence_enabled && (

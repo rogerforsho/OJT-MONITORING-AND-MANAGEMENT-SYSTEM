@@ -46,7 +46,7 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
 
             {/* Sub-headline */}
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl font-normal">
-              Authentic industry practicum for 4th-year students of <strong className="font-semibold text-slate-900">Colegio de Montalban</strong>. Real-time GPS geofence verification, automated hour computation, and digital competency evaluations across <strong className="font-semibold text-slate-900">ICS</strong> and <strong className="font-semibold text-slate-900">IBE</strong>.
+              Authentic industry practicum for 4th-year students of <strong className="font-semibold text-slate-900">Colegio de Montalban</strong>. GPS-verified attendance logging, automated hour computation, and digital competency evaluations across <strong className="font-semibold text-slate-900">ICS</strong> and <strong className="font-semibold text-slate-900">IBE</strong>.
             </p>
 
             {/* Action Buttons */}
@@ -188,14 +188,14 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
                 </div>
               </div>
 
-              {/* FLOATING BOTTOM-LEFT BADGE: Satellite GPS Geofence */}
+              {/* FLOATING BOTTOM-LEFT BADGE: Point-in-Time GPS Verification */}
               <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-5 bg-white rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-xl border border-slate-200/80 flex items-center gap-2.5">
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
                   <Check className="w-4 h-4 stroke-[3]" />
                 </div>
                 <div>
                   <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 block">
-                    GPS Geofence Verified
+                    Point-in-Time GPS Verified
                   </span>
                   <span className="text-xs font-bold text-slate-800">
                     Zero Ghost Hours

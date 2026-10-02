@@ -8,14 +8,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { recordTimeIn, recordTimeOut, getTodayAttendance, fetchOwnAttendance, getActiveAssignment, type LocationPayload } from '../../services/attendance';
+import {
+  recordTimeIn,
+  recordTimeOut,
+  getTodayAttendance,
+  fetchOwnAttendance,
+  getActiveAssignment,
+  type LocationPayload,
+  type CachedCompanyAssignment,
+} from '../../services/attendance';
+import { listStudentReports } from '../../services/reports';
 import { getCurrentCoordinates } from '../../services/location';
 import { syncPendingOfflineAttendance, isNetworkAvailable } from '../../lib/syncEngine';
 import { getOfflineQueue } from '../../lib/offlineQueue';
 import { optimizeSelfie } from '../../lib/imageOptimizer';
 import { isWithinGeofence } from '@ojt/shared';
 import NetworkToast from '../../components/NetworkToast';
-import type { DbAttendance } from '@ojt/shared';
+import ScheduleProposalModal from '../../components/ScheduleProposalModal';
+import { fetchStudentScheduleProposal } from '../../services/schedule';
+import type { DbAttendance, DbPracticumSchedule } from '@ojt/shared';
 import type { StudentTabParamList } from '../../navigation/types';
 
 type Step = 'idle' | 'selfie' | 'submitting';
@@ -38,6 +49,11 @@ export default function AttendanceScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [mode, setMode] = useState<'time_in' | 'time_out'>('time_in');
+  const [activeAssignment, setActiveAssignment] = useState<CachedCompanyAssignment | null>(null);
+  const [gatewayDocs, setGatewayDocs] = useState<{ id: string; title: string; submitted: boolean; status?: string }[]>([]);
+  const [isGatewayCleared, setIsGatewayCleared] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduleProposal, setScheduleProposal] = useState<DbPracticumSchedule | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
   // GPS verification state
@@ -71,6 +87,51 @@ export default function AttendanceScreen() {
 
   async function loadState() {
     setLoading(true);
+    const assign = await getActiveAssignment();
+    setActiveAssignment(assign);
+
+    // Evaluate 5 Pre-Deployment Gateway Requirements
+    try {
+      const repRes = await listStudentReports(1, 50);
+      const reports = repRes.data?.reports || [];
+      const GATEWAY_SPECS = [
+        { id: 'orientation', title: 'Pre-OJT Orientation Certificate' },
+        { id: 'endorsement', title: 'Endorsement Letter' },
+      ];
+
+      const progress = GATEWAY_SPECS.map(spec => {
+        const found = reports.find(r => {
+          const a = (r.report_type || '').toLowerCase();
+          const b = spec.title.toLowerCase();
+          return a.includes(b) || b.includes(a) ||
+            (spec.id === 'orientation' && a.includes('orientation')) ||
+            (spec.id === 'endorsement' && (a.includes('endorsement') || a.includes('acceptance') || a.includes('moa')));
+        });
+        return {
+          id: spec.id,
+          title: spec.title,
+          submitted: Boolean(found),
+          status: found ? found.status : 'missing',
+        };
+      });
+      setGatewayDocs(progress);
+      const cleared = progress.length === 2 && progress.every(p => p.status === 'approved');
+      setIsGatewayCleared(cleared);
+
+      if (cleared) {
+        try {
+          const schedRes = await fetchStudentScheduleProposal();
+          if (schedRes.data) {
+            setScheduleProposal(schedRes.data);
+          }
+        } catch {
+          // Ignore if offline
+        }
+      }
+    } catch {
+      // Fallback silently if offline
+    }
+
     const record = await getTodayAttendance();
     setTodayRecord(record);
     const queue = await getOfflineQueue();
@@ -155,11 +216,13 @@ export default function AttendanceScreen() {
         return;
       }
 
-      // Check geofence if company has coordinates configured & enabled
-      let locationStatus: 'verified' | 'flagged_out_of_bounds' | 'location_unavailable' | 'not_applicable' = 'verified';
+      // Check geofence if company has coordinates configured & enabled (bypass for approved remote modality)
+      const isRemoteWork = scheduleProposal?.work_modality === 'remote';
+      let locationStatus: 'verified' | 'flagged_out_of_bounds' | 'location_unavailable' | 'not_applicable' = isRemoteWork ? 'not_applicable' : 'verified';
       let distanceMeters: number | null = null;
 
       if (
+        !isRemoteWork &&
         assignment &&
         assignment.geofence_enabled &&
         assignment.latitude != null &&
@@ -190,11 +253,11 @@ export default function AttendanceScreen() {
         }
       }
 
-      // Within perimeter or geofence not enabled
+      // Within perimeter or remote work or geofence not enabled
       setPendingLocationData({
         latitude: locRes.coords.latitude,
         longitude: locRes.coords.longitude,
-        distanceMeters,
+        distanceMeters: isRemoteWork ? null : distanceMeters,
         locationStatus,
         satelliteTimestamp: locRes.satelliteTimestamp,
       });
@@ -215,7 +278,7 @@ export default function AttendanceScreen() {
       longitude: isUnavail ? null : tempLocationData.coords.longitude,
       distanceMeters: isUnavail ? null : tempLocationData.distanceMeters,
       locationStatus: isUnavail ? 'location_unavailable' : 'flagged_out_of_bounds',
-      flagReason: flagReasonInput.trim() || (isUnavail ? 'GPS unavailable indoors' : 'Recorded outside designated perimeter'),
+      flagReason: flagReasonInput.trim() || (isUnavail ? 'GPS unavailable indoors' : 'Off-site / field assignment'),
       satelliteTimestamp: tempLocationData.satelliteTimestamp,
     });
     setOutOfBoundsModal(false);
@@ -480,168 +543,282 @@ export default function AttendanceScreen() {
             </View>
           )}
 
-          {/* Today's Status Card */}
-          <View style={s.card}>
-            <View style={s.cardHeaderRow}>
-              <Text style={s.cardHeading}>TODAY&apos;S ATTENDANCE STATUS</Text>
-              {(todayRecord as any)?.offline_created && (
-                <View style={s.offlineTag}>
-                  <Text style={s.offlineTagText}>Offline Log</Text>
+          {/* Pre-Deployment Gateway Notice or Normal Today Status */}
+          {(!activeAssignment || !isGatewayCleared) ? (
+            <View style={s.gatewayCard}>
+              <View style={s.gatewayHeaderRow}>
+                <View style={s.gatewayLockIcon}>
+                  <Ionicons name="lock-closed" size={20} color="#b45309" />
                 </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.gatewayTitle}>Attendance Locked</Text>
+                  <Text style={s.gatewaySubtitle}>
+                    {!isGatewayCleared
+                      ? `Pre-Deployment Gateway Incomplete (${gatewayDocs.filter(d => d.status === 'approved').length}/2 Approved)`
+                      : 'Gateway Cleared! Set Up Practicum Work Schedule'}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={s.gatewayDesc}>
+                {!isGatewayCleared
+                  ? 'Under Colegio de Montalban practicum rules, daily check-in is unlocked only after your 2 mandatory gateway documents are submitted and verified by your OJT Coordinator.'
+                  : 'All mandatory credentials have been verified! Please submit your proposed Practicum Work Schedule so your OJT Coordinator can deploy you.'}
+              </Text>
+
+              {/* Progress Count */}
+              <View style={s.gatewayProgressRow}>
+                <Text style={s.gatewayProgressLabel}>Gateway Progress</Text>
+                <Text style={s.gatewayProgressCount}>
+                  {gatewayDocs.filter(d => d.submitted).length} of {gatewayDocs.length || 2} Submitted
+                </Text>
+              </View>
+
+              {/* Checklist Items */}
+              <View style={s.gatewayList}>
+                {(gatewayDocs.length > 0 ? gatewayDocs : [
+                  { id: '1', title: 'Pre-OJT Orientation Certificate', submitted: false },
+                  { id: '2', title: 'Endorsement Letter', submitted: false },
+                ]).map((doc) => (
+                  <View key={doc.id} style={s.gatewayItem}>
+                    <Ionicons
+                      name={doc.submitted ? "checkmark-circle" : "ellipse-outline"}
+                      size={17}
+                      color={doc.submitted ? "#0A3D24" : "#94a3b8"}
+                    />
+                    <Text style={[s.gatewayItemText, doc.submitted && s.gatewayItemTextDone]}>
+                      {doc.title}
+                    </Text>
+                    <View style={[
+                      s.gatewayStatusBadge,
+                      doc.submitted ? (doc.status === 'approved' ? s.badgeGreen : s.badgeAmber) : s.badgeGray
+                    ]}>
+                      <Text style={s.gatewayStatusBadgeText}>
+                        {doc.submitted ? (doc.status === 'approved' ? 'Approved' : 'Submitted') : 'Required'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              {isGatewayCleared ? (
+                <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
+                  {scheduleProposal ? (
+                    <View style={s.scheduleStatusBox}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="time" size={18} color="#0A3D24" />
+                        <Text style={s.scheduleStatusTitle}>
+                          {scheduleProposal.status === 'approved' ? 'Practicum Schedule Approved' : 'Schedule Proposal Submitted'}
+                        </Text>
+                      </View>
+                      <Text style={s.scheduleStatusSub}>
+                        {scheduleProposal.work_modality?.toUpperCase()} • {scheduleProposal.time_in?.substring(0, 5)} - {scheduleProposal.time_out?.substring(0, 5)} ({scheduleProposal.daily_hours}h/day)
+                      </Text>
+                      <Text style={s.scheduleStatusNote}>
+                        {scheduleProposal.status === 'approved'
+                          ? 'Coordinator approved! Awaiting supervisor activation.'
+                          : 'Under review by your OJT Coordinator for deployment.'}
+                      </Text>
+
+                      <TouchableOpacity
+                        style={s.scheduleModifyBtn}
+                        onPress={() => setScheduleModalOpen(true)}
+                        activeOpacity={0.85}
+                      >
+                        <Ionicons name="create-outline" size={16} color="#0A3D24" />
+                        <Text style={s.scheduleModifyBtnText}>View / Modify Schedule Proposal</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={s.scheduleActionBtn}
+                      onPress={() => setScheduleModalOpen(true)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="calendar" size={18} color="#FFCC00" />
+                      <Text style={s.scheduleActionBtnText}>Set Up Practicum Work Schedule</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={s.gatewayActionBtn}
+                  onPress={() => navigation.navigate('Reports')}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="document-attach" size={17} color="#062415" />
+                  <Text style={s.gatewayActionBtnText}>Go to Document Submissions</Text>
+                </TouchableOpacity>
               )}
             </View>
+          ) : (
+            <>
+              {/* Today's Status Card */}
+              <View style={s.card}>
+                <View style={s.cardHeaderRow}>
+                  <Text style={s.cardHeading}>TODAY&apos;S ATTENDANCE STATUS</Text>
+                  {(todayRecord as any)?.offline_created && (
+                    <View style={s.offlineTag}>
+                      <Text style={s.offlineTagText}>Offline Log</Text>
+                    </View>
+                  )}
+                </View>
 
-            {todayRecord ? (
-              <View style={s.statusList}>
-                <View style={s.statusRow}>
-                  <Text style={s.statusLabel}>Time In</Text>
-                  <Text style={s.statusValue}>
-                    {new Date(todayRecord.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-                <View style={s.statusRow}>
-                  <Text style={s.statusLabel}>Time Out</Text>
-                  <Text style={[s.statusValue, !todayRecord.time_out && s.textMuted]}>
-                    {todayRecord.time_out
-                      ? new Date(todayRecord.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : 'Pending (On Duty)'}
-                  </Text>
-                </View>
-                <View style={s.statusRow}>
-                  <Text style={s.statusLabel}>Punctuality</Text>
-                  <Text style={[
-                    s.statusValue,
-                    todayRecord.late_status === 'late' ? { color: '#dc2626' } : { color: '#0A3D24' }
-                  ]}>
-                    {todayRecord.late_status.replace('_', ' ').toUpperCase()}
-                  </Text>
-                </View>
-                <View style={s.statusRow}>
-                  <Text style={s.statusLabel}>GPS Verification</Text>
-                  <Text style={[
-                    s.statusValue,
-                    todayRecord.time_in_location_status === 'flagged_out_of_bounds'
-                      ? { color: '#b45309' }
-                      : { color: '#0A3D24' }
-                  ]}>
-                    {todayRecord.time_in_location_status === 'flagged_out_of_bounds'
-                      ? `⚠️ Out-of-Bounds (${todayRecord.time_in_distance_meters ?? '?'}m)`
-                      : todayRecord.time_in_distance_meters != null
-                      ? `📍 Verified (${todayRecord.time_in_distance_meters}m)`
-                      : 'Verified'}
-                  </Text>
-                </View>
-                <View style={s.statusRow}>
-                  <Text style={s.statusLabel}>Verification Status</Text>
-                  <View style={[
-                    s.badge,
-                    todayRecord.verification_status === 'verified' ? s.badgeGreen :
-                    todayRecord.verification_status === 'rejected' ? s.badgeRed : s.badgeAmber,
-                  ]}>
-                    <Text style={[
-                      s.badgeText,
-                      todayRecord.verification_status === 'verified' ? s.badgeTextGreen :
-                      todayRecord.verification_status === 'rejected' ? s.badgeTextRed : s.badgeTextAmber,
-                    ]}>
-                      {todayRecord.verification_status}
-                    </Text>
+                {todayRecord ? (
+                  <View style={s.statusList}>
+                    <View style={s.statusRow}>
+                      <Text style={s.statusLabel}>Time In</Text>
+                      <Text style={s.statusValue}>
+                        {new Date(todayRecord.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Text>
+                    </View>
+                    <View style={s.statusRow}>
+                      <Text style={s.statusLabel}>Time Out</Text>
+                      <Text style={[s.statusValue, !todayRecord.time_out && s.textMuted]}>
+                        {todayRecord.time_out
+                          ? new Date(todayRecord.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : 'Pending (On Duty)'}
+                      </Text>
+                    </View>
+                    <View style={s.statusRow}>
+                      <Text style={s.statusLabel}>Punctuality</Text>
+                      <Text style={[
+                        s.statusValue,
+                        todayRecord.late_status === 'late' ? { color: '#dc2626' } : { color: '#0A3D24' }
+                      ]}>
+                        {todayRecord.late_status.replace('_', ' ').toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={s.statusRow}>
+                      <Text style={s.statusLabel}>GPS Verification</Text>
+                      <Text style={[
+                        s.statusValue,
+                        todayRecord.time_in_location_status === 'flagged_out_of_bounds'
+                          ? { color: '#b45309' }
+                          : { color: '#0A3D24' }
+                      ]}>
+                        {todayRecord.time_in_location_status === 'not_applicable'
+                          ? '💻 Remote Work'
+                          : todayRecord.time_in_location_status === 'flagged_out_of_bounds'
+                          ? `📍 Off-Site / Field (${todayRecord.time_in_distance_meters ?? '?'}m)`
+                          : todayRecord.time_in_distance_meters != null
+                          ? `📍 On-Site (${todayRecord.time_in_distance_meters}m)`
+                          : 'Verified'}
+                      </Text>
+                    </View>
+                    <View style={s.statusRow}>
+                      <Text style={s.statusLabel}>Verification Status</Text>
+                      <View style={[
+                        s.badge,
+                        todayRecord.verification_status === 'verified' ? s.badgeGreen :
+                        todayRecord.verification_status === 'rejected' ? s.badgeRed : s.badgeAmber,
+                      ]}>
+                        <Text style={[
+                          s.badgeText,
+                          todayRecord.verification_status === 'verified' ? s.badgeTextGreen :
+                          todayRecord.verification_status === 'rejected' ? s.badgeTextRed : s.badgeTextAmber,
+                        ]}>
+                          {todayRecord.verification_status}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
+                ) : (
+                  <View style={s.emptyBox}>
+                    <Ionicons name="time-outline" size={36} color="#94a3b8" style={{ marginBottom: 6 }} />
+                    <Text style={s.emptyText}>No attendance recorded yet today.</Text>
+                  </View>
+                )}
               </View>
-            ) : (
-              <View style={s.emptyBox}>
-                <Ionicons name="time-outline" size={36} color="#94a3b8" style={{ marginBottom: 6 }} />
-                <Text style={s.emptyText}>No attendance recorded yet today.</Text>
+
+              {/* Action Buttons */}
+              <View style={s.actionSection}>
+                {!todayRecord && (
+                  <TouchableOpacity
+                    onPress={() => startAttendance('time_in')}
+                    disabled={checkingLocation || !!error}
+                    style={[
+                      s.btnTimeIn,
+                      (checkingLocation || !!error) && (error ? s.btnDisabled : { opacity: 0.7 }),
+                    ]}
+                    activeOpacity={0.85}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      {checkingLocation && mode === 'time_in' ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : error ? (
+                        <Ionicons name="alert-circle-outline" size={22} color="#ffffff" />
+                      ) : (
+                        <Ionicons name="location" size={22} color="#ffffff" />
+                      )}
+                      <Text style={[s.btnTimeInText, error ? s.btnDisabledText : null]}>
+                        {checkingLocation && mode === 'time_in'
+                          ? 'Acquiring GPS Fix...'
+                          : error
+                          ? 'Check-In Blocked'
+                          : 'Time In'}
+                      </Text>
+                    </View>
+                    <Text style={[s.btnSubtext, error ? s.btnDisabledSubtext : null]}>
+                      {checkingLocation && mode === 'time_in'
+                        ? 'Connecting to satellites...'
+                        : error
+                        ? 'Resolve the error message above to enable Time In'
+                        : isOffline
+                        ? 'GPS lock & offline selfie verification'
+                        : 'GPS location & front-camera selfie required'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {todayRecord && !todayRecord.time_out && (
+                  <TouchableOpacity
+                    onPress={() => startAttendance('time_out')}
+                    disabled={checkingLocation || !!error}
+                    style={[
+                      s.btnTimeOut,
+                      (checkingLocation || !!error) && (error ? s.btnDisabled : { opacity: 0.7 }),
+                    ]}
+                    activeOpacity={0.85}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      {checkingLocation && mode === 'time_out' ? (
+                        <ActivityIndicator size="small" color="#0A3D24" />
+                      ) : error ? (
+                        <Ionicons name="alert-circle-outline" size={22} color="#64748b" />
+                      ) : (
+                        <Ionicons name="log-out-outline" size={22} color="#0A3D24" />
+                      )}
+                      <Text style={[s.btnTimeOutText, error ? { color: '#64748b' } : null]}>
+                        {checkingLocation && mode === 'time_out'
+                          ? 'Acquiring GPS Fix...'
+                          : error
+                          ? 'Check-Out Blocked'
+                          : 'Time Out'}
+                      </Text>
+                    </View>
+                    <Text style={s.btnSubtextMuted}>
+                      {checkingLocation && mode === 'time_out'
+                        ? 'Connecting to satellites...'
+                        : error
+                        ? 'Resolve the error message above to enable Time Out'
+                        : isOffline
+                        ? 'GPS lock & offline selfie verification'
+                        : 'GPS location & front-camera selfie required'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {todayRecord?.time_out && (
+                  <View style={s.completeCard}>
+                    <Ionicons name="checkmark-done-circle" size={28} color="#0A3D24" style={{ marginBottom: 4 }} />
+                    <Text style={s.completeTitle}>Attendance Complete for Today</Text>
+                    <Text style={s.completeSub}>Both Time In and Time Out have been securely recorded.</Text>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-
-          {/* Action Buttons */}
-          <View style={s.actionSection}>
-            {!todayRecord && (
-              <TouchableOpacity
-                onPress={() => startAttendance('time_in')}
-                disabled={checkingLocation || !!error}
-                style={[
-                  s.btnTimeIn,
-                  (checkingLocation || !!error) && (error ? s.btnDisabled : { opacity: 0.7 }),
-                ]}
-                activeOpacity={0.85}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  {checkingLocation && mode === 'time_in' ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
-                  ) : error ? (
-                    <Ionicons name="alert-circle-outline" size={22} color="#ffffff" />
-                  ) : (
-                    <Ionicons name="location" size={22} color="#ffffff" />
-                  )}
-                  <Text style={[s.btnTimeInText, error ? s.btnDisabledText : null]}>
-                    {checkingLocation && mode === 'time_in'
-                      ? 'Acquiring GPS Fix...'
-                      : error
-                      ? 'Check-In Blocked'
-                      : 'Time In'}
-                  </Text>
-                </View>
-                <Text style={[s.btnSubtext, error ? s.btnDisabledSubtext : null]}>
-                  {checkingLocation && mode === 'time_in'
-                    ? 'Connecting to satellites...'
-                    : error
-                    ? 'Resolve the error message above to enable Time In'
-                    : isOffline
-                    ? 'GPS lock & offline selfie verification'
-                    : 'GPS location & front-camera selfie required'}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {todayRecord && !todayRecord.time_out && (
-              <TouchableOpacity
-                onPress={() => startAttendance('time_out')}
-                disabled={checkingLocation || !!error}
-                style={[
-                  s.btnTimeOut,
-                  (checkingLocation || !!error) && (error ? s.btnDisabled : { opacity: 0.7 }),
-                ]}
-                activeOpacity={0.85}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  {checkingLocation && mode === 'time_out' ? (
-                    <ActivityIndicator size="small" color="#0A3D24" />
-                  ) : error ? (
-                    <Ionicons name="alert-circle-outline" size={22} color="#64748b" />
-                  ) : (
-                    <Ionicons name="log-out-outline" size={22} color="#0A3D24" />
-                  )}
-                  <Text style={[s.btnTimeOutText, error ? { color: '#64748b' } : null]}>
-                    {checkingLocation && mode === 'time_out'
-                      ? 'Acquiring GPS Fix...'
-                      : error
-                      ? 'Check-Out Blocked'
-                      : 'Time Out'}
-                  </Text>
-                </View>
-                <Text style={s.btnSubtextMuted}>
-                  {checkingLocation && mode === 'time_out'
-                    ? 'Connecting to satellites...'
-                    : error
-                    ? 'Resolve the error message above to enable Time Out'
-                    : isOffline
-                    ? 'GPS lock & offline selfie verification'
-                    : 'GPS location & front-camera selfie required'}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {todayRecord?.time_out && (
-              <View style={s.completeCard}>
-                <Ionicons name="checkmark-done-circle" size={28} color="#0A3D24" style={{ marginBottom: 4 }} />
-                <Text style={s.completeTitle}>Attendance Complete for Today</Text>
-                <Text style={s.completeSub}>Both Time In and Time Out have been securely recorded.</Text>
-              </View>
-            )}
-          </View>
+            </>
+          )}
         </ScrollView>
       )}
 
@@ -735,31 +912,31 @@ export default function AttendanceScreen() {
           <View style={s.modalCard}>
             <View style={s.modalHeaderRow}>
               <Ionicons
-                name={tempLocationData?.coords.latitude === 0 ? "location-outline" : "warning"}
+                name={tempLocationData?.coords.latitude === 0 ? "location-outline" : "navigate-outline"}
                 size={26}
-                color={tempLocationData?.coords.latitude === 0 ? "#0284c7" : "#b45309"}
+                color={tempLocationData?.coords.latitude === 0 ? "#0284c7" : "#0A3D24"}
               />
               <Text style={s.modalTitle}>
-                {tempLocationData?.coords.latitude === 0 ? 'Location Notice' : 'Perimeter Notice'}
+                {tempLocationData?.coords.latitude === 0 ? 'Location Notice' : 'Off-Site / Field Work Notice'}
               </Text>
             </View>
             <Text style={s.modalDesc}>
               {tempLocationData?.coords.latitude === 0 ? (
                 'Could not obtain an active satellite GPS lock. This is common indoors, inside concrete structures, or in basement facilities.'
               ) : (
-                <>You are currently <Text style={{ fontWeight: 'bold', color: '#062415' }}>{tempLocationData?.distanceMeters}m</Text> away from {tempLocationData?.companyName} (assigned radius: {tempLocationData?.radiusMeters}m).</>
+                <>Your current location is approx. <Text style={{ fontWeight: 'bold', color: '#062415' }}>{tempLocationData?.distanceMeters}m</Text> from {tempLocationData?.companyName}.</>
               )}
             </Text>
             <Text style={s.modalPrompt}>
               {tempLocationData?.coords.latitude === 0 ? (
                 'Please provide a brief note explaining your current workplace location to proceed with your selfie:'
               ) : (
-                'If you are on an authorized field errand, working remotely, or experiencing indoor GPS drift, provide a brief reason note:'
+                'If you are on an official field task, client errand, working remotely, or experiencing indoor GPS drift, provide a brief note for your supervisor:'
               )}
             </Text>
             <TextInput
               style={s.modalInput}
-              placeholder={tempLocationData?.coords.latitude === 0 ? "e.g. Inside basement / Office 3rd floor" : "e.g. Sent on errand / Indoor GPS drift / WFH"}
+              placeholder={tempLocationData?.coords.latitude === 0 ? "e.g. Inside basement / Office 3rd floor" : "e.g. Client visit / IT site deployment / Errand / WFH"}
               placeholderTextColor="#94a3b8"
               value={flagReasonInput}
               onChangeText={setFlagReasonInput}
@@ -784,6 +961,12 @@ export default function AttendanceScreen() {
           </View>
         </View>
       </Modal>
+
+      <ScheduleProposalModal
+        visible={scheduleModalOpen}
+        onClose={() => setScheduleModalOpen(false)}
+        onSubmitted={loadState}
+      />
 
       <NetworkToast isOffline={isOffline} />
     </View>
@@ -1157,6 +1340,174 @@ const s = StyleSheet.create({
   modalConfirmText: {
     fontSize: 14,
     fontWeight: '700',
+    color: '#FFCC00',
+  },
+  // ─── Pre-Deployment Gateway Card ──────────────────────────────────────────
+  gatewayCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  gatewayHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  gatewayLockIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#fef3c7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gatewayTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#92400e',
+  },
+  gatewaySubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#b45309',
+    marginTop: 1,
+  },
+  gatewayDesc: {
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  gatewayProgressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#f1f5f9',
+    marginBottom: 12,
+  },
+  gatewayProgressLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#062415',
+  },
+  gatewayProgressCount: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0A3D24',
+  },
+  gatewayList: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  gatewayItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  gatewayItemText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#334155',
+    fontWeight: '500',
+  },
+  gatewayItemTextDone: {
+    color: '#0A3D24',
+    fontWeight: '700',
+  },
+  gatewayStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  gatewayStatusBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  badgeGray: {
+    backgroundColor: '#f1f5f9',
+  },
+  gatewayActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFCC00',
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  gatewayActionBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#062415',
+  },
+  scheduleStatusBox: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    padding: 12,
+    gap: 4,
+  },
+  scheduleStatusTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0A3D24',
+  },
+  scheduleStatusSub: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  scheduleStatusNote: {
+    fontSize: 10,
+    color: '#64748b',
+    fontStyle: 'italic',
+  },
+  scheduleModifyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(10,61,36,0.08)',
+    marginTop: 6,
+  },
+  scheduleModifyBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0A3D24',
+  },
+  scheduleActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#0A3D24',
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scheduleActionBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
     color: '#FFCC00',
   },
 });

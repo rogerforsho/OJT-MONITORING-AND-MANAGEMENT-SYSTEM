@@ -8,6 +8,7 @@ import { sendOtpEmail } from '@/src/lib/email/send-otp';
 import type { AppResult } from '@ojt/shared';
 import type { RegisterStudentInput, SignInInput } from '@ojt/shared';
 import { isICSCourse, isIBECourse } from '@/src/lib/departments';
+import { recordAuditEvent } from './audit';
 
 let cachedServiceClient: any = null;
 
@@ -36,7 +37,7 @@ async function assertCoordinator() {
 export async function listPendingStudents(
   page = 1,
   pageSize = 20
-): Promise<AppResult<{ students: Array<{ user_id: string; full_name: string; email: string; student_number: string; course: string; year_level: number; created_at: string }>; total: number }>> {
+): Promise<AppResult<{ students: Array<{ user_id: string; full_name: string; email: string; student_number: string; course: string; year_level: number; created_at: string; id_card_path?: string | null; id_card_signed_url?: string | null }>; total: number }>> {
   const { supabase, authorized } = await assertCoordinator();
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -45,7 +46,7 @@ export async function listPendingStudents(
 
   const { data, error, count } = await supabase
     .from('users')
-    .select('user_id, full_name, email, created_at, students!inner(student_number, course, year_level)', { count: 'exact' })
+    .select('user_id, full_name, email, created_at, students!inner(student_number, course, year_level, id_card_path)', { count: 'exact' })
     .eq('role', 'Student')
     .eq('account_status', 'pending')
     .order('created_at', { ascending: false })
@@ -53,14 +54,29 @@ export async function listPendingStudents(
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load pending students.' } };
 
-  const students = (data ?? []).map((row: any) => ({
-    user_id: row.user_id,
-    full_name: row.full_name,
-    email: row.email,
-    created_at: row.created_at,
-    student_number: row.students?.student_number ?? '',
-    course: row.students?.course ?? '',
-    year_level: row.students?.year_level ?? 0,
+  const service = serviceClient();
+  const students = await Promise.all((data ?? []).map(async (row: any) => {
+    let id_card_signed_url = null;
+    const path = row.students?.id_card_path;
+    if (path) {
+      try {
+        const { data: signed } = await service.storage.from('private-documents').createSignedUrl(path, 3600);
+        id_card_signed_url = signed?.signedUrl ?? null;
+      } catch {
+        // Fallback silently if signed URL generation fails
+      }
+    }
+    return {
+      user_id: row.user_id,
+      full_name: row.full_name,
+      email: row.email,
+      created_at: row.created_at,
+      student_number: row.students?.student_number ?? '',
+      course: row.students?.course ?? '',
+      year_level: row.students?.year_level ?? 0,
+      id_card_path: path ?? null,
+      id_card_signed_url,
+    };
   }));
 
   return { data: { students, total: count ?? 0 }, error: null };
@@ -100,9 +116,12 @@ export async function listActiveStudents(
   return { data: { students, total: count ?? 0 }, error: null };
 }
 
+import { sendAccountStatusEmail } from '@/src/lib/email/send-account-status';
+
 export async function updateStudentAccountStatus(
   user_id: string,
-  status: 'active' | 'rejected'
+  status: 'active' | 'rejected',
+  reason?: string
 ): Promise<AppResult<null>> {
   if (!user_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'User ID is required.' } };
 
@@ -110,12 +129,49 @@ export async function updateStudentAccountStatus(
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const service = serviceClient();
+
+  // Fetch student details for notification email
+  const { data: userRec } = await service
+    .from('users')
+    .select('user_id, full_name, email')
+    .eq('user_id', user_id)
+    .maybeSingle();
+
   const { error } = await service
     .from('users')
     .update({ account_status: status, updated_at: new Date().toISOString() })
     .eq('user_id', user_id);
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update student status.' } };
+
+  // 1. Create in-app notification record matching schema
+  try {
+    await service.from('notifications').insert({
+      receiver_user_id: user_id,
+      message: status === 'active'
+        ? 'Account Verified: Welcome to CdM OJT! Please submit your 5 pre-deployment gateway documents via the mobile app to unlock company assignment and daily attendance.'
+        : `Registration Not Approved: ${reason ? `Reason: ${reason}` : 'Please consult your Institute OJT Coordinator.'}`,
+      status: 'unread',
+      notification_date: new Date().toISOString(),
+    });
+  } catch {
+    // Continue even if in-app notification fails
+  }
+
+  // 2. Dispatch official notification email
+  if (userRec?.email) {
+    try {
+      await sendAccountStatusEmail({
+        to: userRec.email,
+        fullName: userRec.full_name || 'Trainee',
+        status,
+        reason,
+      });
+    } catch (emailErr) {
+      console.error('[updateStudentAccountStatus] Email dispatch failed:', emailErr);
+    }
+  }
+
   return { data: null, error: null };
 }
 
@@ -190,6 +246,7 @@ export async function registerStudent(
       student_number: input.student_number.trim(),
       course: input.course.trim(),
       year_level: input.year_level,
+      id_card_path: input.id_card_path || null,
     },
   });
 
@@ -220,6 +277,7 @@ export async function registerStudent(
     course: input.course.trim(),
     year_level: input.year_level,
     status: 'active',
+    id_card_path: input.id_card_path || null,
   }, { onConflict: 'user_id' });
 
   if (studentError) {
@@ -229,6 +287,33 @@ export async function registerStudent(
   }
 
   return { data: null, error: null };
+}
+
+export async function uploadStudentIdCard(formData: FormData): Promise<AppResult<{ file_path: string }>> {
+  const file = formData.get('file') as File;
+  if (!file) {
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID card file is required.' } };
+  }
+
+  const service = serviceClient();
+  const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const filePath = `id-cards/${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${fileExt}`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const { error: uploadErr } = await service.storage
+    .from('private-documents')
+    .upload(filePath, buffer, {
+      contentType: file.type || 'image/jpeg',
+      upsert: false,
+    });
+
+  if (uploadErr) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to upload student ID card: ' + uploadErr.message } };
+  }
+
+  return { data: { file_path: filePath }, error: null };
 }
 
 export async function signIn(input: SignInInput): Promise<AppResult<{ email: string; full_name: string; role: string }>> {
@@ -269,33 +354,100 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       msg =
         'Database connection failed (fetch failed). Your Supabase project appears to be paused due to inactivity or the URL is unreachable. Please visit https://supabase.com/dashboard to click "Restore project", or verify the NEXT_PUBLIC_SUPABASE_URL in apps/web/.env.local.';
     }
+
+    // Record LOGIN_FAILED audit trail for incident response & brute-force monitoring
+    await recordAuditEvent({
+      actor_user_id: null,
+      action: 'LOGIN_FAILED',
+      entity_type: 'auth',
+      details: {
+        email: input.email.trim(),
+        reason: rawMsg || 'Invalid credentials',
+      },
+    });
+
     return { data: null, error: { code: 'UNAUTHORIZED', message: msg } };
   }
 
   // Check account status — backend authority
   const { data: user } = await supabase
     .from('users')
-    .select('account_status, role, full_name, email')
+    .select('user_id, account_status, role, full_name, email')
     .eq('user_id', data.user.id)
     .single();
 
-  if (!user)
+  if (!user) {
+    await recordAuditEvent({
+      actor_user_id: data.user.id,
+      action: 'LOGIN_FAILED',
+      entity_type: 'auth',
+      details: { email: input.email.trim(), reason: 'Profile record missing' },
+    });
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Account not found.' } };
+  }
 
   if (user.account_status === 'pending') {
     await supabase.auth.signOut();
+    await recordAuditEvent({
+      actor_user_id: user.user_id,
+      action: 'LOGIN_BLOCKED_PENDING',
+      entity_type: 'auth',
+      details: { email: user.email, role: user.role, reason: 'Account pending coordinator approval' },
+    });
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account is pending approval.' } };
   }
 
   if (user.account_status === 'rejected') {
     await supabase.auth.signOut();
+    await recordAuditEvent({
+      actor_user_id: user.user_id,
+      action: 'LOGIN_BLOCKED_REJECTED',
+      entity_type: 'auth',
+      details: { email: user.email, role: user.role },
+    });
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account registration was rejected.' } };
   }
 
   if (user.account_status === 'inactive') {
     await supabase.auth.signOut();
+    await recordAuditEvent({
+      actor_user_id: user.user_id,
+      action: 'LOGIN_BLOCKED_DEACTIVATED',
+      entity_type: 'auth',
+      details: { email: user.email, role: user.role },
+    });
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account has been deactivated.' } };
   }
+
+  // Enforce Mobile-Only Access for Student Trainees on Web Portal
+  if (user.role === 'Student') {
+    await supabase.auth.signOut();
+    await recordAuditEvent({
+      actor_user_id: user.user_id,
+      action: 'LOGIN_BLOCKED_WEB_STUDENT',
+      entity_type: 'auth',
+      details: { email: user.email, reason: 'Students restricted to mobile application' },
+    });
+    return {
+      data: null,
+      error: {
+        code: 'FORBIDDEN',
+        message: 'Student accounts must access the system via the CdM OJT Mobile App. Web portal access is reserved for faculty, coordinators, supervisors, and administrators.',
+      },
+    };
+  }
+
+  // Record successful sign-in
+  await recordAuditEvent({
+    actor_user_id: user.user_id,
+    action: 'LOGIN_SUCCESS',
+    entity_type: 'auth',
+    entity_id: user.user_id,
+    details: {
+      email: user.email,
+      role: user.role,
+    },
+  });
 
   return {
     data: {

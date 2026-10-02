@@ -1,7 +1,7 @@
 'use server';
 
 import crypto from 'crypto';
-import { isICSCourse, isIBECourse } from '@/src/lib/departments';
+import { isICSCourse } from '@/src/lib/departments';
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
 import { recordAuditEvent } from './audit';

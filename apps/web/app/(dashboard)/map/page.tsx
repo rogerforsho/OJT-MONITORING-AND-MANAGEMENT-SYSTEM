@@ -5,7 +5,7 @@ import { getDeploymentMapData } from '@/src/services/companies';
 import DeploymentMapClient from '@/src/components/map/DeploymentMapClient';
 
 export const metadata: Metadata = {
-  title: 'Regional Deployment & Geofence Map',
+  title: 'Regional Deployment & Workplace Map',
 };
 
 export default async function DeploymentMapPage() {

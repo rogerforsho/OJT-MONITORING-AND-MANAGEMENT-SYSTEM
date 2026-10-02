@@ -306,4 +306,6 @@ export async function listAssignedStudents(): Promise<AppResult<{ student_id: st
   };
 }
 
-export const listAssignedStudentsForEvaluation = listAssignedStudents;
+export async function listAssignedStudentsForEvaluation() {
+  return listAssignedStudents();
+}

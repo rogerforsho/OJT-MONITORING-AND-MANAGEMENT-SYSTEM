@@ -36,6 +36,7 @@ export async function registerStudent(input: RegisterStudentInput): Promise<AppR
         student_number: input.student_number.trim(),
         course: input.course.trim(),
         year_level: input.year_level,
+        id_card_path: input.id_card_path || null,
       },
     },
   });

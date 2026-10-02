@@ -3,7 +3,7 @@ const path = require('path');
 
 let tray = null;
 
-function createTray(mainWindow) {
+function createTray(mainWindow, targetUrl) {
   const iconPath = path.join(__dirname, '..', 'assets', 'icon.png');
   const icon = nativeImage.createFromPath(iconPath);
   
@@ -38,7 +38,12 @@ function createTray(mainWindow) {
       click: () => {
         mainWindow.show();
         mainWindow.focus();
-        mainWindow.loadURL('http://localhost:3000/coordinator/approvals');
+        try {
+          const origin = new URL(targetUrl || 'http://localhost:3000').origin;
+          mainWindow.loadURL(`${origin}/coordinator/approvals`);
+        } catch {
+          mainWindow.loadURL('http://localhost:3000/coordinator/approvals');
+        }
       },
     },
     { type: 'separator' },

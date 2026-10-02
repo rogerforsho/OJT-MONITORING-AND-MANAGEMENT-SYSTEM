@@ -138,5 +138,27 @@ export async function createSupervisor(input: SupervisorInput): Promise<AppResul
     .update({ account_status: 'active', updated_at: new Date().toISOString() })
     .eq('user_id', authData.user.id);
 
+  // Dispatch official welcome & credentials email
+  try {
+    const { data: comp } = await service
+      .from('companies')
+      .select('company_name')
+      .eq('company_id', input.company_id)
+      .single();
+
+    const companyName = comp?.company_name || 'Host Training Establishment';
+
+    const { sendSupervisorWelcomeEmail } = await import('@/src/lib/email/send-account-status');
+    await sendSupervisorWelcomeEmail({
+      to: input.email.trim(),
+      fullName: input.full_name.trim(),
+      companyName,
+      position: input.position.trim(),
+      temporaryPassword: input.password,
+    });
+  } catch (err) {
+    console.error('[createSupervisor] Failed to dispatch welcome email:', err);
+  }
+
   return { data: null, error: null };
 }

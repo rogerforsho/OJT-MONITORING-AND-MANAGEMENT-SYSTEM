@@ -20,7 +20,7 @@ export interface AuditLogItem {
 }
 
 export interface AuditEventInput {
-  actor_user_id: string;
+  actor_user_id?: string | null;
   action: string;
   entity_type: string;
   entity_id?: string | null;
@@ -36,7 +36,7 @@ export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
   try {
     const service = serviceClient();
     await service.from('audit_logs').insert({
-      actor_user_id: input.actor_user_id,
+      actor_user_id: input.actor_user_id || null,
       action: input.action,
       entity_type: input.entity_type,
       entity_id: input.entity_id || null,

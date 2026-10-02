@@ -190,7 +190,7 @@ export default function PublicFooter() {
                 <ul className="list-disc list-inside mt-1 space-y-1 text-slate-600">
                   <li><strong>Trainee Identification:</strong> Student ID number, official name, institutional email address, academic department (ICS / IBE), and program section.</li>
                   <li><strong>Biometric Attendance Data:</strong> Front-camera selfie photographs captured during Time-In and Time-Out for anti-proxy identity verification.</li>
-                  <li><strong>Geolocation Coordinates:</strong> GPS latitude, longitude, and geofence distance at the moment of clocking in/out.</li>
+                  <li><strong>Geolocation Coordinates:</strong> GPS latitude, longitude, and workplace distance at the moment of clocking in/out.</li>
                   <li><strong>Practicum Documentation:</strong> Weekly accomplishment reports, Daily Time Records (DTR), and supervisor evaluation rubrics.</li>
                 </ul>
               </div>

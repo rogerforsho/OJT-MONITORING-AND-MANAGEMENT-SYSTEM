@@ -65,6 +65,41 @@ export default function SupervisorEvaluationsPage() {
     return () => { mounted = false; };
   }, [page, load]);
 
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  // Restore draft when student is selected
+  function handleStudentSelect(id: string) {
+    setStudentId(id);
+    setDraftRestored(false);
+    if (!id) return;
+    try {
+      const saved = localStorage.getItem(`ojt_eval_draft_${id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.feedback) setFeedback(parsed.feedback);
+        if (parsed.criteria) setCriteria(parsed.criteria);
+        if (parsed.evaluationType) setEvaluationType(parsed.evaluationType);
+        setDraftRestored(true);
+      }
+    } catch {}
+  }
+
+  // Auto-save draft on input change (debounced 1s)
+  useEffect(() => {
+    if (!studentId || !modalOpen) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(`ojt_eval_draft_${studentId}`, JSON.stringify({
+          evaluationType,
+          feedback,
+          criteria,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch {}
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [studentId, evaluationType, feedback, criteria, modalOpen]);
+
   async function handleSave() {
     setFormError('');
     if (!studentId) {
@@ -86,10 +121,17 @@ export default function SupervisorEvaluationsPage() {
     });
     setSaving(false);
     if (result.error) { setFormError(result.error.message); return; }
+
+    // Clear saved draft on success
+    try {
+      localStorage.removeItem(`ojt_eval_draft_${studentId}`);
+    } catch {}
+
     setModalOpen(false);
     setStudentId('');
     setFeedback('');
     setCriteria(DEFAULT_CRITERIA);
+    setDraftRestored(false);
     load(page);
   }
 
@@ -281,7 +323,7 @@ export default function SupervisorEvaluationsPage() {
             ) : (
               <select
                 value={studentId}
-                onChange={e => setStudentId(e.target.value)}
+                onChange={e => handleStudentSelect(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] shadow-xs"
               >
                 <option value="">Select assigned trainee ({students.length} available)</option>
@@ -291,6 +333,24 @@ export default function SupervisorEvaluationsPage() {
                   </option>
                 ))}
               </select>
+            )}
+
+            {draftRestored && (
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
+                <span>✓ Restored unsaved evaluation draft from your previous session.</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFeedback('');
+                    setCriteria(DEFAULT_CRITERIA);
+                    setDraftRestored(false);
+                    try { localStorage.removeItem(`ojt_eval_draft_${studentId}`); } catch {}
+                  }}
+                  className="text-xs text-emerald-700 underline font-semibold ml-2 hover:text-emerald-900"
+                >
+                  Discard Draft
+                </button>
+              </div>
             )}
           </div>
 

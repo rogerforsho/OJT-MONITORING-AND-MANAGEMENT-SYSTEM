@@ -73,6 +73,37 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
+  // Defense-in-Depth: Route-Level Role-Based Access Control (RBAC) Guard
+  if (user) {
+    const role = user.user_metadata?.role;
+    const isRoleGuardedPath =
+      path.startsWith('/admin') ||
+      path.startsWith('/coordinator') ||
+      path.startsWith('/supervisor') ||
+      path.startsWith('/program-head') ||
+      path.startsWith('/student');
+
+    if (!role && isRoleGuardedPath) {
+      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+    }
+
+    if (path.startsWith('/admin') && role !== 'Admin') {
+      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+    }
+    if (path.startsWith('/coordinator') && !['Coordinator', 'Admin'].includes(role)) {
+      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+    }
+    if (path.startsWith('/supervisor') && !['CompanySupervisor', 'Supervisor', 'Admin'].includes(role)) {
+      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+    }
+    if (path.startsWith('/program-head') && !['ProgramHead', 'Admin'].includes(role)) {
+      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+    }
+    if (path.startsWith('/student') && role !== 'Student' && role !== 'Admin') {
+      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+    }
+  }
+
   return supabaseResponse;
 }
 

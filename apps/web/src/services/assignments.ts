@@ -1,7 +1,9 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
 import { recordAuditEvent } from './audit';
+import { checkStudentGatewayStatus } from './reports';
+import { GATEWAY_DOCUMENT_SPECS, matchesDoc } from '@ojt/shared';
 import type { AppResult, DbStudentAssignment, AssignmentStatus, StudentStatus } from '@ojt/shared';
 
 export interface AssignmentInput {
@@ -83,6 +85,18 @@ export async function createAssignment(input: AssignmentInput): Promise<AppResul
     .maybeSingle();
 
   if (existing) return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Student already has an active assignment.' } };
+
+  // Enforce Pre-Deployment Gateway Requirement: Student must have mandatory gateway documents approved
+  const gateway = await checkStudentGatewayStatus(input.student_id);
+  if (!gateway.isCleared) {
+    return {
+      data: null,
+      error: {
+        code: 'VALIDATION_FAILURE',
+        message: `Cannot assign trainee: Student has only ${gateway.approvedCount}/${GATEWAY_DOCUMENT_SPECS.length} approved pre-deployment gateway credentials. Missing or unapproved: ${gateway.missing.join(', ')}.`,
+      },
+    };
+  }
 
   // Verify supervisor belongs to the selected company
   const { data: supervisor } = await supabase
@@ -223,10 +237,23 @@ export async function reassignStudent(
   return { data: newAssignment as DbStudentAssignment, error: null };
 }
 
-export async function listStudentsForAssignment(): Promise<AppResult<{ student_id: string; student_number: string; full_name: string; course: string; status: string }[]>> {
+export interface StudentAssignmentOption {
+  student_id: string;
+  student_number: string;
+  full_name: string;
+  course: string;
+  status: string;
+  is_gateway_cleared: boolean;
+  gateway_approved_count: number;
+  missing_gateway_documents: string[];
+  has_active_assignment: boolean;
+}
+
+export async function listStudentsForAssignment(): Promise<AppResult<StudentAssignmentOption[]>> {
   const { supabase, authorized } = await assertCoordinator();
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
+  // 1. Fetch active students
   const { data, error } = await supabase
     .from('students')
     .select(`
@@ -237,6 +264,31 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load students.' } };
 
+  // 2. Fetch existing active assignments
+  const { data: activeAssignments } = await supabase
+    .from('student_assignments')
+    .select('student_id')
+    .eq('assignment_status', 'active');
+
+  const assignedStudentIds = new Set((activeAssignments ?? []).map(a => a.student_id));
+
+  // 3. Fetch all approved reports to check gateway compliance
+  const { data: approvedReports } = await supabase
+    .from('reports')
+    .select('student_id, report_type')
+    .eq('status', 'approved');
+
+  const studentApprovedSpecsMap = new Map<string, Set<string>>();
+  (approvedReports ?? []).forEach(r => {
+    const set = studentApprovedSpecsMap.get(r.student_id) || new Set<string>();
+    for (const spec of GATEWAY_DOCUMENT_SPECS) {
+      if (matchesDoc(r.report_type, spec.name)) {
+        set.add(spec.id);
+      }
+    }
+    studentApprovedSpecsMap.set(r.student_id, set);
+  });
+
   interface AssignmentStudentRow {
     student_id: string;
     student_number: string;
@@ -245,19 +297,26 @@ export async function listStudentsForAssignment(): Promise<AppResult<{ student_i
     users: { full_name: string; account_status: string } | { full_name: string; account_status: string }[];
   }
 
-  return {
-    data: (data ?? []).map((s: AssignmentStudentRow) => {
-      const user = Array.isArray(s.users) ? s.users[0] : s.users;
-      return {
-        student_id: s.student_id,
-        student_number: s.student_number,
-        full_name: user?.full_name ?? '',
-        course: s.course,
-        status: s.status,
-      };
-    }),
-    error: null,
-  };
+  const students: StudentAssignmentOption[] = (data ?? []).map((s: AssignmentStudentRow) => {
+    const user = Array.isArray(s.users) ? s.users[0] : s.users;
+    const approvedSpecs = studentApprovedSpecsMap.get(s.student_id) || new Set<string>();
+    const isCleared = approvedSpecs.size === GATEWAY_DOCUMENT_SPECS.length;
+    const missing = GATEWAY_DOCUMENT_SPECS.filter(spec => !approvedSpecs.has(spec.id)).map(spec => spec.name);
+
+    return {
+      student_id: s.student_id,
+      student_number: s.student_number,
+      full_name: user?.full_name ?? '',
+      course: s.course,
+      status: s.status,
+      is_gateway_cleared: isCleared,
+      gateway_approved_count: approvedSpecs.size,
+      missing_gateway_documents: missing,
+      has_active_assignment: assignedStudentIds.has(s.student_id),
+    };
+  });
+
+  return { data: students, error: null };
 }
 
 export async function listSupervisorsForCompany(
