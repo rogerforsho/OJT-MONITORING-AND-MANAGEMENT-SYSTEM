@@ -7,7 +7,7 @@
  * 2. Student Data Isolation (Student A cannot read Student B's records)
  * 3. Tamper Resistance (Students cannot self-verify attendance or inflate hours)
  * 4. Storage Bucket Privacy (Private documents cannot be accessed by unauthorized users)
- * 5. Supervisor Boundary (Supervisors only see their assigned trainees)
+ * 5. Forged client role metadata cannot grant staff access
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -40,6 +40,19 @@ if (!SUPABASE_URL || !ANON_KEY || !SERVICE_KEY) {
   process.exit(1);
 }
 
+// This audit creates and deletes accounts. Require an explicit project match.
+const configuredProjectRef = new URL(SUPABASE_URL).hostname.split('.')[0];
+// CDM-OJT also serves production. Never create audit users or records there.
+const productionProjectRefs = new Set(['jhslfwczxkdhexjgssjr']);
+if (
+  productionProjectRefs.has(configuredProjectRef) ||
+  process.env.OJT_DISPOSABLE_STAGING_CONFIRMED !== 'true' ||
+  process.env.OJT_STAGING_PROJECT_REF !== configuredProjectRef
+) {
+  console.error('Refusing to create test users: this project may serve production, or disposable staging was not confirmed.');
+  process.exit(2);
+}
+
 console.log('================================================================');
 console.log('  COLEGIO DE MONTALBAN — PRE-LAUNCH SECURITY & PRIVACY AUDIT   ');
 console.log('================================================================');
@@ -70,20 +83,20 @@ async function runAudit() {
   console.log('[TEST GROUP 1] Anonymous Public Access Protection (Zero Trust)');
   const anonClient = createClient(SUPABASE_URL, ANON_KEY);
 
-  const { data: anonUsers } = await anonClient.from('users').select('user_id, email, full_name');
-  assert(!anonUsers || anonUsers.length === 0, 'Anonymous users cannot read user accounts');
+  const { data: anonUsers, error: anonUsersError } = await anonClient.from('users').select('user_id, email, full_name');
+  assert(!anonUsersError && anonUsers?.length === 0, 'Anonymous users cannot read user accounts');
 
-  const { data: anonStudents } = await anonClient.from('students').select('student_id, student_number');
-  assert(!anonStudents || anonStudents.length === 0, 'Anonymous users cannot read student profiles');
+  const { data: anonStudents, error: anonStudentsError } = await anonClient.from('students').select('student_id, student_number');
+  assert(!anonStudentsError && anonStudents?.length === 0, 'Anonymous users cannot read student profiles');
 
-  const { data: anonAttendance } = await anonClient.from('attendance').select('attendance_id, time_in');
-  assert(!anonAttendance || anonAttendance.length === 0, 'Anonymous users cannot read attendance logs');
+  const { data: anonAttendance, error: anonAttendanceError } = await anonClient.from('attendance').select('attendance_id, time_in');
+  assert(!anonAttendanceError && anonAttendance?.length === 0, 'Anonymous users cannot read attendance logs');
 
-  const { data: anonReports } = await anonClient.from('reports').select('report_id, title');
-  assert(!anonReports || anonReports.length === 0, 'Anonymous users cannot read submitted reports');
+  const { data: anonReports, error: anonReportsError } = await anonClient.from('reports').select('report_id, title');
+  assert(!anonReportsError && anonReports?.length === 0, 'Anonymous users cannot read submitted reports');
 
-  const { data: anonProgress } = await anonClient.from('internship_progress').select('progress_id');
-  assert(!anonProgress || anonProgress.length === 0, 'Anonymous users cannot read progress / hours');
+  const { data: anonProgress, error: anonProgressError } = await anonClient.from('internship_progress').select('progress_id');
+  assert(!anonProgressError && anonProgress?.length === 0, 'Anonymous users cannot read progress / hours');
 
   // --------------------------------------------------------------------------
   // Create Ephemeral Test Student 1 & Test Student 2 to verify cross-user isolation
@@ -97,7 +110,7 @@ async function runAudit() {
     email: testEmail1,
     password: testPassword,
     email_confirm: true,
-    user_metadata: { role: 'Student' },
+    user_metadata: { role: 'Admin' }, // Forgery must not grant Admin in public.users.
   });
 
   const { data: u2, error: err2 } = await serviceClient.auth.admin.createUser({
@@ -107,31 +120,43 @@ async function runAudit() {
     user_metadata: { role: 'Student' },
   });
 
-  if (err1 || err2 || !u1.user || !u2.user) {
+  if (err1 || err2 || !u1?.user || !u2?.user) {
     console.error('❌ Failed to provision test users for audit:', err1 || err2);
+    if (u1?.user) await serviceClient.auth.admin.deleteUser(u1.user.id);
+    if (u2?.user) await serviceClient.auth.admin.deleteUser(u2.user.id);
+    process.exitCode = 1;
     return;
   }
 
-  // Ensure public.users and public.students are active
-  await serviceClient.from('users').update({ account_status: 'active' }).in('user_id', [u1.user.id, u2.user.id]);
-  
-  // Insert test attendance for student 2 to verify student 1 cannot see or edit it
-  const { data: s2Profile } = await serviceClient.from('students').select('student_id').eq('user_id', u2.user.id).single();
-  const student2Id = s2Profile?.student_id;
-
   let dummyAttendanceId = null;
-  if (student2Id) {
-    const { data: dummyAtt } = await serviceClient.from('attendance').insert({
+  let ownAttendanceId = null;
+  let testStoragePath = null;
+  try {
+    const { data: forgedProfile, error: forgedProfileError } = await serviceClient
+      .from('users').select('role').eq('user_id', u1.user.id).single();
+    assert(!forgedProfileError && forgedProfile?.role === 'Student', 'Client-editable role metadata cannot create an Admin');
+    if (forgedProfileError || forgedProfile?.role !== 'Student') throw new Error('Trusted-role migration is not effective');
+
+    // Ensure public.users and public.students are active.
+    const { error: activationError } = await serviceClient.from('users')
+      .update({ account_status: 'active' }).in('user_id', [u1.user.id, u2.user.id]);
+    if (activationError) throw activationError;
+
+    // Insert test attendance for student 2 to verify student 1 cannot see or edit it.
+    const { data: s2Profile, error: s2Error } = await serviceClient.from('students')
+      .select('student_id').eq('user_id', u2.user.id).single();
+    if (s2Error || !s2Profile?.student_id) throw s2Error || new Error('Second student profile missing');
+    const student2Id = s2Profile.student_id;
+
+    const { data: dummyAtt, error: dummyError } = await serviceClient.from('attendance').insert({
       student_id: student2Id,
       attendance_date: '2026-09-17',
       time_in: '2026-09-17T08:00:00Z',
       time_out: '2026-09-17T17:00:00Z',
       verification_status: 'pending',
     }).select().single();
-    dummyAttendanceId = dummyAtt?.attendance_id;
-  }
-
-  try {
+    if (dummyError || !dummyAtt?.attendance_id) throw dummyError || new Error('Test attendance missing');
+    dummyAttendanceId = dummyAtt.attendance_id;
     // --------------------------------------------------------------------------
     // TEST GROUP 2: Student Login & Cross-Student Isolation
     // --------------------------------------------------------------------------
@@ -169,33 +194,39 @@ async function runAudit() {
     console.log('\n[TEST GROUP 3] Tamper Resistance & Hour Integrity');
     
     // Student 1 tries to maliciously verify Student 2's attendance
-    if (dummyAttendanceId) {
-      const { data: s1HackedAtt, error: hackErr } = await student1Client
+    {
+      const { data: s1HackedAtt } = await student1Client
         .from('attendance')
         .update({ verification_status: 'verified' })
         .eq('attendance_id', dummyAttendanceId)
         .select();
 
+      const { data: actualForeign } = await serviceClient.from('attendance')
+        .select('verification_status').eq('attendance_id', dummyAttendanceId).single();
+
       assert(
-        !s1HackedAtt || s1HackedAtt.length === 0,
+        (!s1HackedAtt || s1HackedAtt.length === 0) && actualForeign?.verification_status === 'pending',
         'Student 1 CANNOT update or tamper with another student\'s attendance'
       );
     }
 
     // Student 1 tries to self-verify their own attendance
-    const { data: s1Profile } = await serviceClient.from('students').select('student_id').eq('user_id', u1.user.id).single();
+    const { data: s1Profile, error: s1ProfileError } = await serviceClient.from('students').select('student_id').eq('user_id', u1.user.id).single();
     const student1Id = s1Profile?.student_id;
+    if (s1ProfileError || !student1Id) throw s1ProfileError || new Error('First student profile missing');
 
-    if (student1Id) {
+    {
       // Create pending log for student 1
-      const { data: ownAtt } = await serviceClient.from('attendance').insert({
+      const { data: ownAtt, error: ownAttError } = await serviceClient.from('attendance').insert({
         student_id: student1Id,
         attendance_date: '2026-09-17',
         time_in: '2026-09-17T08:00:00Z',
         verification_status: 'pending',
       }).select().single();
+      if (ownAttError || !ownAtt?.attendance_id) throw ownAttError || new Error('Own test attendance missing');
 
-      if (ownAtt) {
+      {
+        ownAttendanceId = ownAtt.attendance_id;
         // Try to update verification_status from pending to verified as student 1
         const { data: selfVerified, error: selfErr } = await student1Client
           .from('attendance')
@@ -203,13 +234,13 @@ async function runAudit() {
           .eq('attendance_id', ownAtt.attendance_id)
           .select();
 
+        const { data: actualOwn } = await serviceClient.from('attendance')
+          .select('verification_status').eq('attendance_id', ownAtt.attendance_id).single();
         assert(
-          !selfVerified || selfVerified.length === 0 || selfErr !== null,
+          (!selfVerified || selfVerified.length === 0 || selfErr !== null) && actualOwn?.verification_status === 'pending',
           'Postgres RLS WITH CHECK blocks student from self-verifying own attendance'
         );
 
-        // Clean up own attendance
-        await serviceClient.from('attendance').delete().eq('attendance_id', ownAtt.attendance_id);
       }
     }
 
@@ -217,26 +248,47 @@ async function runAudit() {
     // TEST GROUP 4: Storage Security (Private Documents)
     // --------------------------------------------------------------------------
     console.log('\n[TEST GROUP 4] Storage Security & Private Documents Isolation');
+    testStoragePath = `${u2.user.id}/security-audit-${Date.now()}.png`;
+    const tinyPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lWQAAAAASUVORK5CYII=', 'base64');
+    const { error: uploadError } = await serviceClient.storage.from('private-documents')
+      .upload(testStoragePath, tinyPng, { contentType: 'image/png' });
+    if (uploadError) throw uploadError;
+    const student2Client = createClient(SUPABASE_URL, ANON_KEY);
+    const { error: s2AuthError } = await student2Client.auth.signInWithPassword({ email: testEmail2, password: testPassword });
+    if (s2AuthError) throw s2AuthError;
+    const { data: ownFile, error: ownFileError } = await student2Client.storage.from('private-documents')
+      .download(testStoragePath);
+    assert(!ownFileError && ownFile?.size === tinyPng.length, 'Student 2 can download their own private document');
     const { data: foreignFiles, error: storageErr } = await student1Client
       .storage
       .from('private-documents')
       .list(u2.user.id); // Student 2's storage directory
 
-    assert(
-      !foreignFiles || foreignFiles.length === 0 || storageErr !== null,
-      'Student 1 cannot enumerate or download files from Student 2\'s private document directory'
-    );
+    const { data: foreignFile, error: foreignDownloadError } = await student1Client.storage
+      .from('private-documents').download(testStoragePath);
+    assert(!foreignFiles?.some(file => file.name === testStoragePath.split('/')[1]) &&
+      !foreignFile && !!foreignDownloadError,
+      'Student 1 cannot enumerate or download Student 2\'s private document');
 
   } finally {
     // --------------------------------------------------------------------------
     // TEARDOWN: Clean up ephemeral test users
     // --------------------------------------------------------------------------
     console.log('\n[TEARDOWN] Cleaning up ephemeral test records...');
-    if (dummyAttendanceId) {
-      await serviceClient.from('attendance').delete().eq('attendance_id', dummyAttendanceId);
+    const cleanupErrors = [];
+    if (testStoragePath) {
+      const { error } = await serviceClient.storage.from('private-documents').remove([testStoragePath]);
+      if (error) cleanupErrors.push(error.message);
     }
-    await serviceClient.auth.admin.deleteUser(u1.user.id);
-    await serviceClient.auth.admin.deleteUser(u2.user.id);
+    for (const attendanceId of [dummyAttendanceId, ownAttendanceId].filter(Boolean)) {
+      const { error } = await serviceClient.from('attendance').delete().eq('attendance_id', attendanceId);
+      if (error) cleanupErrors.push(error.message);
+    }
+    for (const userId of [u1.user.id, u2.user.id]) {
+      const { error } = await serviceClient.auth.admin.deleteUser(userId);
+      if (error) cleanupErrors.push(error.message);
+    }
+    if (cleanupErrors.length) throw new Error(`Test cleanup failed: ${cleanupErrors.join('; ')}`);
     console.log('  Cleaned up test users successfully.');
   }
 
@@ -249,6 +301,7 @@ async function runAudit() {
     console.log('🛡️  STATUS: 100% OF TESTED DATABASE & STORAGE SECURITY BOUNDARIES VERIFIED!');
   } else {
     console.log('⚠️  STATUS: Some tests failed.');
+    process.exitCode = 1;
   }
   console.log('================================================================\n');
 }

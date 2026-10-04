@@ -120,7 +120,6 @@ export async function uploadSelfieToStorage(
         const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_BUCKET}/o/${encodeURIComponent(
           firebasePath
         )}?alt=media&token=${fbData.downloadTokens || ''}`;
-        console.log('[uploadSelfieToStorage] Uploaded to Google Firebase Storage:', downloadUrl);
         return { data: { path: downloadUrl, url: downloadUrl }, error: null };
       }
       console.warn('[uploadSelfieToStorage] Firebase upload failed, falling back to Supabase');

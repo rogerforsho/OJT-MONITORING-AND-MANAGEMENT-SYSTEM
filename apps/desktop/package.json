@@ -47,6 +47,12 @@
       ],
       "icon": "assets/icon.png",
       "category": "Education"
+    },
+    "nsis": {
+      "artifactName": "CdM-OJT-Portal-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "CdM-OJT-Portal-Portable-${version}.${ext}"
     }
   }
 }

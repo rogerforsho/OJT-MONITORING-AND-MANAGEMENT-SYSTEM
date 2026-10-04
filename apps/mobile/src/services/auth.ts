@@ -1,3 +1,5 @@
+import { clearAttendanceIdentity, getCachedAttendanceIdentity, rememberAttendanceIdentity } from '../lib/attendanceCache';
+import { isNetworkAvailable } from '../lib/syncEngine';
 import { supabase } from '../lib/supabase';
 import type { AppResult, RegisterStudentInput, SignInInput, AuthUser } from '@ojt/shared';
 
@@ -63,6 +65,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<AuthUser>> {
   if (!input.password)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password is required.' } };
 
+  await clearAttendanceIdentity();
   const { data, error } = await supabase.auth.signInWithPassword({
     email: input.email.trim(),
     password: input.password,
@@ -104,10 +107,12 @@ export async function signIn(input: SignInInput): Promise<AppResult<AuthUser>> {
     };
   }
 
+  await rememberAttendanceIdentity(user as AuthUser);
   return { data: user as AuthUser, error: null };
 }
 
 export async function signOut(): Promise<void> {
+  await clearAttendanceIdentity();
   await supabase.auth.signOut();
 }
 
@@ -264,8 +269,12 @@ export async function changeUserPassword(
 }
 
 export async function getAuthUser(): Promise<AuthUser | null> {
+  if (!await isNetworkAvailable()) return (await getCachedAttendanceIdentity())?.user ?? null;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) {
+    await clearAttendanceIdentity();
+    return null;
+  }
 
   const { data } = await supabase
     .from('users')
@@ -273,5 +282,6 @@ export async function getAuthUser(): Promise<AuthUser | null> {
     .eq('user_id', user.id)
     .single();
 
+  if (data) await rememberAttendanceIdentity(data as AuthUser);
   return data as AuthUser ?? null;
 }

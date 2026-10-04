@@ -1,3 +1,4 @@
+import { getAttendanceDate } from '@ojt/shared';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SecureStore from 'expo-secure-store';
 
@@ -117,7 +118,7 @@ export async function removeOfflineQueueItem(id: string): Promise<void> {
  */
 export async function getOfflineAttendanceForToday(student_id: string): Promise<OfflineQueueItem | null> {
   const queue = await getOfflineQueue();
-  const today = new Date().toISOString().split('T')[0];
-  const found = queue.find(q => q.student_id === student_id && q.attendance_date === today);
+  const today = getAttendanceDate();
+  const found = queue.find(q => q.type === 'time_in' && q.student_id === student_id && q.attendance_date === today);
   return found || null;
 }

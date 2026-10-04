@@ -208,7 +208,7 @@ export interface SendSupervisorWelcomeOptions {
   fullName: string;
   companyName: string;
   position: string;
-  temporaryPassword?: string;
+  employeeNumber: string;
 }
 
 export async function sendSupervisorWelcomeEmail({
@@ -216,12 +216,13 @@ export async function sendSupervisorWelcomeEmail({
   fullName,
   companyName,
   position,
-  temporaryPassword,
+  employeeNumber,
 }: SendSupervisorWelcomeOptions): Promise<{ success: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Colegio de Montalban <onboarding@resend.dev>';
   const portalUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const subject = `Welcome to CdM OJT Portal - Industry Supervisor Credentials (${companyName})`;
+  const setupUrl = `${portalUrl}/auth/reset-password?email=${encodeURIComponent(to)}`;
+  const subject = `Set up your CdM OJT Portal supervisor account (${companyName})`;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -249,18 +250,18 @@ export async function sendSupervisorWelcomeEmail({
               An Industry Supervisor profile has been established for you representing <strong>${escapeHtml(companyName)}</strong> (${escapeHtml(position)}) in the Colegio de Montalban OJT Practicum System.
             </p>
             <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 0 0 24px 0;">
-              <h3 style="color: #0f172a; font-size: 13px; font-weight: 700; margin: 0 0 12px 0;">🔐 Your Web Portal Credentials</h3>
+              <h3 style="color: #0f172a; font-size: 13px; font-weight: 700; margin: 0 0 12px 0;">Your Account Details</h3>
               <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;"><strong>Web Portal:</strong> <a href="${portalUrl}/auth/sign-in" style="color: #0A3D24; font-weight: 600;">${portalUrl}/auth/sign-in</a></p>
               <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;"><strong>Login Email:</strong> <span style="font-family: monospace; color: #0f172a;">${escapeHtml(to)}</span></p>
-              ${temporaryPassword ? `<p style="font-size: 13px; color: #475569; margin: 0;"><strong>Initial Password:</strong> <span style="font-family: monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #0f172a;">${escapeHtml(temporaryPassword)}</span></p>` : ''}
+              <p style="font-size: 13px; color: #475569; margin: 0;"><strong>Employee ID:</strong> <span style="font-family: monospace; color: #0f172a;">${escapeHtml(employeeNumber)}</span></p>
             </div>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${portalUrl}/auth/sign-in" style="display: inline-block; background-color: #0A3D24; color: #FFCC00; font-size: 14px; font-weight: 800; padding: 12px 28px; border-radius: 8px; text-decoration: none;">
-                Access Supervisor Portal →
+              <a href="${setupUrl}" style="display: inline-block; background-color: #0A3D24; color: #FFCC00; font-size: 14px; font-weight: 800; padding: 12px 28px; border-radius: 8px; text-decoration: none;">
+                Set Your Password →
               </a>
             </div>
             <p style="color: #64748b; font-size: 12px; line-height: 1.5; margin: 20px 0 0 0; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-              Please change your password after logging in under Account Settings.
+              Use your Employee ID on the setup page to request a one-time code by email, then choose your own password. Never share the code.
             </p>
           </div>
         </div>
@@ -287,21 +288,15 @@ export async function sendSupervisorWelcomeEmail({
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         console.error('[sendSupervisorWelcomeEmail] Resend API error:', errorData);
+        return { success: false, error: 'Welcome email could not be delivered.' };
       }
+      return { success: true };
     } catch (err) {
       console.error('[sendSupervisorWelcomeEmail] Network failure calling Resend:', err);
+      return { success: false, error: 'Welcome email could not be delivered.' };
     }
   }
 
-  // Console fallback
-  console.log('\n' + '='.repeat(68));
-  console.log('  COLEGIO DE MONTALBAN - SUPERVISOR CREDENTIAL DISPATCH');
-  console.log('='.repeat(68));
-  console.log(`  Recipient : ${fullName} <${to}>`);
-  console.log(`  Company   : ${companyName} (${position})`);
-  if (temporaryPassword) console.log(`  Password  : ${temporaryPassword}`);
-  console.log(`  Portal    : ${portalUrl}/auth/sign-in`);
-  console.log('='.repeat(68) + '\n');
-
-  return { success: true };
+  // Never print credentials to process logs.
+  return { success: false, error: 'Welcome email is not configured.' };
 }

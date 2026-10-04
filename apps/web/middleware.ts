@@ -4,9 +4,10 @@ import { createServerClient } from '@supabase/ssr';
 const PUBLIC_PATHS = ['/auth/sign-in', '/auth/register', '/auth/pending', '/auth/reset-password', '/auth/callback'];
 
 export async function middleware(request: NextRequest) {
-  // 1. Force HTTPS in production
+  const isLoopback = ['localhost', '127.0.0.1', '[::1]'].includes(request.nextUrl.hostname);
+  // Keep HTTPS enforcement for deployed hosts while allowing local next start.
   if (
-    process.env.NODE_ENV === 'production' &&
+    process.env.NODE_ENV === 'production' && !isLoopback &&
     request.headers.get('x-forwarded-proto') === 'http'
   ) {
     const httpsUrl = new URL(request.url);
@@ -19,10 +20,13 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const path = request.nextUrl.pathname;
+
+  // Load balancer probes must not depend on a user session.
+  if (path === '/health' || path === '/ready') return supabaseResponse;
   
   // Public routes: root landing page, credential verification, public downloads, and auth screens
   const isPublic = 
-    path === '/' ||
+    path === '/' || path === '/robots.txt' || path === '/sitemap.xml' ||
     path.startsWith('/verify-certificate') ||
     path.startsWith('/downloads') ||
     PUBLIC_PATHS.some(p => path.startsWith(p));
@@ -75,7 +79,12 @@ export async function middleware(request: NextRequest) {
 
   // Defense-in-Depth: Route-Level Role-Based Access Control (RBAC) Guard
   if (user) {
-    const role = user.user_metadata?.role;
+    const { data: profile, error: profileError } = await supabase
+      .from('users').select('role, account_status').eq('user_id', user.id).single();
+    if ((profileError || !profile || profile.account_status !== 'active') && !isPublic) {
+      return NextResponse.redirect(new URL('/auth/pending', request.url));
+    }
+    const role = profile?.account_status === 'active' ? profile.role : null;
     const isRoleGuardedPath =
       path.startsWith('/admin') ||
       path.startsWith('/coordinator') ||

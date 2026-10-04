@@ -1,3 +1,4 @@
+import { clearAttendanceIdentity } from './src/lib/attendanceCache';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -12,21 +13,30 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAuthUser().then(u => {
-      setUser(u);
-      setLoading(false);
-    });
+    let cancelled = false;
+    const refreshUser = async () => {
+      try {
+        const profile = await getAuthUser();
+        if (!cancelled) setUser(profile);
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void refreshUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
+        void clearAttendanceIdentity();
       } else if (event === 'SIGNED_IN') {
-        const u = await getAuthUser();
-        setUser(u);
+        // Supabase calls listeners under its auth lock. Query after it releases.
+        setTimeout(() => { if (!cancelled) void refreshUser(); }, 0);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => { cancelled = true; subscription.unsubscribe(); };
   }, []);
 
   if (loading) {

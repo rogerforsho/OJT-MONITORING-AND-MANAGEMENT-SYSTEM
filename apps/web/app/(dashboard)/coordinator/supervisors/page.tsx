@@ -13,7 +13,6 @@ const PAGE_SIZE = 20;
 const EMPTY_FORM: SupervisorInput = {
   full_name: '',
   email: '',
-  password: '',
   company_id: '',
   position: '',
 };
@@ -124,7 +123,6 @@ export default function SupervisorsPage() {
       <Modal title="Add Supervisor" open={modalOpen} onClose={() => setModalOpen(false)}>
         <Input label="Full Name" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} required />
         <Input label="Email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
-        <Input label="Temporary Password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-slate-700">Company</label>
           <select

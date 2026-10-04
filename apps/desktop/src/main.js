@@ -235,6 +235,11 @@ app.whenReady().then(() => {
     connectToPortal();
   });
 
+  // IPC: Hide the window while keeping the existing tray available.
+  ipcMain.on('minimize-to-tray', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
+  });
+
   // IPC: Native OS Notification
   ipcMain.on('show-notification', (_event, { title, body }) => {
     if (Notification.isSupported()) {
@@ -270,12 +275,15 @@ app.whenReady().then(() => {
 
   // IPC: Toggle Floating WFH Mini Widget
   ipcMain.on('toggle-mini-widget', (_event, enable) => {
-    if (!mainWindow) return;
+    if (!mainWindow || mainWindow.isDestroyed()) return;
     if (enable) {
+      mainWindow.unmaximize();
+      mainWindow.setMinimumSize(380, 540);
       mainWindow.setAlwaysOnTop(true, 'floating');
       mainWindow.setSize(380, 540);
     } else {
       mainWindow.setAlwaysOnTop(false);
+      mainWindow.setMinimumSize(980, 640);
       mainWindow.setSize(1280, 840);
     }
   });

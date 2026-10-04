@@ -16,7 +16,6 @@ const THEME_KEY = 'ojt_theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     try {
@@ -33,7 +32,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // fallback to light if localStorage is unavailable
     }
-    setMounted(true);
   }, []);
 
   function applyTheme(newTheme: Theme) {

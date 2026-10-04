@@ -104,6 +104,7 @@ export async function createSystemUser(
     email: input.email.trim(),
     password: input.password,
     email_confirm: true,
+    app_metadata: { role: input.role },
     user_metadata: {
       full_name: input.full_name.trim(),
       role: input.role,

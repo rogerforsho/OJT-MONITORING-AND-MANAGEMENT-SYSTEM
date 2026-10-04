@@ -1,8 +1,9 @@
+import { getAttendanceIdentity } from './attendanceCache';
 import * as Network from 'expo-network';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import { decodeBase64ToArrayBuffer } from './base64';
-import { getOfflineQueue, removeOfflineQueueItem, type OfflineQueueItem } from './offlineQueue';
+import { getOfflineQueue, removeOfflineQueueItem } from './offlineQueue';
 
 export interface SyncResult {
   syncedCount: number;
@@ -69,13 +70,24 @@ async function uploadOfflineSelfie(
 /**
  * Processes all pending items in the offline queue and uploads them to Supabase.
  */
-export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
+let pendingSync: Promise<SyncResult> | null = null;
+
+export function syncPendingOfflineAttendance(): Promise<SyncResult> {
+  if (!pendingSync) {
+    pendingSync = syncQueue().finally(() => { pendingSync = null; });
+  }
+  return pendingSync;
+}
+
+async function syncQueue(): Promise<SyncResult> {
   const online = await isNetworkAvailable();
   if (!online) {
     return { syncedCount: 0, errors: ['Network is currently offline.'] };
   }
 
-  const queue = await getOfflineQueue();
+  const identity = await getAttendanceIdentity(true);
+  if (!identity) return { syncedCount: 0, errors: ['Sign in with an active student account before syncing.'] };
+  const queue = (await getOfflineQueue()).filter(item => item.student_id === identity.student_id);
   if (queue.length === 0) {
     return { syncedCount: 0, errors: [] };
   }
@@ -86,13 +98,28 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
   for (const item of queue) {
     try {
       if (item.type === 'time_in') {
+        const { data: existing, error: lookupError } = await supabase.from('attendance')
+          .select('attendance_id, time_in').eq('student_id', identity.student_id)
+          .eq('attendance_date', item.attendance_date).maybeSingle();
+        if (lookupError) { errors.push('Could not check existing attendance.'); continue; }
+        if (existing) {
+          if (new Date(existing.time_in).getTime() === new Date(item.captured_at).getTime()) {
+            await removeOfflineQueueItem(item.id);
+            syncedCount++;
+          } else errors.push(`An attendance record already exists for ${item.attendance_date}.`);
+          continue;
+        }
+        const { data: assignment, error: assignmentError } = await supabase.from('student_assignments')
+          .select('assignment_id').eq('assignment_id', item.assignment_id)
+          .eq('student_id', identity.student_id).eq('assignment_status', 'active').maybeSingle();
+        if (assignmentError || !assignment) { errors.push('The queued assignment is no longer active.'); continue; }
         const storagePath = await uploadOfflineSelfie(item.local_photo_uri, item.student_id, 'time_in');
         if (!storagePath) {
           errors.push(`Failed to upload photo evidence for record on ${item.attendance_date}`);
           continue;
         }
 
-        const { data: inserted, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from('attendance')
           .insert({
             student_id: item.student_id,
@@ -121,6 +148,23 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
         await removeOfflineQueueItem(item.id);
         syncedCount++;
       } else if (item.type === 'time_out') {
+        let existingQuery = supabase.from('attendance')
+          .select('attendance_id, time_out').eq('student_id', identity.student_id);
+        existingQuery = item.attendance_id && !item.attendance_id.startsWith('offline_')
+          ? existingQuery.eq('attendance_id', item.attendance_id)
+          : existingQuery.eq('attendance_date', item.attendance_date);
+        const { data: existing, error: lookupError } = await existingQuery.maybeSingle();
+        if (lookupError || !existing) {
+          errors.push(`No attendance record found for ${item.attendance_date}; Time Out remains queued.`);
+          continue;
+        }
+        if (existing.time_out) {
+          if (new Date(existing.time_out).getTime() === new Date(item.captured_at).getTime()) {
+            await removeOfflineQueueItem(item.id);
+            syncedCount++;
+          } else errors.push(`A different Time Out already exists for ${item.attendance_date}.`);
+          continue;
+        }
         const storagePath = await uploadOfflineSelfie(item.local_photo_uri, item.student_id, 'time_out');
         if (!storagePath) {
           errors.push(`Failed to upload time out photo for record on ${item.attendance_date}`);
@@ -142,7 +186,8 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
             updated_at: new Date().toISOString(),
           });
 
-        if (item.attendance_id && item.attendance_id !== 'offline_pending') {
+        updateQuery = updateQuery.eq('student_id', identity.student_id).is('time_out', null);
+        if (item.attendance_id && !item.attendance_id.startsWith('offline_')) {
           updateQuery = updateQuery.eq('attendance_id', item.attendance_id);
         } else {
           updateQuery = updateQuery
@@ -150,12 +195,16 @@ export async function syncPendingOfflineAttendance(): Promise<SyncResult> {
             .eq('attendance_date', item.attendance_date);
         }
 
-        const { error: updateError } = await updateQuery;
+        const { data: updated, error: updateError } = await updateQuery.select('attendance_id').maybeSingle();
         if (updateError) {
           errors.push(`Failed to update time out for ${item.attendance_date}: ${updateError.message}`);
           continue;
         }
 
+        if (!updated) {
+          errors.push(`No open attendance record found for ${item.attendance_date}; Time Out remains queued.`);
+          continue;
+        }
         await removeOfflineQueueItem(item.id);
         syncedCount++;
       }

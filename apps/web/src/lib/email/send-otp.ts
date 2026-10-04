@@ -103,45 +103,25 @@ export async function sendOtpEmail({
         body: JSON.stringify({
           from: fromEmail,
           to: [to],
-          subject: `Your CdM OJT Portal Verification Code: ${otp}`,
+          subject: 'Your CdM OJT Portal verification code',
           html: htmlContent,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('[sendOtpEmail] Resend API error:', errorData);
-        // Fallback log to console so testing is not blocked
-        logConsoleFallback(to, fullName, otp, expiresMinutes);
-        return {
-          success: true, // Graceful fallback
-          error: errorData.message || 'Email delivery failed; code logged to console.',
-        };
+        console.error('[sendOtpEmail] Email provider rejected the request:', response.status);
+        return { success: false, error: 'Email delivery failed.' };
       }
 
-      console.log(`[sendOtpEmail] Successfully dispatched OTP email to ${to}`);
       return { success: true };
-    } catch (err: any) {
-      console.error('[sendOtpEmail] Network failure calling Resend:', err);
-      logConsoleFallback(to, fullName, otp, expiresMinutes);
-      return { success: true };
+    } catch {
+      console.error('[sendOtpEmail] Email provider request failed.');
+      return { success: false, error: 'Email delivery failed.' };
     }
   }
 
-  // Development Fallback: Log directly to terminal
-  logConsoleFallback(to, fullName, otp, expiresMinutes);
-  return { success: true };
-}
-
-function logConsoleFallback(to: string, fullName: string, otp: string, expiresMinutes: number) {
-  console.log('\n' + '='.repeat(64));
-  console.log('  COLEGIO DE MONTALBAN - PASSWORD RESET VERIFICATION CODE');
-  console.log('='.repeat(64));
-  console.log(`  Recipient : ${fullName} <${to}>`);
-  console.log(`  OTP Code  : >>> ${otp} <<<`);
-  console.log(`  Validity  : ${expiresMinutes} Minutes`);
-  console.log(`  Timestamp : ${new Date().toLocaleString()}`);
-  console.log('='.repeat(64) + '\n');
+  console.error('[sendOtpEmail] Email provider is not configured.');
+  return { success: false, error: 'Email delivery is not configured.' };
 }
 
 function escapeHtml(str: string): string {

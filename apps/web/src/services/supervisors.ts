@@ -1,5 +1,6 @@
 'use server';
 
+import crypto from 'crypto';
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
 import type { AppResult } from '@ojt/shared';
@@ -7,7 +8,6 @@ import type { AppResult } from '@ojt/shared';
 export interface SupervisorInput {
   full_name: string;
   email: string;
-  password: string;
   company_id: string;
   position: string;
 }
@@ -35,7 +35,6 @@ async function assertCoordinator() {
 function validateSupervisorInput(input: SupervisorInput): string | null {
   if (!input.full_name?.trim()) return 'Full name is required.';
   if (!input.email?.trim()) return 'Email is required.';
-  if (!input.password || input.password.length < 8) return 'Password must be at least 8 characters.';
   if (!input.company_id) return 'Company is required.';
   if (!input.position?.trim()) return 'Position is required.';
   return null;
@@ -104,11 +103,15 @@ export async function createSupervisor(input: SupervisorInput): Promise<AppResul
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const service = getServiceClient();
+  const employeeNumber = `SUP-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+  // Nobody, including the coordinator or email provider, receives this password.
+  const initialPassword = crypto.randomBytes(32).toString('base64url');
 
   const { data: authData, error: authError } = await service.auth.admin.createUser({
     email: input.email.trim(),
-    password: input.password,
+    password: initialPassword,
     email_confirm: true,
+    app_metadata: { role: 'Supervisor' },
     user_metadata: {
       full_name: input.full_name.trim(),
       role: 'Supervisor',
@@ -132,13 +135,17 @@ export async function createSupervisor(input: SupervisorInput): Promise<AppResul
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to create supervisor profile.' } };
   }
 
-  // Set supervisor status to active immediately (as they are created directly by the Coordinator)
-  await service
+  // The ID supports the existing staff OTP password-setup screen.
+  const { error: profileError } = await service
     .from('users')
-    .update({ account_status: 'active', updated_at: new Date().toISOString() })
+    .update({ employee_number: employeeNumber, account_status: 'active', updated_at: new Date().toISOString() })
     .eq('user_id', authData.user.id);
+  if (profileError) {
+    await service.auth.admin.deleteUser(authData.user.id);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to activate supervisor account.' } };
+  }
 
-  // Dispatch official welcome & credentials email
+  // Deliver the account ID and password-setup instructions, never a password.
   try {
     const { data: comp } = await service
       .from('companies')
@@ -149,15 +156,18 @@ export async function createSupervisor(input: SupervisorInput): Promise<AppResul
     const companyName = comp?.company_name || 'Host Training Establishment';
 
     const { sendSupervisorWelcomeEmail } = await import('@/src/lib/email/send-account-status');
-    await sendSupervisorWelcomeEmail({
+    const delivery = await sendSupervisorWelcomeEmail({
       to: input.email.trim(),
       fullName: input.full_name.trim(),
       companyName,
       position: input.position.trim(),
-      temporaryPassword: input.password,
+      employeeNumber,
     });
-  } catch (err) {
-    console.error('[createSupervisor] Failed to dispatch welcome email:', err);
+    if (!delivery.success) throw new Error('Welcome email delivery failed');
+  } catch {
+    const { error: rollbackError } = await service.auth.admin.deleteUser(authData.user.id);
+    if (rollbackError) console.error('[createSupervisor] Failed to roll back an undelivered account');
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Supervisor email could not be delivered. Please try again later.' } };
   }
 
   return { data: null, error: null };

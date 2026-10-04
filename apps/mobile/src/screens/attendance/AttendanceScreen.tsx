@@ -1,3 +1,6 @@
+import * as Network from 'expo-network';
+import * as SecureStore from 'expo-secure-store';
+import { getCachedAttendanceIdentity } from '../../lib/attendanceCache';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ActivityIndicator,
@@ -70,15 +73,22 @@ export default function AttendanceScreen() {
   } | null>(null);
 
   useEffect(() => {
-    loadState();
-    checkOfflineStatus();
+    void loadState();
+    void checkOfflineStatus();
+    const subscription = Network.addNetworkStateListener(state => {
+      const online = Boolean(state.isConnected && state.isInternetReachable !== false);
+      setIsOffline(!online);
+      if (online) void handleSync();
+    });
+    return () => subscription.remove();
   }, []);
 
   async function checkOfflineStatus() {
     const online = await isNetworkAvailable();
     setIsOffline(!online);
     const queue = await getOfflineQueue();
-    setOfflineCount(queue.length);
+    const queueIdentity = await getCachedAttendanceIdentity();
+    setOfflineCount(queue.filter(item => item.student_id === queueIdentity?.student_id).length);
 
     if (online && queue.length > 0) {
       await handleSync();
@@ -90,8 +100,24 @@ export default function AttendanceScreen() {
     const assign = await getActiveAssignment();
     setActiveAssignment(assign);
 
-    // Evaluate 5 Pre-Deployment Gateway Requirements
-    try {
+    const identity = await getCachedAttendanceIdentity();
+    const eligibilityKey = identity ? `cdm_ojt_attendance_eligibility_${identity.user.user_id}` : null;
+    const online = await isNetworkAvailable();
+    // Cache only the existing attendance prerequisites, scoped to this account.
+    if (!online) {
+      setIsGatewayCleared(false);
+      setGatewayDocs([]);
+      setScheduleProposal(null);
+      try {
+        const raw = eligibilityKey ? await SecureStore.getItemAsync(eligibilityKey) : null;
+        if (raw) {
+          const cached = JSON.parse(raw);
+          setIsGatewayCleared(cached.cleared === true);
+          setGatewayDocs(cached.progress || []);
+          setScheduleProposal(cached.schedule || null);
+        }
+      } catch { /* Remain blocked until prerequisites can be checked online. */ }
+    } else try {
       const repRes = await listStudentReports(1, 50);
       const reports = repRes.data?.reports || [];
       const GATEWAY_SPECS = [
@@ -118,24 +144,31 @@ export default function AttendanceScreen() {
       const cleared = progress.length === 2 && progress.every(p => p.status === 'approved');
       setIsGatewayCleared(cleared);
 
+      let cachedSchedule: DbPracticumSchedule | null = null;
+      setScheduleProposal(null);
       if (cleared) {
         try {
           const schedRes = await fetchStudentScheduleProposal();
           if (schedRes.data) {
             setScheduleProposal(schedRes.data);
+            cachedSchedule = schedRes.data;
           }
         } catch {
           // Ignore if offline
         }
       }
+      if (eligibilityKey) {
+        await SecureStore.setItemAsync(eligibilityKey, JSON.stringify({ cleared, progress, schedule: cachedSchedule }));
+      }
     } catch {
-      // Fallback silently if offline
+      setIsGatewayCleared(false);
     }
 
     const record = await getTodayAttendance();
     setTodayRecord(record);
     const queue = await getOfflineQueue();
-    setOfflineCount(queue.length);
+    const queueIdentity = await getCachedAttendanceIdentity();
+    setOfflineCount(queue.filter(item => item.student_id === queueIdentity?.student_id).length);
     setLoading(false);
   }
 
@@ -174,9 +207,8 @@ export default function AttendanceScreen() {
       setSuccess(`Successfully synchronized ${res.syncedCount} offline attendance record(s) with CdM servers.`);
       await loadState();
       if (activeTab === 'history') await loadHistory();
-    } else if (res.errors.length > 0 && isOffline) {
-      setError(res.errors[0]);
     }
+    if (res.errors.length > 0) setError(res.errors[0]);
   }
 
   async function startAttendance(targetMode: 'time_in' | 'time_out') {

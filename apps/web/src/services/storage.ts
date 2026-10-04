@@ -2,21 +2,12 @@
 
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
+import { validateUploadedFile } from '@/src/lib/uploadValidation';
 import type { AppResult } from '@ojt/shared';
 
 const serviceClient = getServiceClient;
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
-
-const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png'];
-
-const ALLOWED_MIME_TYPES = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/msword',
-  'image/jpeg',
-  'image/png',
-];
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 /**
  * Validates file size and format, then uploads to private-documents bucket.
@@ -28,36 +19,8 @@ export async function uploadPrivateDocument(
   const file = formData.get('file') as File | null;
   const reportType = (formData.get('report_type') as string) || 'document';
 
-  if (!file || !(file instanceof File) || file.size === 0) {
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Please select a valid file to upload.' } };
-  }
-
-  // 1. File Size Checker (Max 10 MB)
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: `File size (${sizeInMB} MB) exceeds the maximum limit of 10 MB. Please compress or optimize your document.`,
-      },
-    };
-  }
-
-  // 2. File Extension & MIME Type Whitelist Checker
-  const originalName = file.name.toLowerCase();
-  const hasValidExt = ALLOWED_EXTENSIONS.some((ext) => originalName.endsWith(ext));
-  const hasValidMime = ALLOWED_MIME_TYPES.includes(file.type);
-
-  if (!hasValidExt && !hasValidMime) {
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: `Unusual or unsupported file format detected ("${file.name}"). Only official document formats (PDF, Word DOCX, JPG, PNG) are accepted.`,
-      },
-    };
-  }
+  const checked = await validateUploadedFile(file, ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png'], MAX_FILE_SIZE_BYTES);
+  if (checked.error || !checked.data) return { data: null, error: checked.error };
 
   // 3. User Authentication & Authorization Check
   const supabase = await createClient();
@@ -77,19 +40,16 @@ export async function uploadPrivateDocument(
   }
 
   // 4. Sanitize File Name & Construct Secure Storage Path
-  const ext = originalName.substring(originalName.lastIndexOf('.')) || '.pdf';
-  const cleanCategory = reportType.replace(/[^a-zA-Z0-9_]/g, '_');
-  const sanitizedPath = `${user.id}/${cleanCategory}_${Date.now()}${ext}`;
+  const cleanCategory = reportType.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 40);
+  const sanitizedPath = `${user.id}/${cleanCategory}_${Date.now()}${checked.data.extension}`;
 
-  // 5. Upload Buffer to Supabase Storage
-  const buffer = Buffer.from(await file.arrayBuffer());
   const service = serviceClient();
 
   const { error: uploadErr } = await service.storage
     .from('private-documents')
-    .upload(sanitizedPath, buffer, {
-      contentType: file.type || 'application/octet-stream',
-      upsert: true,
+    .upload(sanitizedPath, checked.data.bytes, {
+      contentType: checked.data.mimeType,
+      upsert: false,
     });
 
   if (uploadErr) {
@@ -99,8 +59,8 @@ export async function uploadPrivateDocument(
   return {
     data: {
       filePath: sanitizedPath,
-      fileName: file.name,
-      fileSize: file.size,
+      fileName: file?.name ?? sanitizedPath,
+      fileSize: checked.data.bytes.length,
     },
     error: null,
   };
@@ -135,18 +95,22 @@ export async function getSignedDocumentUrl(
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
   }
 
-  // IDOR Guard: Trainees can strictly only access their own private document keys
-  if (profile.role === 'Student' && !filePath.startsWith(`${user.id}/`)) {
-    return {
-      data: null,
-      error: { code: 'FORBIDDEN', message: 'Unauthorized access. You may only inspect your own submitted documents.' },
-    };
-  }
+  if (!Number.isInteger(expiresInSeconds) || expiresInSeconds < 1 || expiresInSeconds > 300 ||
+      filePath.startsWith('http://'))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid document path or expiry.' } };
 
-  // If path is already a direct Firebase or external URL, return directly
-  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-    return { data: { signedUrl: filePath }, error: null };
-  }
+  // Query with the caller's JWT; report RLS limits rows to permitted records.
+  const { data: report, error: reportError } = await supabase
+    .from('reports').select('student_id').eq('file_path', filePath).limit(1).maybeSingle();
+  if (reportError || !report)
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Document is not available to this account.' } };
+
+  if (filePath.startsWith('https://')) return { data: { signedUrl: filePath }, error: null };
+
+  const { data: student } = await supabase
+    .from('students').select('user_id, student_id').eq('student_id', report.student_id).single();
+  if (!student || !(filePath.startsWith(`${student.user_id}/`) || filePath.startsWith(`${student.student_id}/`)))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Document path does not belong to this student.' } };
 
   const service = serviceClient();
   const { data, error } = await service.storage

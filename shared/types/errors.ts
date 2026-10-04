@@ -7,6 +7,7 @@ export type AppErrorCode =
   | 'EXPIRED_QR'
   | 'INVALID_QR'
   | 'DUPLICATE_REQUEST'
+  | 'RATE_LIMITED'
   | 'OFFLINE'
   | 'SYNC_FAILURE'
   | 'SERVER_FAILURE'

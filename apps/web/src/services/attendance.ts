@@ -297,13 +297,20 @@ export async function getSelfieUrl(selfie_path: string): Promise<AppResult<{ url
   if (!selfie_path)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Selfie path is required.' } };
 
-  const { user, profile } = await getAuthUserWithRole();
-  if (!user || !['Supervisor', 'Coordinator', 'Admin'].includes(profile?.role ?? ''))
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.account_status !== 'active' || !['Supervisor', 'Coordinator', 'Admin'].includes(profile.role))
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  if (selfie_path.startsWith('http://') || selfie_path.startsWith('https://')) {
-    return { data: { url: selfie_path }, error: null };
-  }
+  const { data: timeIn } = await supabase.from('attendance').select('attendance_id')
+    .eq('time_in_selfie_path', selfie_path).limit(1).maybeSingle();
+  const { data: timeOut } = timeIn ? { data: null } : await supabase.from('attendance')
+    .select('attendance_id').eq('time_out_selfie_path', selfie_path).limit(1).maybeSingle();
+  if (!timeIn && !timeOut)
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Selfie is not available to this account.' } };
+
+  if (selfie_path.startsWith('https://')) return { data: { url: selfie_path }, error: null };
+  if (selfie_path.startsWith('http://'))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Insecure selfie URL.' } };
 
   const service = serviceClient();
 

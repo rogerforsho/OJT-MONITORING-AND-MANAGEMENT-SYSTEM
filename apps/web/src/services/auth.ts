@@ -5,7 +5,8 @@ import { getServiceClient } from '@/src/lib/supabase/service';
 import { redirect } from 'next/navigation';
 import crypto from 'crypto';
 import { sendOtpEmail } from '@/src/lib/email/send-otp';
-import type { AppResult } from '@ojt/shared';
+import { validateUploadedFile } from '@/src/lib/uploadValidation';
+import type { AppError, AppResult } from '@ojt/shared';
 import type { RegisterStudentInput, SignInInput } from '@ojt/shared';
 import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 import { recordAuditEvent } from './audit';
@@ -17,6 +18,34 @@ function serviceClient() {
     cachedServiceClient = getServiceClient();
   }
   return cachedServiceClient;
+}
+
+type AuthAction = 'login' | 'register' | 'password_reset_request' | 'password_reset_verify' | 'id_card_upload';
+
+async function authActionLimit(
+  action: AuthAction,
+  email: string,
+  maxAttempts: number,
+  windowSeconds: number
+): Promise<AppError | null> {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) return { code: 'SERVER_FAILURE', message: 'Authentication service is not configured.' };
+
+  const subjectHash = crypto.createHmac('sha256', secret)
+    .update(email.trim().toLowerCase()).digest('hex');
+  const { data, error } = await serviceClient().rpc('claim_auth_rate_limit', {
+    p_action: action,
+    p_subject_hash: subjectHash,
+    p_max_attempts: maxAttempts,
+    p_window_seconds: windowSeconds,
+  });
+  if (error) {
+    console.error(`[authActionLimit] ${action} unavailable`);
+    return { code: 'SERVER_FAILURE', message: 'Authentication service is temporarily unavailable.' };
+  }
+  return data === true ? null : {
+    code: 'RATE_LIMITED', message: 'Too many attempts. Please wait before trying again.',
+  };
 }
 
 async function assertCoordinator() {
@@ -194,6 +223,9 @@ export async function registerStudent(
   if (input.year_level !== 4)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'OJT registration is exclusively restricted to 4th-Year graduating students.' } };
 
+  const limitError = await authActionLimit('register', input.email, 3, 3600);
+  if (limitError) return { data: null, error: limitError };
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl || supabaseUrl.includes('your-project-id')) {
     return {
@@ -290,22 +322,23 @@ export async function registerStudent(
 }
 
 export async function uploadStudentIdCard(formData: FormData): Promise<AppResult<{ file_path: string }>> {
-  const file = formData.get('file') as File;
-  if (!file) {
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID card file is required.' } };
-  }
+  const email = formData.get('email');
+  if (typeof email !== 'string' || !email.trim())
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Registration email is required.' } };
+  const limitError = await authActionLimit('id_card_upload', email, 3, 3600);
+  if (limitError) return { data: null, error: limitError };
+
+  const file = formData.get('file') as File | null;
+  const checked = await validateUploadedFile(file, ['.pdf', '.jpg', '.jpeg', '.png'], 5 * 1024 * 1024);
+  if (checked.error || !checked.data) return { data: null, error: checked.error };
 
   const service = serviceClient();
-  const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const filePath = `id-cards/${Date.now()}_${crypto.randomBytes(6).toString('hex')}.${fileExt}`;
-
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  const filePath = `id-cards/${Date.now()}_${crypto.randomBytes(12).toString('hex')}${checked.data.extension}`;
 
   const { error: uploadErr } = await service.storage
     .from('private-documents')
-    .upload(filePath, buffer, {
-      contentType: file.type || 'image/jpeg',
+    .upload(filePath, checked.data.bytes, {
+      contentType: checked.data.mimeType,
       upsert: false,
     });
 
@@ -321,6 +354,9 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email is required.' } };
   if (!input.password)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Password is required.' } };
+
+  const limitError = await authActionLimit('login', input.email, 10, 900);
+  if (limitError) return { data: null, error: limitError };
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl || supabaseUrl.includes('your-project-id')) {
@@ -482,6 +518,9 @@ export async function requestPasswordReset(
   if (!email?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
 
+  const limitError = await authActionLimit('password_reset_request', email, 3, 900);
+  if (limitError) return { data: null, error: limitError };
+
   const service = serviceClient();
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -616,12 +655,16 @@ export async function requestPasswordReset(
   }
 
   // 5. Dispatch branded email with 6-digit verification code
-  await sendOtpEmail({
+  const delivery = await sendOtpEmail({
     to: normalizedEmail,
     fullName: userProfile.full_name || 'Colegio de Montalban User',
     otp,
     expiresMinutes: 10,
   });
+  if (!delivery.success) {
+    await service.from('password_reset_otps').update({ used: true }).eq('email', normalizedEmail).eq('used', false);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Unable to deliver a reset code. Please try again later.' } };
+  }
 
   return {
     data: {
@@ -660,103 +703,42 @@ export async function verifyOtpAndResetPassword(
     };
   }
 
+  const limitError = await authActionLimit('password_reset_verify', email, 10, 900);
+  if (limitError) return { data: null, error: limitError };
+
   const service = serviceClient();
   const normalizedEmail = email.trim().toLowerCase();
 
-  // 1. Fetch active OTP record for this email
-  const { data: otpRecord, error: fetchErr } = await service
-    .from('password_reset_otps')
-    .select('id, user_id, otp_hash, expires_at, attempts, used')
-    .eq('email', normalizedEmail)
-    .eq('used', false)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (fetchErr || !otpRecord) {
-    return {
-      data: null,
-      error: {
-        code: 'NOT_FOUND',
-        message: 'No active verification code found for this account. Please request a new code.',
-      },
-    };
+  // A database row lock ensures only one caller can consume a valid code.
+  const otpHash = crypto.createHash('sha256').update(cleanOtp).digest('hex');
+  const { data: claim, error: claimError } = await service.rpc('consume_password_reset_otp', {
+    p_email: normalizedEmail, p_otp_hash: otpHash,
+  });
+  if (claimError) {
+    console.error('[verifyOtpAndResetPassword] OTP claim failed:', claimError);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Password reset is temporarily unavailable.' } };
+  }
+  const result = claim?.[0];
+  if (result?.result_status !== 'valid' || !result.reset_user_id) {
+    const message = result?.result_status === 'expired'
+      ? 'The verification code has expired. Please request a new code.'
+      : 'Invalid or already used verification code. Please request a new code if needed.';
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message } };
   }
 
-  // 2. Check if expired
-  const isExpired = new Date(otpRecord.expires_at).getTime() < Date.now();
-  if (isExpired) {
-    await service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id);
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: 'The verification code has expired (valid for 10 minutes). Please request a new code.',
-      },
-    };
-  }
-
-  // 3. Check brute-force attempts
-  if (otpRecord.attempts >= 5) {
-    await service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id);
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: 'Too many incorrect attempts. For security, this code has been revoked. Please request a new code.',
-      },
-    };
-  }
-
-  // 4. Verify OTP Hash
-  const inputHash = crypto.createHash('sha256').update(cleanOtp).digest('hex');
-  if (inputHash !== otpRecord.otp_hash) {
-    const nextAttempts = otpRecord.attempts + 1;
-    await service
-      .from('password_reset_otps')
-      .update({ attempts: nextAttempts, used: nextAttempts >= 5 })
-      .eq('id', otpRecord.id);
-
-    const remaining = 5 - nextAttempts;
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: remaining > 0
-          ? `Incorrect verification code. ${remaining} attempt(s) remaining.`
-          : 'Incorrect verification code. Attempt limit reached; please request a new code.',
-      },
-    };
-  }
-
-  // 5. Code verified! Update the user password in Supabase Auth via Admin client
-  const { error: adminAuthErr } = await service.auth.admin.updateUserById(otpRecord.user_id, {
+  const { error: adminAuthErr } = await service.auth.admin.updateUserById(result.reset_user_id, {
     password: newPassword,
   });
-
   if (adminAuthErr) {
-    console.error('[verifyOtpAndResetPassword] Supabase admin error:', adminAuthErr);
-    return {
-      data: null,
-      error: {
-        code: 'SERVER_FAILURE',
-        message: adminAuthErr.message || 'Failed to update account password.',
-      },
-    };
+    console.error('[verifyOtpAndResetPassword] Auth password update failed:', adminAuthErr);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Password update failed. Request a new code and try again.' } };
   }
 
-  // 6. Concurrently mark OTP as used and write security audit log in parallel
-  await Promise.allSettled([
-    service.from('password_reset_otps').update({ used: true }).eq('id', otpRecord.id),
-    service.from('audit_logs').insert({
-      user_id: otpRecord.user_id,
-      action: 'PASSWORD_RESET_VIA_OTP',
-      table_affected: 'users',
-      record_id: otpRecord.user_id,
-      details: { reset_method: '6_DIGIT_OTP', reset_at: new Date().toISOString() },
-      timestamp: new Date().toISOString(),
-    }),
-  ]);
+  await recordAuditEvent({
+    actor_user_id: result.reset_user_id,
+    action: 'PASSWORD_RESET_VIA_OTP', entity_type: 'user', entity_id: result.reset_user_id,
+    details: { reset_method: '6_DIGIT_OTP' },
+  });
 
   return { data: { success: true }, error: null };
 }

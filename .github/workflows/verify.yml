@@ -1,0 +1,35 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint -w apps/web
+      - run: node node_modules/typescript/bin/tsc --noEmit --incremental false -p apps/web/tsconfig.json
+      - run: npm run build:web
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      # Report-only: remaining advisories are in the upstream Expo / React Native
+      # toolchain (metro, node-forge, braces) with no non-breaking fix available.
+      # Review this output on every run; re-enable failure once Expo ships fixes.
+      - run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true

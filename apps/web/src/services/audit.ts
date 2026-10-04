@@ -35,7 +35,7 @@ export interface AuditEventInput {
 export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
   try {
     const service = serviceClient();
-    await service.from('audit_logs').insert({
+    const { error } = await service.from('audit_logs').insert({
       actor_user_id: input.actor_user_id || null,
       action: input.action,
       entity_type: input.entity_type,
@@ -43,9 +43,10 @@ export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
       details: input.details || {},
       ip_address: input.ip_address || null,
     });
+    if (error) console.error(`[AUDIT] ${input.action} insert failed: ${error.message}`);
   } catch {
-    // Non-blocking fallback for resilience
-    console.info(`[AUDIT] ${input.action} on ${input.entity_type}:${input.entity_id} by ${input.actor_user_id}`, input.details);
+    // A failed audit write must be visible to server monitoring.
+    console.error(`[AUDIT] ${input.action} insert threw an error`);
   }
 }
 
@@ -90,7 +91,8 @@ export async function listAuditLogs(
 
     const { data, error, count } = await query;
     if (error) {
-      return { data: { logs: [], total: 0 }, error: null };
+      console.error('[listAuditLogs] Query failed:', error.message);
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Audit logs are temporarily unavailable.' } };
     }
 
     const formatted: AuditLogItem[] = (data || []).map((row: any) => ({
@@ -108,6 +110,7 @@ export async function listAuditLogs(
 
     return { data: { logs: formatted, total: count || 0 }, error: null };
   } catch {
-    return { data: { logs: [], total: 0 }, error: null };
+    console.error('[listAuditLogs] Query threw an error');
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Audit logs are temporarily unavailable.' } };
   }
 }

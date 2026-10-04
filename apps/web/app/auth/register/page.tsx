@@ -82,6 +82,7 @@ export default function RegisterPage() {
     // 1. Upload Student ID Card
     const formData = new FormData();
     formData.append('file', idCardFile);
+    formData.append('email', form.email.trim());
     const uploadRes = await uploadStudentIdCard(formData);
 
     if (uploadRes.error) {
