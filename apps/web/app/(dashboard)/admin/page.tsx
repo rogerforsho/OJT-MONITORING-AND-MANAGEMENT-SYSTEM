@@ -27,6 +27,9 @@ export default async function AdminPage() {
     listAllUsers(1, 10),
     getSystemOverview(),
   ]);
+  if (usersResult.error || overviewResult.error) {
+    throw new Error('Unable to load the administration overview. Please retry.');
+  }
 
   const initialUsers = usersResult.data?.users ?? [];
   const totalUsers = usersResult.data?.total ?? 0;

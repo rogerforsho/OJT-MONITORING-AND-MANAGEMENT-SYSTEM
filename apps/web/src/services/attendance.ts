@@ -2,7 +2,8 @@
 
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
-import { recordAuditEvent } from './audit';
+import { toPublicSupabaseUrl } from '@/src/lib/supabase/public-url';
+import { recordAuditEvent } from '@/src/lib/audit';
 import type { AppResult, DbAttendance, VerificationStatus } from '@ojt/shared';
 
 const serviceClient = getServiceClient;
@@ -91,6 +92,8 @@ export async function verifyAttendance(
 ): Promise<AppResult<null>> {
   if (!attendance_id)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Attendance ID is required.' } };
+  if (!['verified', 'rejected'].includes(verification_status))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid verification status.' } };
 
   const { supabase, user, profile } = await getAuthUserWithRole();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
@@ -130,6 +133,7 @@ export async function verifyAttendance(
     .select('assignment_id')
     .eq('student_id', record.student_id)
     .eq('supervisor_id', supervisor.supervisor_id)
+    .eq('assignment_status', 'active')
     .maybeSingle();
 
   if (!assignment)
@@ -138,18 +142,26 @@ export async function verifyAttendance(
   if (record.verification_status !== 'pending')
     return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Attendance already verified.' } };
 
-  const { error } = await service
+  const { data: updated, error } = await service
     .from('attendance')
     .update({ verification_status, updated_at: new Date().toISOString() })
-    .eq('attendance_id', attendance_id);
+    .eq('attendance_id', attendance_id)
+    .eq('verification_status', 'pending')
+    .select('attendance_id').maybeSingle();
 
   if (error)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update verification.' } };
+  if (!updated)
+    return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'This attendance was already processed. Refresh the list.' } };
 
   return { data: null, error: null };
 }
 
-export async function batchVerifyAttendance(): Promise<AppResult<{ verifiedCount: number }>> {
+export async function batchVerifyAttendance(attendanceIds: string[]): Promise<AppResult<{ verifiedCount: number }>> {
+  if (!Array.isArray(attendanceIds) || attendanceIds.length === 0 || attendanceIds.length > 20 ||
+      attendanceIds.some(id => typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Choose between 1 and 20 visible attendance records.' } };
+  const requestedIds = [...new Set(attendanceIds)];
   const { supabase, user, profile } = await getAuthUserWithRole();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
@@ -173,11 +185,13 @@ export async function batchVerifyAttendance(): Promise<AppResult<{ verifiedCount
   if (!supervisor)
     return { data: null, error: { code: 'NOT_FOUND', message: 'Supervisor profile not found.' } };
 
-  const { data: assignments } = await supabase
+  const { data: assignments, error: assignmentError } = await supabase
     .from('student_assignments')
     .select('student_id')
     .eq('supervisor_id', supervisor.supervisor_id)
     .eq('assignment_status', 'active');
+  if (assignmentError)
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Unable to verify your assigned students.' } };
 
   const studentIds = (assignments ?? []).map((a: { student_id: string }) => a.student_id);
   if (studentIds.length === 0)
@@ -186,12 +200,18 @@ export async function batchVerifyAttendance(): Promise<AppResult<{ verifiedCount
   const { data: updated, error } = await service
     .from('attendance')
     .update({ verification_status: 'verified', updated_at: new Date().toISOString() })
+    .in('attendance_id', requestedIds)
     .in('student_id', studentIds)
     .eq('verification_status', 'pending')
     .select('attendance_id');
 
   if (error)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to batch verify attendance.' } };
+
+  if (updated?.length) await recordAuditEvent({
+    actor_user_id: user.id, action: 'ATTENDANCE_BATCH_VERIFIED', entity_type: 'attendance',
+    details: { attendance_ids: updated.map(row => row.attendance_id) },
+  });
 
   return { data: { verifiedCount: updated?.length ?? 0 }, error: null };
 }
@@ -321,7 +341,7 @@ export async function getSelfieUrl(selfie_path: string): Promise<AppResult<{ url
   if (error || !data)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to retrieve selfie.' } };
 
-  return { data: { url: data.signedUrl }, error: null };
+  return { data: { url: toPublicSupabaseUrl(data.signedUrl) }, error: null };
 }
 
 export async function listAttendanceForCoordinator(

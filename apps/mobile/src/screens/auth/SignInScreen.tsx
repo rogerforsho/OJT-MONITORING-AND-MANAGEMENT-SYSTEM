@@ -1,3 +1,5 @@
+import { Linking } from 'react-native';
+import { getWebPortalUrl } from '../../lib/webPortal';
 import { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -15,7 +17,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
-import { signIn, requestInstitutionalPasswordReset } from '../../services/auth';
+import { signIn } from '../../services/auth';
 import NetworkToast from '../../components/NetworkToast';
 
 type Props = {
@@ -44,10 +46,6 @@ export default function SignInScreen({ navigation }: Props) {
 
   // Forgot Password / Account Recovery State
   const [showForgot, setShowForgot] = useState(false);
-  const [resetRole, setResetRole] = useState<'Student' | 'Staff'>('Student');
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetStudentNumber, setResetStudentNumber] = useState('');
-  const [resetEmployeeNumber, setResetEmployeeNumber] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
 
@@ -113,107 +111,28 @@ export default function SignInScreen({ navigation }: Props) {
   }
 
   async function handleReset() {
-    setResetMsg('');
-    if (!resetEmail.trim()) {
-      setResetMsg('Please enter your student email.');
-      return;
-    }
-    if (!resetStudentNumber.trim()) {
-      setResetMsg('Please enter your official CdM Student Number.');
-      return;
-    }
-
     setResetLoading(true);
-    const result = await requestInstitutionalPasswordReset(resetEmail, resetStudentNumber, 'Student');
-    setResetLoading(false);
-
-    if (result.error) {
-      setResetMsg(result.error.message);
-    } else {
-      setResetMsg('Identity verified! A secure password recovery link has been dispatched to your student inbox.');
-    }
+    setResetMsg('');
+    try { await Linking.openURL(getWebPortalUrl('/auth/reset-password?role=Student')); }
+    catch (error) { setResetMsg(error instanceof Error ? error.message : 'Unable to open account recovery. Please try again.'); }
+    finally { setResetLoading(false); }
   }
 
-  // VIEW 1: Account Recovery / Forgot Password Form
-  if (showForgot) {
-    return (
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.root}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          <View style={s.inner}>
-            <View style={s.brand}>
-              <View style={s.logoContainer}>
-                <Image source={require('../../../assets/logo.png')} style={s.logo} resizeMode="contain" />
-              </View>
-              <Text style={s.brandTitle}>Colegio de Montalban</Text>
-              <Text style={s.brandSub}>Student Trainee Account Recovery</Text>
-            </View>
-
-            <View style={s.card}>
-              <Text style={s.title}>Reset Password</Text>
-              <Text style={s.subtitle}>Verify your student identity to receive a recovery link.</Text>
-
-              <View style={s.infoNotice}>
-                <Ionicons name="shield-checkmark" size={14} color="#854d0e" />
-                <Text style={s.infoNoticeText}>
-                  <Text style={{ fontWeight: '800' }}>Student Verification:</Text> Please enter your official CdM Student Number (e.g. 2021-00123-CM) to verify account ownership.
-                </Text>
-              </View>
-
-              <Text style={s.label}>Registered Student Email</Text>
-              <TextInput
-                style={s.input}
-                value={resetEmail}
-                onChangeText={setResetEmail}
-                placeholder="student@cdm.edu.ph"
-                placeholderTextColor="#94a3b8"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-
-              <Text style={s.label}>CdM Student ID Number</Text>
-              <TextInput
-                style={s.input}
-                value={resetStudentNumber}
-                onChangeText={setResetStudentNumber}
-                placeholder="e.g. 2021-00123-CM"
-                placeholderTextColor="#94a3b8"
-                autoCapitalize="none"
-              />
-
-              {!!resetMsg && (
-                <View style={resetMsg.includes('dispatched') || resetMsg.includes('verified') ? s.alertSuccess : s.alertError}>
-                  <Text style={resetMsg.includes('dispatched') || resetMsg.includes('verified') ? s.alertSuccessText : s.alertErrorText}>
-                    {resetMsg}
-                  </Text>
-                </View>
-              )}
-
-              <TouchableOpacity style={s.btn} onPress={handleReset} disabled={resetLoading} activeOpacity={0.85}>
-                {resetLoading ? (
-                  <ActivityIndicator color="#FFCC00" />
-                ) : (
-                  <Text style={s.btnText}>Verify Student ID & Send Link</Text>
-                )}
-              </TouchableOpacity>
-
-              <View style={{ marginTop: 10, padding: 10, backgroundColor: '#f8fafc', borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0' }}>
-                <Text style={{ fontSize: 10, color: '#64748b', textAlign: 'center' }}>
-                  👔 <Text style={{ fontWeight: '700' }}>Faculty or Coordinator?</Text> Please access the Web Portal on your computer to recover your staff account.
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => { setShowForgot(false); setResetMsg(''); }}
-                style={s.linkContainer}
-              >
-                <Text style={s.link}>← Return to Sign In</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    );
-  }
+  if (showForgot) return (
+    <View style={[s.root, { justifyContent: 'center', padding: 24 }]}>
+      <View style={s.card}>
+        <Text style={s.title}>Reset your password</Text>
+        <Text style={s.subtitle}>Continue to secure account recovery in your browser. Enter your student email and ID, then use the emailed code to set a new password. Return here to sign in afterwards.</Text>
+        {!!resetMsg && <Text style={s.alertErrorText}>{resetMsg}</Text>}
+        <TouchableOpacity style={s.btn} onPress={handleReset} disabled={resetLoading}>
+          {resetLoading ? <ActivityIndicator color="#FFCC00" /> : <Text style={s.btnText}>Open Secure Recovery</Text>}
+        </TouchableOpacity>
+        <TouchableOpacity style={s.linkContainer} onPress={() => { setShowForgot(false); setResetMsg(''); }}>
+          <Text style={s.link}>Return to Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   // VIEW 2: Remembered Account Quick Login Card (Like Google / Facebook)
   if (rememberedProfile && !useAnotherAccount) {

@@ -11,12 +11,14 @@ interface Props {
   studentId: string;
   studentName: string;
   completedHours: number;
+  readOnly?: boolean;
 }
 
 export default function ClearanceActionModal({
   studentId,
   studentName,
   completedHours,
+  readOnly = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export default function ClearanceActionModal({
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Close
             </Button>
-            {isEligible && !issuedCode && (
+            {!readOnly && isEligible && !issuedCode && (
               <Button
                 onClick={handleIssue}
                 loading={issuing}

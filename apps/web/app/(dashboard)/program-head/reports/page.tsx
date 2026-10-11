@@ -20,7 +20,10 @@ export default async function ProgramHeadReportsPage() {
     redirect('/dashboard');
   }
 
-  const userDepartment = (progHead?.department_or_program || 'ICS').toUpperCase();
+  const userDepartment = (progHead?.department_or_program || '').trim().toUpperCase();
+  if (profile.role === 'ProgramHead' && !['ICS', 'IBE'].includes(userDepartment)) {
+    throw new Error('Your department assignment could not be verified. Contact an administrator.');
+  }
   const userRole = profile.role;
 
   const [summaryRes, cohortRes] = await Promise.all([
@@ -28,28 +31,19 @@ export default async function ProgramHeadReportsPage() {
     listCohortProgress(1, 200),
   ]);
 
-  const summary = summaryRes.data ?? {
-    totalStudents: 0,
-    activeTrainees: 0,
-    completedTrainees: 0,
-    totalRenderedHours: 0,
-    ics: {
-      total: 0,
-      completed: 0,
-      hours: 0,
-      bsit: { total: 0, active: 0, completed: 0, hours: 0 },
-      bscpe: { total: 0, active: 0, completed: 0, hours: 0 },
-    },
-    ibe: {
-      total: 0,
-      completed: 0,
-      hours: 0,
-      bsbaHrm: { total: 0, active: 0, completed: 0, hours: 0 },
-      bsEntrep: { total: 0, active: 0, completed: 0, hours: 0 },
-    },
-  };
-
-  const initialStudents = cohortRes.data?.students ?? [];
+  if (summaryRes.error || !summaryRes.data || cohortRes.error || !cohortRes.data) {
+    throw new Error('Unable to load the department report. Please retry.');
+  }
+  const summary = summaryRes.data;
+  // The report and its export must cover the complete authorized cohort.
+  const initialStudents = [...cohortRes.data.students];
+  for (let page = 2; initialStudents.length < cohortRes.data.total; page++) {
+    const result = await listCohortProgress(page, 200);
+    if (result.error || !result.data?.students.length) {
+      throw new Error('The cohort changed or could not be fully loaded. Please reload the report.');
+    }
+    initialStudents.push(...result.data.students);
+  }
 
   return (
     <DepartmentReportsClient

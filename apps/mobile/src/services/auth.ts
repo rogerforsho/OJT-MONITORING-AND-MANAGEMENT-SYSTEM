@@ -15,8 +15,11 @@ export async function registerStudent(input: RegisterStudentInput): Promise<AppR
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student number is required.' } };
   if (!input.course?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Course is required.' } };
-  if (!input.year_level || input.year_level < 1 || input.year_level > 4)
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Valid year level is required.' } };
+  if (input.year_level !== 4)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Registration is restricted to fourth-year students.' } };
+
+  if (!/(BSIT|BSCS|BS-?CPE|INFORMATION TECHNOLOGY|COMPUTER ENGINEERING|COMPUTER SCIENCE|BSBA|BSENTREP|ENTREPRENEURSHIP|HUMAN RESOURCE|BSA|ACCOUNTANCY)/i.test(input.course))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Registration is restricted to ICS and IBE students.' } };
 
   // Check if student number is already taken
   const { data: existingStudent } = await supabase
@@ -47,7 +50,7 @@ export async function registerStudent(input: RegisterStudentInput): Promise<AppR
     if (error.message?.includes('already registered'))
       return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email already registered.' } };
     if (error.message?.includes('rate limit'))
-      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Email rate limit exceeded. Please turn off "Confirm email" in Supabase Auth settings.' } };
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Too many registration attempts. Please wait and try again later.' } };
     if (error.message?.toLowerCase().includes('database error saving new user'))
       return { data: null, error: { code: 'SERVER_FAILURE', message: 'Account creation failed: this email or student number may already be in use. Please check your credentials or contact your OJT Coordinator.' } };
     return { data: null, error: { code: 'SERVER_FAILURE', message: error.message || 'Registration failed. Please try again.' } };
@@ -114,113 +117,6 @@ export async function signIn(input: SignInInput): Promise<AppResult<AuthUser>> {
 export async function signOut(): Promise<void> {
   await clearAttendanceIdentity();
   await supabase.auth.signOut();
-}
-
-export async function requestInstitutionalPasswordReset(
-  email: string,
-  identifier?: string,
-  expectedRole?: 'Student' | 'Staff'
-): Promise<AppResult<null>> {
-  if (!email?.trim())
-    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Email address is required.' } };
-
-  const normalizedEmail = email.trim().toLowerCase();
-
-  // 1. Verify user profile exists
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('user_id, role, full_name, employee_number')
-    .eq('email', normalizedEmail)
-    .maybeSingle();
-
-  if (!userProfile) {
-    return {
-      data: null,
-      error: { code: 'NOT_FOUND', message: 'No registered CdM account found with that email address.' },
-    };
-  }
-
-  // 2. Strict Role Tab Enforcement: Block cross-role recovery in the wrong tab
-  if (expectedRole === 'Student' && userProfile.role !== 'Student') {
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: `This account is registered as a ${userProfile.role} (Faculty/Staff). Please switch to the "Coordinator / Faculty" tab to reset your password.`,
-      },
-    };
-  }
-
-  if (expectedRole === 'Staff' && userProfile.role === 'Student') {
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: 'This account is registered as a Student. Please switch to the "Student" tab to reset your password.',
-      },
-    };
-  }
-
-  // 3. If student, verify Student Number identity proofing
-  if (userProfile.role === 'Student') {
-    if (!identifier?.trim()) {
-      return {
-        data: null,
-        error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for student verification.' },
-      };
-    }
-
-    const { data: studentRecord } = await supabase
-      .from('students')
-      .select('student_number')
-      .eq('user_id', userProfile.user_id)
-      .maybeSingle();
-
-    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanDbId = (studentRecord?.student_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    if (!cleanDbId || cleanInputId !== cleanDbId) {
-      return {
-        data: null,
-        error: {
-          code: 'VALIDATION_FAILURE',
-          message: 'The provided Student ID does not match our institutional records for this account.',
-        },
-      };
-    }
-  } else {
-    // 3. If faculty / staff / admin, verify Employee ID Number (e.g. 2024-001)
-    if (!identifier?.trim()) {
-      return {
-        data: null,
-        error: { code: 'VALIDATION_FAILURE', message: 'Employee ID Number is required for faculty verification.' },
-      };
-    }
-
-    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanDbId = (userProfile.employee_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    if (!cleanDbId || cleanInputId !== cleanDbId) {
-      return {
-        data: null,
-        error: {
-          code: 'VALIDATION_FAILURE',
-          message: 'The provided Employee ID does not match our institutional records for this faculty account.',
-        },
-      };
-    }
-  }
-
-  // 4. Request password reset email from Supabase Auth
-  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
-  if (resetErr) {
-    return {
-      data: null,
-      error: { code: 'SERVER_FAILURE', message: resetErr.message || 'Failed to dispatch recovery link.' },
-    };
-  }
-
-  return { data: null, error: null };
 }
 
 export async function changeUserPassword(

@@ -19,37 +19,6 @@ export interface AuditLogItem {
   created_at: string;
 }
 
-export interface AuditEventInput {
-  actor_user_id?: string | null;
-  action: string;
-  entity_type: string;
-  entity_id?: string | null;
-  details?: Record<string, any>;
-  ip_address?: string | null;
-}
-
-/**
- * Records an immutable audit log entry in the database.
- * Fulfills ISO/IEC 25010:2023 Non-repudiation & Accountability standard.
- */
-export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
-  try {
-    const service = serviceClient();
-    const { error } = await service.from('audit_logs').insert({
-      actor_user_id: input.actor_user_id || null,
-      action: input.action,
-      entity_type: input.entity_type,
-      entity_id: input.entity_id || null,
-      details: input.details || {},
-      ip_address: input.ip_address || null,
-    });
-    if (error) console.error(`[AUDIT] ${input.action} insert failed: ${error.message}`);
-  } catch {
-    // A failed audit write must be visible to server monitoring.
-    console.error(`[AUDIT] ${input.action} insert threw an error`);
-  }
-}
-
 /**
  * Lists institutional audit logs for Administrator inspection.
  */

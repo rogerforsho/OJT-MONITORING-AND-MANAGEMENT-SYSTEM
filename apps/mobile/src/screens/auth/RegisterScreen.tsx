@@ -80,7 +80,7 @@ export default function RegisterScreen({ navigation }: Props) {
 
     // 1. Upload ID card file
     let idCardPath: string | undefined = undefined;
-    const uploadRes = await uploadRegistrationIdCard(idCardFile.uri, idCardFile.name);
+    const uploadRes = await uploadRegistrationIdCard(idCardFile.uri, idCardFile.name, form.email);
     if (uploadRes.error) {
       setLoading(false);
       setError(uploadRes.error.message);

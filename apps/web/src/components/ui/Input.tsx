@@ -1,4 +1,6 @@
-import { forwardRef } from 'react';
+'use client';
+
+import { forwardRef, useId } from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -7,7 +9,9 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, id, className = '', ...props }, ref) => {
-    const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+    const generatedId = useId();
+    const inputId = id ?? generatedId;
+    const errorId = `${inputId}-error`;
     return (
       <div className="flex flex-col gap-1 w-full">
         {label && (
@@ -22,8 +26,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             focus:ring-2 focus:ring-[#0A3D24]/20 dark:focus:ring-emerald-500/30 focus:border-[#0A3D24] dark:focus:border-emerald-500
             ${error ? 'border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200' : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'} ${className}`}
           {...props}
+          aria-invalid={error ? true : props['aria-invalid']}
+          aria-describedby={[props['aria-describedby'], error ? errorId : undefined].filter(Boolean).join(' ') || undefined}
         />
-        {error && <p className="text-xs font-medium text-rose-500 dark:text-rose-400">{error}</p>}
+        {error && <p id={errorId} className="text-xs font-medium text-rose-500 dark:text-rose-400">{error}</p>}
       </div>
     );
   }

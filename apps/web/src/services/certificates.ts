@@ -2,7 +2,8 @@
 
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
-import { recordAuditEvent } from './audit';
+import { recordAuditEvent } from '@/src/lib/audit';
+import { departmentScope, restrictDepartment } from '@/src/lib/department-scope';
 import type { AppResult } from '@ojt/shared';
 
 const serviceClient = getServiceClient;
@@ -43,6 +44,18 @@ export interface ClearanceCheckResult {
 
 export async function checkClearanceStatus(student_id: string): Promise<AppResult<ClearanceCheckResult>> {
   if (!student_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
+
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || profile?.account_status !== 'active' || !['Student', 'Coordinator', 'Admin', 'ProgramHead'].includes(profile.role))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  const scope = await departmentScope(supabase, user.id, profile.role);
+  if (scope.error) return { data: null, error: { code: 'FORBIDDEN', message: scope.error } };
+  let visibleStudent = supabase.from('students').select('student_id').eq('student_id', student_id);
+  visibleStudent = restrictDepartment(visibleStudent, scope.department);
+  if (profile.role === 'Student') visibleStudent = visibleStudent.eq('user_id', user.id);
+  const { data: accessible, error: accessError } = await visibleStudent.maybeSingle();
+  if (accessError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Unable to check student access.' } };
+  if (!accessible) return { data: null, error: { code: 'FORBIDDEN', message: 'Student record is not accessible.' } };
 
   const service = serviceClient();
 
@@ -135,7 +148,7 @@ export async function issueCertificate(student_id: string): Promise<AppResult<{ 
   if (!student_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
 
   const { user, profile } = await getAuthUserWithRole();
-  if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active') {
+  if (!user || !profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
   }
 
@@ -146,6 +159,10 @@ export async function issueCertificate(student_id: string): Promise<AppResult<{ 
 
   if (clearance.data.certificate) {
     return { data: { verification_code: clearance.data.certificate.verification_code }, error: null };
+  }
+
+  if (!clearance.data.can_issue) {
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'The student has not met all clearance requirements.' } };
   }
 
   const service = serviceClient();
@@ -200,7 +217,7 @@ export async function revokeCertificate(certificate_id: string, reason: string):
   if (!reason?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Revocation reason is required.' } };
 
   const { user, profile } = await getAuthUserWithRole();
-  if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active') {
+  if (!user || !profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
   }
 

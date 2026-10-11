@@ -8,4 +8,6 @@ apps/desktop/dist/
 apps/web/diagnose_auth.mjs
 apps/web/raw_fetch.mjs
 apps/web/test_repair_auth.mjs
-
+.env.docker
+.env.staging.local
+.staging-qa-credentials.txt

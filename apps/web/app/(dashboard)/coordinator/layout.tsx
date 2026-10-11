@@ -14,7 +14,7 @@ export default async function CoordinatorLayout({
   const user = await getAuthUser();
   if (!user) redirect('/auth/sign-in');
 
-  if (!['Coordinator', 'Admin'].includes(user.role) || user.account_status !== 'active') {
+  if (!['Coordinator', 'Admin', 'ProgramHead'].includes(user.role) || user.account_status !== 'active') {
     redirect('/dashboard');
   }
 

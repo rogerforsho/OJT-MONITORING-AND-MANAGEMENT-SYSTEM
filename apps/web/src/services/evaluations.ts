@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
+import { canManageDepartmentRecord, canManageDepartmentStudent } from '@/src/lib/department-scope';
 import { getServiceClient } from '@/src/lib/supabase/service';
-import { recordAuditEvent } from './audit';
+import { recordAuditEvent } from '@/src/lib/audit';
 import type { AppResult, DbEvaluation } from '@ojt/shared';
 
 const serviceClient = getServiceClient;
@@ -80,6 +81,20 @@ export async function listEvaluationsForSupervisor(
 export async function createEvaluation(input: EvaluationInput): Promise<AppResult<null>> {
   if (!input.student_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student is required.' } };
   if (!input.feedback?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Feedback is required.' } };
+  if (input.evaluation_type && !['midterm', 'final'].includes(input.evaluation_type))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid evaluation type.' } };
+  if (input.performance_score !== null && (typeof input.performance_score !== 'number' || !Number.isFinite(input.performance_score) || input.performance_score < 0 || input.performance_score > 100))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Score must be between 0 and 100.' } };
+  if (input.criteria) {
+    const maxima: Record<keyof EvaluationRubricCriteria, number> = {
+      technical_competence: 25, productivity_dependability: 20, attendance_punctuality: 20,
+      communication_skills: 15, work_ethics_professionalism: 20,
+    };
+    if (Object.entries(maxima).some(([key, maximum]) => {
+      const value = input.criteria![key as keyof EvaluationRubricCriteria];
+      return typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > maximum;
+    })) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Each rubric score must be within its displayed range.' } };
+  }
 
   const { user, profile } = await getAuthUserWithRole();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
@@ -100,6 +115,7 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
     .select('assignment_id')
     .eq('student_id', input.student_id)
     .eq('supervisor_id', supervisor.supervisor_id)
+    .eq('assignment_status', 'active')
     .maybeSingle();
 
   if (!assignment)
@@ -158,15 +174,14 @@ export interface StudentEvaluationSummary {
 }
 
 export async function getStudentEvaluationSummary(student_id?: string): Promise<AppResult<StudentEvaluationSummary>> {
-  const { user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getAuthUserWithRole();
   if (!user || !profile || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const service = serviceClient();
   let targetStudentId = student_id;
 
   if (profile.role === 'Student') {
-    const { data: s } = await service.from('students').select('student_id').eq('user_id', user.id).single();
+    const { data: s } = await supabase.from('students').select('student_id').eq('user_id', user.id).single();
     if (!s) return { data: null, error: { code: 'NOT_FOUND', message: 'Student profile not found.' } };
     targetStudentId = s.student_id;
   }
@@ -174,6 +189,17 @@ export async function getStudentEvaluationSummary(student_id?: string): Promise<
   if (!targetStudentId) {
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
   }
+
+  if (profile.role === 'Supervisor') {
+    const { data: supervisor } = await supabase.from('supervisors').select('supervisor_id').eq('user_id', user.id).maybeSingle();
+    if (!supervisor) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+    const { data: assignment, error } = await supabase.from('student_assignments').select('student_id')
+      .eq('student_id', targetStudentId).eq('supervisor_id', supervisor.supervisor_id).eq('assignment_status', 'active').maybeSingle();
+    if (error || !assignment) return { data: null, error: { code: 'FORBIDDEN', message: 'Student is not assigned to you.' } };
+  } else if (profile.role !== 'Student' && !await canManageDepartmentStudent(supabase, user.id, profile.role, targetStudentId)) {
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Student is outside your department.' } };
+  }
+  const service = serviceClient();
 
   // Fetch student info
   const { data: student } = await service
@@ -244,7 +270,7 @@ export async function overrideEvaluation(
   reason: string
 ): Promise<AppResult<null>> {
   if (!evaluation_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Evaluation ID is required.' } };
-  if (new_score < 0 || new_score > 100) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Score must be between 0 and 100.' } };
+  if (typeof new_score !== 'number' || !Number.isFinite(new_score) || new_score < 0 || new_score > 100) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Score must be between 0 and 100.' } };
   if (!reason?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Override justification is required.' } };
 
   const { supabase, user, profile } = await getAuthUserWithRole();
@@ -252,15 +278,18 @@ export async function overrideEvaluation(
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
   }
 
-  const { error } = await supabase
+  if (!await canManageDepartmentRecord(supabase, user.id, profile.role, 'evaluations', 'evaluation_id', evaluation_id))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Evaluation is outside your department.' } };
+  const { data: updated, error } = await supabase
     .from('evaluations')
     .update({
       performance_score: new_score,
       feedback: `${reason.trim()} (Adjudicated by ${profile.role})`,
     })
-    .eq('evaluation_id', evaluation_id);
+    .eq('evaluation_id', evaluation_id).select('evaluation_id').maybeSingle();
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to override evaluation.' } };
+  if (!updated) return { data: null, error: { code: 'NOT_FOUND', message: 'Evaluation not found or access denied.' } };
 
   await recordAuditEvent({
     actor_user_id: user.id,

@@ -21,7 +21,7 @@ function loader(mocks, globals = {}) {
       fileName: filename,
     }).outputText;
     vm.runInNewContext(output, {
-      exports, console, setTimeout, clearTimeout, Date, Buffer, URL,
+      exports, console, setTimeout, clearTimeout, Date, Buffer, URL, crypto: require('node:crypto').webcrypto, Headers,
       process: { env: {} },
       require(name) {
         if (mocks[name]) return mocks[name];
@@ -300,12 +300,55 @@ function webFixture({ profile, user = null, production = false } = {}) {
   return (url, headers) => middleware(new NextRequest(url, { headers }));
 }
 
+test('middleware enforces a per-response CSP nonce and forwards it to the rendered request', async () => {
+  const request = webFixture();
+  const first = await request('http://localhost/');
+  const second = await request('http://localhost/');
+  const csp = first.headers.get('content-security-policy');
+  assert.ok(csp);
+  assert.match(csp, /script-src[^;]*'nonce-[a-f0-9]{32}'/);
+  assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
+  assert.notEqual(csp.match(/'nonce-([^']+)'/)?.[1], second.headers.get('content-security-policy')?.match(/'nonce-([^']+)'/)?.[1]);
+});
+
 test('public crawler metadata works without authentication; dashboard still redirects', async () => {
   const request = webFixture();
   for (const route of ['/robots.txt', '/sitemap.xml']) {
     assert.equal((await request(`http://localhost${route}`)).status, 200);
   }
   assert.equal((await request('http://localhost/dashboard')).status, 307);
+});
+
+test('container auth redirects use relative paths instead of an unusable 0.0.0.0 host', async () => {
+  const request = webFixture();
+  const response = await request('http://127.0.0.1:3000/dashboard', { host: '127.0.0.1:3000' });
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get('location'), 'http://127.0.0.1:3000/auth/sign-in');
+  assert.doesNotMatch(response.headers.get('location'), /0\.0\.0\.0/);
+});
+
+test('unknown paths pass through to the framework not-found handler instead of redirecting to sign-in', async () => {
+  const request = webFixture();
+  const response = await request('http://localhost/not-a-real-page');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('x-middleware-next'), '1');
+});
+
+test('auth callback keeps success and failure redirects on the browser-facing host', async () => {
+  const { NextRequest, NextResponse } = require('next/server');
+  const load = loader({
+    'next/server': { NextRequest, NextResponse },
+    '@/src/lib/supabase/server': { async createClient() {
+      return { auth: { async exchangeCodeForSession() { return { error: null }; } } };
+    } },
+  });
+  const { GET } = load('apps/web/app/auth/callback/route.ts');
+  const failure = await GET(new NextRequest('http://127.0.0.1:3000/auth/callback'));
+  assert.equal(failure.headers.get('location'), '/auth/sign-in?error=auth_callback_failed');
+  const success = await GET(new NextRequest('http://127.0.0.1:3000/auth/callback?code=good&next=%2Fstudent%2Fprogress'));
+  assert.equal(success.headers.get('location'), '/student/progress');
+  const unsafe = await GET(new NextRequest('http://127.0.0.1:3000/auth/callback?code=good&next=https%3A%2F%2Fevil.example'));
+  assert.equal(unsafe.headers.get('location'), '/dashboard');
 });
 
 test('forged user metadata cannot grant Admin access, and trusted Admin role still works', async () => {
@@ -326,6 +369,16 @@ test('inactive or missing profiles cannot access protected pages', async () => {
   }
 });
 
+test('Program Heads can enter department workflows but cannot enter company or account administration', async () => {
+  const request = webFixture({ user: { id: 'head' }, profile: { role: 'ProgramHead', account_status: 'active' } });
+  for (const route of ['approvals', 'students', 'assignments', 'submissions', 'progress']) {
+    assert.equal((await request(`http://localhost/coordinator/${route}`)).status, 200);
+  }
+  for (const route of ['/admin', '/coordinator/companies', '/coordinator/supervisors']) {
+    assert.equal((await request(`http://localhost${route}`)).status, 307);
+  }
+});
+
 test('production HTTP works on loopback while deployed hosts still require HTTPS', async () => {
   const request = webFixture({ production: true });
   assert.equal((await request('http://127.0.0.1:3100/auth/sign-in', { 'x-forwarded-proto': 'http' })).status, 200);
@@ -343,7 +396,7 @@ test('desktop IPC hides to tray and transitions between valid widget/window size
     setMinimumSize: (w, h) => calls.push(['minimum', w, h]),
     setSize: (w, h) => calls.push(['size', w, h]),
     setAlwaysOnTop() {}, setMenuBarVisibility() {}, loadFile() {}, on() {},
-    webContents: { on() {} },
+    webContents: { on() {}, setWindowOpenHandler() {}, mainFrame: { url: 'https://ojt-monitoring-and-management-syste.vercel.app/dashboard' } },
   };
   const electron = {
     app: { isPackaged: true, requestSingleInstanceLock: () => true, on() {},
@@ -355,15 +408,17 @@ test('desktop IPC hides to tray and transitions between valid widget/window size
   vm.runInNewContext(fs.readFileSync(path.join(root, 'apps/desktop/src/main.js'), 'utf8'), {
     require(name) { if (name === 'electron') return electron;
       if (name === './tray') return { createTray() {} };
+      if (name === './security') return require(path.join(root, 'apps/desktop/src/security.js'));
       if (name === 'fs') return { existsSync: () => false };
       return require(name); },
     __dirname: path.join(root, 'apps/desktop/src'), process: { env: {} }, console,
     URL, setInterval() {}, clearInterval() {},
   });
   await Promise.resolve();
-  handlers.get('minimize-to-tray')();
-  handlers.get('toggle-mini-widget')({}, true);
-  handlers.get('toggle-mini-widget')({}, false);
+  const ipcEvent = { sender: window.webContents, senderFrame: window.webContents.mainFrame };
+  handlers.get('minimize-to-tray')(ipcEvent);
+  handlers.get('toggle-mini-widget')(ipcEvent, true);
+  handlers.get('toggle-mini-widget')(ipcEvent, false);
   assert.deepEqual(calls, ['hide', 'unmaximize', ['minimum', 380, 540], ['size', 380, 540],
     ['minimum', 980, 640], ['size', 1280, 840]]);
 });

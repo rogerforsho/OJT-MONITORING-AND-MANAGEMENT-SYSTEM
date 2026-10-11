@@ -2,6 +2,7 @@
 
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
+import { toPublicSupabaseUrl } from '@/src/lib/supabase/public-url';
 import { validateUploadedFile } from '@/src/lib/uploadValidation';
 import type { AppResult } from '@ojt/shared';
 
@@ -121,5 +122,5 @@ export async function getSignedDocumentUrl(
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to generate secure document URL.' } };
   }
 
-  return { data: { signedUrl: data.signedUrl }, error: null };
+  return { data: { signedUrl: toPublicSupabaseUrl(data.signedUrl) }, error: null };
 }

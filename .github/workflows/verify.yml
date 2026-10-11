@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npm test
@@ -25,11 +25,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
-      # Report-only: remaining advisories are in the upstream Expo / React Native
-      # toolchain (metro, node-forge, braces) with no non-breaking fix available.
-      # Review this output on every run; re-enable failure once Expo ships fixes.
+      # Release gate: high/critical advisories fail CI until remediated.
       - run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true

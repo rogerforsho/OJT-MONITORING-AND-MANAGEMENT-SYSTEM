@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: 'Practicum Dashboard',
 };
 import { getAuthUser } from '@/src/services/auth';
+import { getDepartmentSummary } from '@/src/services/progress';
+import { departmentScope } from '@/src/lib/department-scope';
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
 import {
@@ -152,49 +154,25 @@ export default async function DashboardPage() {
       };
     }
   } else if (user.role === 'ProgramHead') {
-    const { data: progHead } = await service
-      .from('program_heads')
-      .select('department_or_program')
-      .eq('user_id', user.user_id)
-      .maybeSingle();
-
-    const dept = (progHead?.department_or_program || 'ICS').toUpperCase();
+    const scope = await departmentScope(supabase, user.user_id, user.role);
+    if (scope.error || !scope.department) throw new Error(scope.error || 'Department assignment is missing.');
+    const dept = scope.department;
     departmentSubtitle = dept === 'IBE'
       ? 'Institute of Business and Entrepreneurship (IBE)'
       : 'Institute of Computing Studies (ICS)';
 
     const [
-      { data: allStudents },
+      summary,
       { count: totalCompanies },
     ] = await Promise.all([
-      service.from('students').select('course, users!inner(account_status)').eq('users.account_status', 'active'),
+      getDepartmentSummary(),
       service.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     ]);
 
-    let courseCount1 = 0; // BSIT or BSBA-HRM
-    let courseCount2 = 0; // BS-CPE or BSEntrep
-    let totalDepartmentStudents = 0;
-
-    (allStudents ?? []).forEach((s: any) => {
-      const c = (s.course || '').toUpperCase();
-      if (dept === 'ICS') {
-        if (c.includes('BSIT') || c.includes('INFORMATION TECHNOLOGY')) {
-          courseCount1++;
-          totalDepartmentStudents++;
-        } else if (c.includes('BS-CPE') || c.includes('BSCPE') || c.includes('COMPUTER ENGINEERING')) {
-          courseCount2++;
-          totalDepartmentStudents++;
-        }
-      } else {
-        if (c.includes('BSBA-HRM') || c.includes('BSBA-HR') || c.includes('HUMAN RESOURCE') || c.includes('BSBA')) {
-          courseCount1++;
-          totalDepartmentStudents++;
-        } else if (c.includes('BSENTREP') || c.includes('ENTREPRENEURSHIP')) {
-          courseCount2++;
-          totalDepartmentStudents++;
-        }
-      }
-    });
+    if (summary.error || !summary.data) throw new Error('Unable to load department dashboard.');
+    const courseCount1 = dept === 'ICS' ? summary.data.ics.bsit.total : summary.data.ibe.bsbaHrm.total;
+    const courseCount2 = dept === 'ICS' ? summary.data.ics.bscpe.total : summary.data.ibe.bsEntrep.total;
+    const totalDepartmentStudents = summary.data.totalStudents;
 
     stats = {
       dept,

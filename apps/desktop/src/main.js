@@ -1,10 +1,11 @@
-const { app, BrowserWindow, ipcMain, Notification, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const { spawn } = require('child_process');
 const { createTray } = require('./tray');
+const { createDesktopSecurity } = require('./security');
 
 let mainWindow = null;
 let tray = null;
@@ -37,6 +38,8 @@ function getDesktopConfig() {
 const config = getDesktopConfig();
 const isProd = app.isPackaged || process.env.NODE_ENV === 'production';
 const targetUrl = process.env.DESKTOP_TARGET_URL || (isProd ? config.productionUrl : (config.developmentUrl || 'http://localhost:3000/auth/sign-in'));
+
+const desktopSecurity = createDesktopSecurity(() => mainWindow, targetUrl, path.join(__dirname, 'loader.html'));
 
 function checkServerReady(url) {
   return new Promise((resolve) => {
@@ -133,7 +136,7 @@ function createMainWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
     },
   });
 
@@ -187,17 +190,17 @@ function createMainWindow() {
     loadSplashScreen();
   });
 
-  // Desktop guard: prevent navigating to the public marketing landing page
-  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
-    try {
-      const parsed = new URL(navigationUrl);
-      if (parsed.pathname === '/' || parsed.pathname === '') {
-        event.preventDefault();
-        mainWindow.loadURL(targetUrl);
-      }
-    } catch {
-      // ignore invalid URLs
-    }
+  // Remote content must never gain access to native IPC through navigation.
+  const guardNavigation = (event, url) => {
+    desktopSecurity.clearFolder();
+    if (!desktopSecurity.allowNavigation(url)) event.preventDefault();
+  };
+  mainWindow.webContents.on('will-navigate', guardNavigation);
+  mainWindow.webContents.on('will-redirect', guardNavigation);
+  mainWindow.webContents.on('did-start-navigation', () => desktopSecurity.clearFolder());
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try { if (new URL(url).protocol === 'https:') shell.openExternal(url); } catch {}
+    return { action: 'deny' };
   });
 
   // Close to Tray behavior
@@ -231,17 +234,20 @@ app.whenReady().then(() => {
   createMainWindow();
 
   // IPC: Manual retry connection from loader splash
-  ipcMain.on('retry-connection', () => {
+  ipcMain.on('retry-connection', (event) => {
+    if (!desktopSecurity.trusted(event, true)) return;
     connectToPortal();
   });
 
   // IPC: Hide the window while keeping the existing tray available.
-  ipcMain.on('minimize-to-tray', () => {
+  ipcMain.on('minimize-to-tray', (event) => {
+    if (!desktopSecurity.trusted(event)) return;
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
   });
 
   // IPC: Native OS Notification
-  ipcMain.on('show-notification', (_event, { title, body }) => {
+  ipcMain.on('show-notification', (event, { title, body } = {}) => {
+    if (!desktopSecurity.trusted(event)) return;
     if (Notification.isSupported()) {
       new Notification({
         title: title || 'CdM OJT System Alert',
@@ -252,29 +258,26 @@ app.whenReady().then(() => {
   });
 
   // IPC: Folder Picker for batch exports
-  ipcMain.handle('select-folder', async () => {
+  ipcMain.handle('select-folder', async (event) => {
+    if (!desktopSecurity.trusted(event)) throw new Error('Untrusted desktop request.');
+    desktopSecurity.clearFolder();
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Select Destination Folder for OJT Archival',
       properties: ['openDirectory', 'createDirectory'],
     });
     if (result.canceled || result.filePaths.length === 0) return null;
-    return result.filePaths[0];
+    return desktopSecurity.selectFolder(event, result.filePaths[0]);
   });
 
   // IPC: Save File to local disk
-  ipcMain.handle('save-file', async (_event, { folderPath, fileName, fileData }) => {
-    try {
-      const fullPath = path.join(folderPath, fileName);
-      const buffer = Buffer.from(fileData, 'base64');
-      fs.writeFileSync(fullPath, buffer);
-      return { success: true, path: fullPath };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
+  ipcMain.handle('save-file', async (event, input) => {
+    try { return desktopSecurity.saveFile(event, input); }
+    catch (err) { return { success: false, error: err.code === 'EEXIST' ? 'This filename already exists. Choose a new name.' : err.message }; }
   });
 
   // IPC: Toggle Floating WFH Mini Widget
-  ipcMain.on('toggle-mini-widget', (_event, enable) => {
+  ipcMain.on('toggle-mini-widget', (event, enable) => {
+    if (!desktopSecurity.trusted(event) || typeof enable !== 'boolean') return;
     if (!mainWindow || mainWindow.isDestroyed()) return;
     if (enable) {
       mainWindow.unmaximize();

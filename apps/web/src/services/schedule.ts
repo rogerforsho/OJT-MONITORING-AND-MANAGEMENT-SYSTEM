@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
+import { canManageDepartmentStudent } from '@/src/lib/department-scope';
 import { getServiceClient } from '@/src/lib/supabase/service';
-import { recordAuditEvent } from './audit';
+import { recordAuditEvent } from '@/src/lib/audit';
 import { checkStudentGatewayStatus } from './reports';
 import type { AppResult, DbPracticumSchedule, WorkModality, PracticumScheduleStatus } from '@ojt/shared';
 
@@ -26,6 +27,7 @@ export interface PracticumScheduleInput {
   time_in: string; // "HH:MM" e.g. "08:00"
   time_out: string; // "HH:MM" e.g. "17:00"
   lunch_break_minutes?: number; // default 60
+  lunch_break_start: string | null;
   start_date: string;
   end_date?: string | null;
   student_notes?: string | null;
@@ -43,8 +45,9 @@ export type ScheduleDetail = Omit<DbPracticumSchedule, 'students' | 'companies'>
 };
 
 function parseTimeToMinutes(t: string): number {
-  const parts = t.split(':').map(Number);
-  return (parts[0] || 0) * 60 + (parts[1] || 0);
+  const match = /^(\d{2}):(\d{2})$/.exec(t);
+  if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return NaN;
+  return Number(match[1]) * 60 + Number(match[2]);
 }
 
 export async function submitPracticumSchedule(
@@ -92,6 +95,11 @@ export async function submitPracticumSchedule(
   const lunchMinutes = input.lunch_break_minutes ?? 60;
   const startMin = parseTimeToMinutes(input.time_in);
   const endMin = parseTimeToMinutes(input.time_out);
+  const lunchStartMin = input.lunch_break_start ? parseTimeToMinutes(input.lunch_break_start) : null;
+  if (!Number.isFinite(startMin) || !Number.isFinite(endMin) || !Number.isInteger(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 120 ||
+      (lunchMinutes > 0 && (lunchStartMin === null || !Number.isFinite(lunchStartMin) || lunchStartMin < startMin || lunchStartMin + lunchMinutes > endMin)) ||
+      (lunchMinutes === 0 && input.lunch_break_start !== null))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Enter a valid lunch interval inside the scheduled shift.' } };
 
   if (startMin >= endMin) {
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Time In must be earlier than Time Out.' } };
@@ -162,6 +170,7 @@ export async function submitPracticumSchedule(
         time_in: input.time_in,
         time_out: input.time_out,
         lunch_break_minutes: lunchMinutes,
+        lunch_break_start: input.lunch_break_start,
         daily_hours: dailyHours,
         weekly_hours: weeklyHours,
         start_date: input.start_date,
@@ -288,7 +297,7 @@ export async function reviewPracticumSchedule(
   }
 ): Promise<AppResult<null>> {
   const { supabase, user, profile } = await getAuthUserWithRole();
-  if (!user || !['Coordinator', 'Admin'].includes(profile?.role ?? '') || profile?.account_status !== 'active') {
+  if (!user || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile?.role ?? '') || profile?.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
   }
 
@@ -301,6 +310,10 @@ export async function reviewPracticumSchedule(
   if (!schedule) {
     return { data: null, error: { code: 'NOT_FOUND', message: 'Schedule proposal not found.' } };
   }
+  if (!await canManageDepartmentStudent(supabase, user.id, profile.role, schedule.student_id))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Schedule is outside your department.' } };
+  if (!['approve', 'reject', 'modify'].includes(action))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid schedule decision.' } };
 
   const statusMap: Record<string, PracticumScheduleStatus> = {
     approve: 'approved',

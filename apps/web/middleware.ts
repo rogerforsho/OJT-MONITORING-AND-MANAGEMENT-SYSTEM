@@ -2,12 +2,47 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 const PUBLIC_PATHS = ['/auth/sign-in', '/auth/register', '/auth/pending', '/auth/reset-password', '/auth/callback'];
+const KNOWN_PATHS = new Set([
+  '/', '/admin', '/api/registration/id-card', '/auth/callback', '/auth/pending',
+  '/auth/register', '/auth/reset-password', '/auth/sign-in',
+  '/coordinator/approvals', '/coordinator/assignments', '/coordinator/companies',
+  '/coordinator/progress', '/coordinator/students', '/coordinator/submissions',
+  '/coordinator/supervisors', '/dashboard', '/health', '/map', '/program-head',
+  '/program-head/reports', '/ready', '/robots.txt', '/settings', '/sitemap.xml',
+  '/student/attendance', '/student/certificate', '/student/evaluation-summary',
+  '/student/notifications', '/student/progress', '/student/reports',
+  '/supervisor/attendance', '/supervisor/evaluations', '/supervisor/reports',
+  '/supervisor/students', '/verify-certificate', '/verify-certificate/search',
+]);
+
+function isKnownPath(path: string) {
+  return KNOWN_PATHS.has(path) || /^\/(?:downloads\/[^/]+|verify-certificate\/[^/]+)$/.test(path);
+}
+
+function redirectToPath(request: NextRequest, path: string) {
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const protocol = forwardedProto === 'https' || forwardedProto === 'http'
+    ? forwardedProto
+    : request.nextUrl.protocol.slice(0, -1);
+  const host = request.headers.get('host');
+  let origin = request.nextUrl.origin;
+  if (host) {
+    try {
+      const parsedOrigin = new URL(`${protocol}://${host}`);
+      if (parsedOrigin.hostname === '0.0.0.0') parsedOrigin.hostname = 'localhost';
+      origin = parsedOrigin.origin;
+    } catch { /* Fall back to the framework request origin. */ }
+  }
+  return NextResponse.redirect(new URL(path, origin));
+}
 
 export async function middleware(request: NextRequest) {
-  const isLoopback = ['localhost', '127.0.0.1', '[::1]'].includes(request.nextUrl.hostname);
+  const path = request.nextUrl.pathname.replace(/\/+$/, '') || '/';
+  const isHealthProbe = path === '/health' || path === '/ready';
+  const isLoopback = ['localhost', '127.0.0.1', '[::1]', '0.0.0.0'].includes(request.nextUrl.hostname);
   // Keep HTTPS enforcement for deployed hosts while allowing local next start.
   if (
-    process.env.NODE_ENV === 'production' && !isLoopback &&
+    !isHealthProbe && process.env.NODE_ENV === 'production' && !isLoopback &&
     request.headers.get('x-forwarded-proto') === 'http'
   ) {
     const httpsUrl = new URL(request.url);
@@ -15,14 +50,47 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(httpsUrl, 301);
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  const nonce = crypto.randomUUID().replaceAll('-', '');
+  let supabaseOrigin = '';
+  let supabaseWsOrigin = '';
+  try {
+    const backend = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
+    supabaseOrigin = backend.origin;
+    supabaseWsOrigin = backend.protocol === 'https:' ? backend.origin.replace(/^https:/, 'wss:') : backend.origin.replace(/^http:/, 'ws:');
+  } catch { /* CSP remains same-origin when backend config is missing. */ }
+  const cspHeader = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    `connect-src 'self' ${supabaseOrigin} ${supabaseWsOrigin} https://nominatim.openstreetmap.org`,
+    `img-src 'self' data: blob: ${supabaseOrigin} https://*.tile.openstreetmap.org https://firebasestorage.googleapis.com`,
+    "font-src 'self' data:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+    "worker-src 'self' blob:",
+    ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
+  ].filter(Boolean).join('; ');
+  const createSupabaseResponse = () => {
+    const forwardedHeaders = new Headers(request.headers);
+    forwardedHeaders.set('x-nonce', nonce);
+    forwardedHeaders.set('Content-Security-Policy', cspHeader);
+    const response = NextResponse.next({ request: { headers: forwardedHeaders } });
+    response.headers.set('Content-Security-Policy', cspHeader);
+    return response;
+  };
+  let supabaseResponse = createSupabaseResponse();
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const path = request.nextUrl.pathname;
 
   // Load balancer probes must not depend on a user session.
-  if (path === '/health' || path === '/ready') return supabaseResponse;
+  if (path === '/health' || path === '/ready' || path === '/api/registration/id-card') return supabaseResponse;
+
+  // Let Next render its real not-found response for unknown URLs. Auth redirects
+  // should protect existing routes without disguising broken links as sign-in.
+  if (!isKnownPath(path)) return supabaseResponse;
   
   // Public routes: root landing page, credential verification, public downloads, and auth screens
   const isPublic = 
@@ -34,7 +102,7 @@ export async function middleware(request: NextRequest) {
   // If Supabase credentials are missing or default placeholder, allow public paths
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-project-id')) {
     if (!isPublic) {
-      return NextResponse.redirect(new URL('/auth/sign-in', request.url));
+      return redirectToPath(request, '/auth/sign-in');
     }
     return supabaseResponse;
   }
@@ -47,7 +115,7 @@ export async function middleware(request: NextRequest) {
         getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = createSupabaseResponse();
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -66,7 +134,7 @@ export async function middleware(request: NextRequest) {
 
   // Unauthenticated — redirect to sign in unless on public path
   if (!user && !isPublic) {
-    return NextResponse.redirect(new URL('/auth/sign-in', request.url));
+    return redirectToPath(request, '/auth/sign-in');
   }
 
   // Authenticated — redirect away from sign-in and register pages
@@ -74,7 +142,7 @@ export async function middleware(request: NextRequest) {
     user &&
     (path === '/auth/sign-in' || path === '/auth/register')
   ) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return redirectToPath(request, '/dashboard');
   }
 
   // Defense-in-Depth: Route-Level Role-Based Access Control (RBAC) Guard
@@ -82,7 +150,7 @@ export async function middleware(request: NextRequest) {
     const { data: profile, error: profileError } = await supabase
       .from('users').select('role, account_status').eq('user_id', user.id).single();
     if ((profileError || !profile || profile.account_status !== 'active') && !isPublic) {
-      return NextResponse.redirect(new URL('/auth/pending', request.url));
+      return redirectToPath(request, '/auth/pending');
     }
     const role = profile?.account_status === 'active' ? profile.role : null;
     const isRoleGuardedPath =
@@ -93,23 +161,24 @@ export async function middleware(request: NextRequest) {
       path.startsWith('/student');
 
     if (!role && isRoleGuardedPath) {
-      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
 
     if (path.startsWith('/admin') && role !== 'Admin') {
-      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
-    if (path.startsWith('/coordinator') && !['Coordinator', 'Admin'].includes(role)) {
-      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+    const programHeadWorkflow = role === 'ProgramHead' && ['/coordinator/approvals', '/coordinator/students', '/coordinator/assignments', '/coordinator/submissions', '/coordinator/progress'].some(route => path === route || path.startsWith(`${route}/`));
+    if (path.startsWith('/coordinator') && !['Coordinator', 'Admin'].includes(role) && !programHeadWorkflow) {
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
     if (path.startsWith('/supervisor') && !['CompanySupervisor', 'Supervisor', 'Admin'].includes(role)) {
-      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
     if (path.startsWith('/program-head') && !['ProgramHead', 'Admin'].includes(role)) {
-      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
     if (path.startsWith('/student') && role !== 'Student' && role !== 'Admin') {
-      return NextResponse.redirect(new URL('/dashboard?reason=unauthorized', request.url));
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
   }
 

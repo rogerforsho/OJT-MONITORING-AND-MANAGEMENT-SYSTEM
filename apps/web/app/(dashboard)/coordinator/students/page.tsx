@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Alert from '@/src/components/ui/Alert';
 import Button from '@/src/components/ui/Button';
 import { Badge } from '@/src/components/ui/Badge';
@@ -28,48 +28,37 @@ export default function CoordinatorStudentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchFilter, setSearchFilter] = useState('');
 
-  const load = useCallback(async (pageNumber: number) => {
-    setLoading(true);
-    setError('');
-
-    const result = await listActiveStudents(pageNumber, PAGE_SIZE);
-    setLoading(false);
-
-    if (result.error) {
-      setError(result.error.message);
-      return;
-    }
-
-    setStudents(result.data?.students ?? []);
-    setTotal(result.data?.total ?? 0);
-  }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchFilter(searchQuery.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     let active = true;
-
-    const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    listActiveStudents(page, PAGE_SIZE, searchFilter).then((result) => {
       if (!active) return;
-      await load(page);
-    };
-
-    fetchData();
-    return () => {
-      active = false;
-    };
-  }, [page, load]);
-
-  const filteredStudents = useMemo(() => {
-    if (!searchQuery.trim()) return students;
-    const q = searchQuery.toLowerCase();
-    return students.filter(
-      (s) =>
-        s.full_name.toLowerCase().includes(q) ||
-        s.student_number.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q) ||
-        s.course.toLowerCase().includes(q)
-    );
-  }, [students, searchQuery]);
+      if (result.error) {
+        setError(result.error.message);
+        setStudents([]);
+        setTotal(0);
+      } else {
+        setStudents(result.data?.students ?? []);
+        setTotal(result.data?.total ?? 0);
+      }
+      setLoading(false);
+    }).catch(() => {
+      if (!active) return;
+      setError('Failed to load active students.');
+      setStudents([]);
+      setTotal(0);
+      setLoading(false);
+    });
+    return () => { active = false; };
+  }, [page, searchFilter]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -96,9 +85,9 @@ export default function CoordinatorStudentsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
-            placeholder="Search name, ID, or course..."
+            placeholder="Search name, email, ID, or course..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); if (page !== 1) setPage(1); }}
             className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#0A3D24]/20 dark:focus:ring-emerald-500/20 focus:border-[#0A3D24] dark:focus:border-emerald-600 transition-all shadow-2xs"
           />
         </div>
@@ -129,7 +118,7 @@ export default function CoordinatorStudentsPage() {
               </div>
             ))}
           </div>
-        ) : filteredStudents.length === 0 ? (
+        ) : students.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
             <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center mb-3">
               <Users className="w-6 h-6" />
@@ -157,7 +146,7 @@ export default function CoordinatorStudentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredStudents.map((student) => (
+                {students.map((student) => (
                   <tr
                     key={student.user_id}
                     className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"

@@ -19,7 +19,7 @@ function ResetPasswordForm() {
 
   // Wizard state
   const [step, setStep] = useState<1 | 2>(initialStep);
-  const role = 'Staff' as const;
+  const role = searchParams.get('role') === 'Student' ? 'Student' as const : 'Staff' as const;
 
   // Step 1 fields
   const [email, setEmail] = useState(initialEmail);
@@ -103,7 +103,7 @@ function ResetPasswordForm() {
 
     if (!identifier.trim()) {
       setIsError(true);
-      setMessage('Please enter your official CdM Employee ID for identity verification.');
+      setMessage('Please enter your official CdM ID number.');
       return;
     }
 
@@ -121,7 +121,7 @@ function ResetPasswordForm() {
       setSecondsLeft(600);
       setResendCooldown(60);
       setCanResend(false);
-      setMessage(`Verification code dispatched! Check your institutional inbox for the 6-digit code.`);
+      setMessage(`If the details match an account, a verification code will be sent to its email.`);
     }
   }
 
@@ -143,7 +143,7 @@ function ResetPasswordForm() {
       setResendCooldown(60);
       setCanResend(false);
       setOtp('');
-      setMessage('A brand new 6-digit verification code has been sent to your email.');
+      setMessage('If the details match an account, a new code will be sent to its email.');
     }
   }
 
@@ -194,8 +194,8 @@ function ResetPasswordForm() {
       setMessage(result.error.message);
     } else {
       setIsError(false);
-      setMessage('Password successfully updated! Redirecting to sign in...');
-      setTimeout(() => router.push('/auth/sign-in'), 1000);
+      setMessage('Password updated. Students can return to the mobile app to sign in.');
+      if (role === 'Staff') setTimeout(() => router.push('/auth/sign-in'), 1500);
     }
   }
 
@@ -205,12 +205,12 @@ function ResetPasswordForm() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-xl font-black text-[#0A3D24] font-serif">
-            {step === 1 ? 'Staff Account Recovery' : 'Enter Verification Code'}
+            {step === 1 ? 'Account Recovery' : 'Enter Verification Code'}
           </h1>
         </div>
         <p className="text-xs text-slate-500">
           {step === 1
-            ? 'Verify your institutional credentials with your CdM Employee ID to receive a secure 6-digit verification code.'
+            ? 'Enter your registered email and CdM ID number to request a verification code.'
             : `Enter the 6-digit code sent to ${maskedEmail || email} and set your new password.`}
         </p>
       </div>
@@ -235,7 +235,7 @@ function ResetPasswordForm() {
           <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-900 text-xs flex items-start gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <p className="text-[11px] leading-relaxed text-emerald-800">
-              <strong>Institutional Verification:</strong> To protect faculty, coordinator, and administrator accounts, please provide both your registered email and official CdM Employee ID Number.
+              <strong>Institutional Verification:</strong> Provide your registered email and official CdM ID number. For matching records, a code will be sent to your email.
             </p>
           </div>
 
@@ -249,7 +249,7 @@ function ResetPasswordForm() {
           />
 
           <Input
-            label="CdM Employee ID Number"
+            label={role === 'Student' ? 'CdM Student Number' : 'CdM Employee ID Number'}
             type="text"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}

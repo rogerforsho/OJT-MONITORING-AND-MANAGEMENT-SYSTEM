@@ -9,6 +9,7 @@ export interface MobileScheduleInput {
   time_in: string; // "HH:MM" e.g. "08:00"
   time_out: string; // "HH:MM" e.g. "17:00"
   lunch_break_minutes: number;
+  lunch_break_start: string | null;
   start_date: string;
   end_date?: string | null;
   student_notes?: string | null;
@@ -84,10 +85,20 @@ export async function submitScheduleProposal(
     }
 
     // Time calculations
-    const [inH, inM] = input.time_in.split(':').map(Number);
-    const [outH, outM] = input.time_out.split(':').map(Number);
-    const startMin = (inH || 0) * 60 + (inM || 0);
-    const endMin = (outH || 0) * 60 + (outM || 0);
+    const toMinutes = (value: string) => {
+      const match = /^(\d{2}):(\d{2})$/.exec(value);
+      if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return NaN;
+      return Number(match[1]) * 60 + Number(match[2]);
+    };
+    const startMin = toMinutes(input.time_in);
+    const endMin = toMinutes(input.time_out);
+    const lunchStartMin = input.lunch_break_start ? toMinutes(input.lunch_break_start) : null;
+    if (!Number.isFinite(startMin) || !Number.isFinite(endMin) ||
+        !Number.isInteger(input.lunch_break_minutes) || input.lunch_break_minutes < 0 || input.lunch_break_minutes > 120 ||
+        (input.lunch_break_minutes > 0 && (lunchStartMin === null || !Number.isFinite(lunchStartMin) || lunchStartMin < startMin || lunchStartMin + input.lunch_break_minutes > endMin)) ||
+        (input.lunch_break_minutes === 0 && input.lunch_break_start !== null)) {
+      return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Enter a valid lunch interval inside the scheduled shift.' } };
+    }
 
     if (startMin >= endMin) {
       return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Time In must be earlier than Time Out.' } };
@@ -101,7 +112,7 @@ export async function submitScheduleProposal(
       };
     }
 
-    const shiftMin = (endMin - startMin) - (input.lunch_break_minutes || 60);
+    const shiftMin = (endMin - startMin) - input.lunch_break_minutes;
     const dailyHours = Math.round((shiftMin / 60) * 100) / 100;
 
     if (dailyHours > 8.0) {
@@ -140,6 +151,7 @@ export async function submitScheduleProposal(
           time_in: input.time_in,
           time_out: input.time_out,
           lunch_break_minutes: input.lunch_break_minutes,
+          lunch_break_start: input.lunch_break_start,
           daily_hours: dailyHours,
           weekly_hours: weeklyHours,
           start_date: input.start_date,

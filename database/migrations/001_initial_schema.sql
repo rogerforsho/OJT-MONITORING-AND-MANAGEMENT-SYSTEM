@@ -3,7 +3,7 @@ create extension if not exists "uuid-ossp";
 
 -- USERS
 create table users (
-  user_id uuid primary key default uuid_generate_v4(),
+  user_id uuid primary key default extensions.uuid_generate_v4(),
   full_name text not null,
   email text not null unique,
   role text not null check (role in ('Student','Coordinator','Supervisor','ProgramHead','Admin')),
@@ -17,7 +17,7 @@ create index idx_users_account_status on users(account_status);
 
 -- STUDENTS
 create table students (
-  student_id uuid primary key default uuid_generate_v4(),
+  student_id uuid primary key default extensions.uuid_generate_v4(),
   user_id uuid not null unique references users(user_id) on delete cascade,
   student_number text not null unique,
   course text not null,
@@ -30,14 +30,14 @@ create index idx_students_user_id on students(user_id);
 
 -- COORDINATORS
 create table coordinators (
-  coordinator_id uuid primary key default uuid_generate_v4(),
+  coordinator_id uuid primary key default extensions.uuid_generate_v4(),
   user_id uuid not null unique references users(user_id) on delete cascade,
   department text not null
 );
 
 -- SUPERVISORS (company_id FK added after companies table)
 create table supervisors (
-  supervisor_id uuid primary key default uuid_generate_v4(),
+  supervisor_id uuid primary key default extensions.uuid_generate_v4(),
   user_id uuid not null unique references users(user_id) on delete cascade,
   company_id uuid,
   position text not null
@@ -45,20 +45,20 @@ create table supervisors (
 
 -- PROGRAM HEADS
 create table program_heads (
-  program_head_id uuid primary key default uuid_generate_v4(),
+  program_head_id uuid primary key default extensions.uuid_generate_v4(),
   user_id uuid not null unique references users(user_id) on delete cascade,
   department_or_program text not null
 );
 
 -- ADMINS
 create table admins (
-  admin_id uuid primary key default uuid_generate_v4(),
+  admin_id uuid primary key default extensions.uuid_generate_v4(),
   user_id uuid not null unique references users(user_id) on delete cascade
 );
 
 -- COMPANIES
 create table companies (
-  company_id uuid primary key default uuid_generate_v4(),
+  company_id uuid primary key default extensions.uuid_generate_v4(),
   company_name text not null,
   address text not null,
   contact_person text not null,
@@ -77,7 +77,7 @@ alter table supervisors
 
 -- STUDENT ASSIGNMENTS
 create table student_assignments (
-  assignment_id uuid primary key default uuid_generate_v4(),
+  assignment_id uuid primary key default extensions.uuid_generate_v4(),
   student_id uuid not null references students(student_id) on delete cascade,
   company_id uuid not null references companies(company_id) on delete restrict,
   supervisor_id uuid not null references supervisors(supervisor_id) on delete restrict,
@@ -92,7 +92,7 @@ create index idx_assignments_supervisor_id on student_assignments(supervisor_id)
 
 -- ATTENDANCE
 create table attendance (
-  attendance_id uuid primary key default uuid_generate_v4(),
+  attendance_id uuid primary key default extensions.uuid_generate_v4(),
   student_id uuid not null references students(student_id) on delete cascade,
   assignment_id uuid not null references student_assignments(assignment_id) on delete cascade,
   attendance_date date not null,
@@ -114,7 +114,7 @@ create index idx_attendance_sync_status on attendance(sync_status);
 
 -- REPORTS
 create table reports (
-  report_id uuid primary key default uuid_generate_v4(),
+  report_id uuid primary key default extensions.uuid_generate_v4(),
   student_id uuid not null references students(student_id) on delete cascade,
   report_type text not null,
   file_path text not null,
@@ -129,7 +129,7 @@ create index idx_reports_status on reports(status);
 
 -- EVALUATIONS
 create table evaluations (
-  evaluation_id uuid primary key default uuid_generate_v4(),
+  evaluation_id uuid primary key default extensions.uuid_generate_v4(),
   student_id uuid not null references students(student_id) on delete cascade,
   supervisor_id uuid not null references supervisors(supervisor_id) on delete restrict,
   performance_score numeric,
@@ -142,7 +142,7 @@ create index idx_evaluations_supervisor_id on evaluations(supervisor_id);
 
 -- NOTIFICATIONS
 create table notifications (
-  notification_id uuid primary key default uuid_generate_v4(),
+  notification_id uuid primary key default extensions.uuid_generate_v4(),
   sender_user_id uuid references users(user_id) on delete set null,
   receiver_user_id uuid not null references users(user_id) on delete cascade,
   message text not null,
@@ -154,7 +154,7 @@ create index idx_notifications_status on notifications(status);
 
 -- INTERNSHIP PROGRESS
 create table internship_progress (
-  progress_id uuid primary key default uuid_generate_v4(),
+  progress_id uuid primary key default extensions.uuid_generate_v4(),
   student_id uuid not null unique references students(student_id) on delete cascade,
   completed_hours numeric not null default 0,
   remaining_hours numeric not null default 0,

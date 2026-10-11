@@ -26,6 +26,7 @@ export default function SupervisorAttendancePage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [batchLoading, setBatchLoading] = useState(false);
+  const [batchIds, setBatchIds] = useState<string[]>([]);
 
   const [selected, setSelected] = useState<AttendanceWithStudent | null>(null);
   const [selfieUrl, setSelfieUrl] = useState('');
@@ -86,17 +87,19 @@ export default function SupervisorAttendancePage() {
   }
 
   async function handleBatchVerify() {
+    if (batchIds.length === 0 || batchLoading) return;
     setBatchLoading(true);
     setError('');
     setSuccess('');
-    const result = await batchVerifyAttendance();
-    setBatchLoading(false);
-    if (result.error) {
-      setError(result.error.message);
-      return;
-    }
-    setSuccess(`Successfully verified ${result.data?.verifiedCount || 0} pending attendance records.`);
-    load(page, filter);
+    try {
+      const result = await batchVerifyAttendance(batchIds);
+      if (result.error) { setError(result.error.message); return; }
+      setSuccess(`Verified ${result.data?.verifiedCount || 0} of ${batchIds.length} requested records. Records already processed or no longer assigned were skipped.`);
+      setBatchIds([]);
+      await load(page, filter);
+    } catch {
+      setError('Unable to complete verification. Refresh the records before retrying.');
+    } finally { setBatchLoading(false); }
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -126,17 +129,25 @@ export default function SupervisorAttendancePage() {
         </div>
         {filter === 'pending' && records.length > 0 && (
           <Button
-            onClick={handleBatchVerify}
+            onClick={() => setBatchIds(records.filter(record => record.verification_status === 'pending').map(record => record.attendance_id))}
             loading={batchLoading}
+            disabled={loading}
             className="bg-[#0A3D24] hover:bg-[#062415] text-white font-bold text-xs shadow-2xs py-2 px-4 whitespace-nowrap"
           >
-            ✓ 1-Click Batch Verify All ({records.length})
+            Verify this page ({records.length})
           </Button>
         )}
       </div>
 
       {error && <div className="mb-4"><Alert type="error" message={error} /></div>}
       {success && <div className="mb-4"><Alert type="success" message={success} /></div>}
+      <Modal title="Verify visible attendance" open={batchIds.length > 0} onClose={() => { if (!batchLoading) setBatchIds([]); }}>
+        <p className="text-sm">Verify the {batchIds.length} pending records from this page? Review the selfie evidence and any location or punctuality flags before confirming.</p>
+        <div className="flex justify-end gap-3 mt-5">
+          <Button variant="outline" disabled={batchLoading} onClick={() => setBatchIds([])}>Cancel</Button>
+          <Button loading={batchLoading} onClick={handleBatchVerify}>Verify {batchIds.length} records</Button>
+        </div>
+      </Modal>
 
       {/* Smart Compliance Triage Summary */}
       {filter === 'pending' && records.length > 0 && (

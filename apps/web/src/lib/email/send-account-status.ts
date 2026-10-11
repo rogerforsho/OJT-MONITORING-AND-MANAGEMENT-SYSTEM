@@ -160,38 +160,18 @@ export async function sendAccountStatusEmail({
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('[sendAccountStatusEmail] Resend API error:', errorData);
-        logConsoleFallback(to, fullName, status, reason);
-        return {
-          success: true,
-          error: errorData.message || 'Email delivery failed; logged to console.',
-        };
+        console.error('[sendAccountStatusEmail] provider rejected delivery:', response.status);
+        return { success: false, error: 'Email delivery failed.' };
       }
 
-      console.log(`[sendAccountStatusEmail] Successfully dispatched ${status} status email to ${to}`);
       return { success: true };
-    } catch (err: any) {
-      console.error('[sendAccountStatusEmail] Network failure calling Resend:', err);
-      logConsoleFallback(to, fullName, status, reason);
-      return { success: true };
+    } catch {
+      console.error('[sendAccountStatusEmail] provider request failed');
+      return { success: false, error: 'Email delivery failed.' };
     }
   }
 
-  // 2. Development Console Fallback
-  logConsoleFallback(to, fullName, status, reason);
-  return { success: true };
-}
-
-function logConsoleFallback(to: string, fullName: string, status: 'active' | 'rejected', reason?: string) {
-  console.log('\n' + '='.repeat(68));
-  console.log(`  COLEGIO DE MONTALBAN - STUDENT ACCOUNT ${status.toUpperCase()} NOTIFICATION`);
-  console.log('='.repeat(68));
-  console.log(`  Recipient : ${fullName} <${to}>`);
-  console.log(`  Status    : ${status === 'active' ? 'APPROVED & VERIFIED' : 'REJECTED'}`);
-  if (reason) console.log(`  Reason    : ${reason}`);
-  console.log(`  Timestamp : ${new Date().toLocaleString()}`);
-  console.log('='.repeat(68) + '\n');
+  return { success: false, error: 'Email delivery is not configured.' };
 }
 
 function escapeHtml(str: string): string {
@@ -220,7 +200,7 @@ export async function sendSupervisorWelcomeEmail({
 }: SendSupervisorWelcomeOptions): Promise<{ success: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Colegio de Montalban <onboarding@resend.dev>';
-  const portalUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const portalUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ojt.cdm.edu.ph';
   const setupUrl = `${portalUrl}/auth/reset-password?email=${encodeURIComponent(to)}`;
   const subject = `Set up your CdM OJT Portal supervisor account (${companyName})`;
 
@@ -286,13 +266,12 @@ export async function sendSupervisorWelcomeEmail({
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error('[sendSupervisorWelcomeEmail] Resend API error:', errorData);
+        console.error('[sendSupervisorWelcomeEmail] provider rejected delivery:', res.status);
         return { success: false, error: 'Welcome email could not be delivered.' };
       }
       return { success: true };
-    } catch (err) {
-      console.error('[sendSupervisorWelcomeEmail] Network failure calling Resend:', err);
+    } catch {
+      console.error('[sendSupervisorWelcomeEmail] provider request failed');
       return { success: false, error: 'Welcome email could not be delivered.' };
     }
   }

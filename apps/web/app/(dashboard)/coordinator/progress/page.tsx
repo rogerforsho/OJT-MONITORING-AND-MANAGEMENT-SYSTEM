@@ -21,25 +21,18 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth/sign-in');
 
-  const { data } = await listCohortProgress(page, 50, courseFilter);
-  let students = data?.students ?? [];
+  const { data: profile } = await supabase.from('users').select('role').eq('user_id', user.id).single();
+  const { data, error } = await listCohortProgress(page, 50, courseFilter, statusFilter as 'not_started' | 'in_progress' | 'completed' | undefined);
+  if (error) throw new Error(error.message);
+  const students = data?.students ?? [];
   const total = data?.total ?? 0;
-
-  // Filter by health status if selected
-  if (statusFilter === 'ontrack') {
-    students = students.filter(s => s.completed_hours >= 350);
-  } else if (statusFilter === 'midway') {
-    students = students.filter(s => s.completed_hours >= 150 && s.completed_hours < 350);
-  } else if (statusFilter === 'atrisk') {
-    students = students.filter(s => s.completed_hours < 150);
-  }
 
   const courses = ['All', 'BSIT', 'BSCS', 'BSBA-MKT', 'BSBA-HRM', 'BSBA-FM', 'BSA'];
   const statusTabs = [
     { label: 'All Trainees', key: '' },
-    { label: '🟢 On Track (≥350h)', key: 'ontrack' },
-    { label: '🟡 Midway (150–349h)', key: 'midway' },
-    { label: '🔴 At Risk (<150h)', key: 'atrisk' },
+    { label: 'Not started', key: 'not_started' },
+    { label: 'In progress', key: 'in_progress' },
+    { label: 'Completed', key: 'completed' },
   ];
 
   return (
@@ -47,7 +40,7 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Cohort Progress Monitoring</h1>
-          <p className="text-sm text-slate-500 mt-1">Real-time rendered hours and milestone tracking for 4th-year ICS & IBE trainees (486.0 target hours).</p>
+          <p className="text-sm text-slate-500 mt-1">Real-time rendered hours and milestone tracking for 4th-year ICS & IBE trainees; targets follow each student’s configured requirement.</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="px-3.5 py-1.5 text-sm font-semibold bg-emerald-50 text-[#0A3D24] border-emerald-200">
@@ -157,16 +150,16 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
                         <div className="space-y-1">
                           <div className="flex justify-between text-[11px] font-semibold text-slate-700">
                             <span>{s.percentage}%</span>
-                            <span className="text-slate-400 font-normal">{s.completed_hours >= 486 ? 'Target Reached' : `${(486 - s.completed_hours).toFixed(1)}h left`}</span>
+                            <span className="text-slate-400 font-normal">{s.remaining_hours <= 0 ? 'Target Reached' : `${s.remaining_hours.toFixed(1)}h left`}</span>
                           </div>
                           <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-500 ${
                                 isDone
                                   ? 'bg-emerald-500'
-                                  : s.completed_hours >= 350
+                                  : s.percentage >= 75
                                   ? 'bg-[#0A3D24]'
-                                  : s.completed_hours >= 150
+                                  : s.percentage >= 25
                                   ? 'bg-amber-500'
                                   : 'bg-slate-400'
                               }`}
@@ -181,16 +174,17 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
                             className={
                               isDone
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold'
-                                : s.completed_hours >= 350
+                                : s.percentage >= 75
                                 ? 'bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs font-semibold'
-                                : s.completed_hours >= 150
+                                : s.percentage >= 25
                                 ? 'bg-amber-50 text-amber-700 border-amber-200 text-xs font-semibold'
                                 : 'bg-slate-100 text-slate-600 border-slate-200 text-xs font-semibold'
                             }
                           >
-                            {isDone ? 'Completed' : s.completed_hours >= 350 ? 'On Track' : s.completed_hours >= 150 ? 'Midway' : 'At Risk'}
+                            {isDone ? 'Completed' : s.percentage >= 75 ? '75%+ complete' : s.percentage >= 25 ? '25–74% complete' : 'Under 25% complete'}
                           </Badge>
                           <ClearanceActionModal
+                            readOnly={profile?.role === 'ProgramHead'}
                             studentId={s.student_id}
                             studentName={s.full_name}
                             completedHours={s.completed_hours}

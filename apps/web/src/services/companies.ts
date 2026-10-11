@@ -2,7 +2,7 @@
 
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
-import { recordAuditEvent } from './audit';
+import { recordAuditEvent } from '@/src/lib/audit';
 import type { AppResult, DbCompany } from '@ojt/shared';
 
 export interface CompanyInput {
@@ -40,7 +40,7 @@ function validateCompanyInput(input: CompanyInput): string | null {
   return null;
 }
 
-async function assertCoordinator() {
+async function assertCoordinator(allowProgramHeadRead = false) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { supabase, user: null, authorized: false };
@@ -52,7 +52,7 @@ async function assertCoordinator() {
   return {
     supabase,
     user,
-    authorized: ['Coordinator', 'Admin', 'ProgramHead'].includes(data?.role ?? '') && data?.account_status === 'active',
+    authorized: (['Coordinator', 'Admin'].includes(data?.role ?? '') || (allowProgramHeadRead && data?.role === 'ProgramHead')) && data?.account_status === 'active',
   };
 }
 
@@ -60,7 +60,7 @@ export async function listCompanies(
   page = 1,
   pageSize = 20
 ): Promise<AppResult<{ companies: CompanyWithSupervisors[]; total: number }>> {
-  const { supabase, authorized } = await assertCoordinator();
+  const { supabase, authorized } = await assertCoordinator(true);
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const from = (page - 1) * pageSize;
@@ -213,7 +213,7 @@ export async function getCompanyCapacity(
 ): Promise<AppResult<{ company_id: string; active_interns: number; recommended_capacity: number; is_at_capacity: boolean }>> {
   if (!company_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Company ID is required.' } };
 
-  const { supabase, authorized } = await assertCoordinator();
+  const { supabase, authorized } = await assertCoordinator(true);
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
   const { count, error } = await supabase

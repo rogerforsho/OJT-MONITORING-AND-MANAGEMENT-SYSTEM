@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { isICSCourse } from '@/src/lib/departments';
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
-import { recordAuditEvent } from './audit';
+import { recordAuditEvent } from '@/src/lib/audit';
 import type { AppResult, UserRole, AccountStatus } from '@ojt/shared';
 
 const serviceClient = getServiceClient;
@@ -123,8 +123,8 @@ export async function createSystemUser(
 
   const empNumber = input.employee_number?.trim() || `${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
 
-  // 2. Ensure public.users entry is active
-  await service
+  // Keep the account pending until both profile records have been saved.
+  const { error: profileError } = await service
     .from('users')
     .upsert({
       user_id: newUserId,
@@ -132,25 +132,42 @@ export async function createSystemUser(
       email: input.email.trim(),
       role: input.role,
       employee_number: empNumber,
-      account_status: 'active',
+      account_status: 'pending',
       updated_at: new Date().toISOString(),
     });
 
   // 3. Populate corresponding role table
-  if (input.role === 'Coordinator') {
-    await service.from('coordinators').upsert({
+  let roleError = profileError;
+  if (!roleError && input.role === 'Coordinator') {
+    const result = await service.from('coordinators').upsert({
       user_id: newUserId,
       department: dept,
     });
-  } else if (input.role === 'ProgramHead') {
-    await service.from('program_heads').upsert({
+    roleError = result.error;
+  } else if (!roleError && input.role === 'ProgramHead') {
+    const result = await service.from('program_heads').upsert({
       user_id: newUserId,
       department_or_program: dept,
     });
-  } else if (input.role === 'Admin') {
-    await service.from('admins').upsert({
+    roleError = result.error;
+  } else if (!roleError && input.role === 'Admin') {
+    const result = await service.from('admins').upsert({
       user_id: newUserId,
     });
+    roleError = result.error;
+  }
+
+  if (!roleError) {
+    const activation = await service.from('users').update({ account_status: 'active' })
+      .eq('user_id', newUserId).select('user_id').single();
+    roleError = activation.error;
+  }
+  if (roleError) {
+    const { error: rollbackError } = await service.auth.admin.deleteUser(newUserId);
+    if (rollbackError) console.error('[createSystemUser] Failed to roll back incomplete staff account:', newUserId);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: rollbackError
+      ? 'Staff setup failed and the incomplete account needs administrator cleanup before retrying.'
+      : 'Staff setup failed. The incomplete account was removed; please check the details and retry.' } };
   }
 
   // 4. Log Audit Event
@@ -179,15 +196,21 @@ export async function updateUserAccountStatus(
   if (!['pending', 'active', 'rejected', 'inactive'].includes(status)) {
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid status.' } };
   }
+  if (user_id === user.id && status !== 'active') {
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'You cannot deactivate your own administrator account.' } };
+  }
 
   const service = serviceClient();
-  const { error } = await service
+  const { data: updatedUser, error } = await service
     .from('users')
     .update({ account_status: status, updated_at: new Date().toISOString() })
-    .eq('user_id', user_id);
+    .eq('user_id', user_id)
+    .select('user_id').maybeSingle();
 
   if (error)
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update user status.' } };
+  if (!updatedUser)
+    return { data: null, error: { code: 'NOT_FOUND', message: 'User account no longer exists.' } };
 
   // Log Audit Event for Non-repudiation
   await recordAuditEvent({
@@ -214,35 +237,19 @@ export async function getSystemOverview(): Promise<AppResult<{
 
   const service = serviceClient();
 
-  const [
-    { count: totalUsers },
-    { count: activeUsers },
-    { count: pendingUsers },
-    { count: companiesCount },
-    { count: attendanceCount },
-    { data: users },
-  ] = await Promise.all([
+  const roles = ['Student', 'Coordinator', 'Supervisor', 'ProgramHead', 'Admin'];
+  const results = await Promise.all([
     service.from('users').select('*', { count: 'exact', head: true }),
     service.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'active'),
     service.from('users').select('*', { count: 'exact', head: true }).eq('account_status', 'pending'),
     service.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     service.from('attendance').select('*', { count: 'exact', head: true }),
-    service.from('users').select('role'),
+    ...roles.map(role => service.from('users').select('user_id', { count: 'exact', head: true }).eq('role', role)),
   ]);
-
-  const roleBreakdown: Record<string, number> = {
-    Student: 0,
-    Coordinator: 0,
-    Supervisor: 0,
-    ProgramHead: 0,
-    Admin: 0,
-  };
-
-  (users ?? []).forEach((u: { role: string }) => {
-    if (roleBreakdown[u.role] !== undefined) {
-      roleBreakdown[u.role]++;
-    }
-  });
+  if (results.some(result => result.error))
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'System overview is temporarily unavailable.' } };
+  const [totalUsers, activeUsers, pendingUsers, companiesCount, attendanceCount] = results.map(result => result.count ?? 0);
+  const roleBreakdown = Object.fromEntries(roles.map((role, index) => [role, results[index + 5].count ?? 0]));
 
   return {
     data: {
@@ -609,7 +616,7 @@ export async function getPracticumRosterReport(
 
     // Certificate
     const certs = Array.isArray(s.certificates) ? s.certificates : (s.certificates ? [s.certificates] : []);
-    const activeCert = certs.find((c: any) => c.status === 'active') || certs[0];
+    const activeCert = certs.find((c: any) => c.status === 'active');
 
     const courseStr = (s.course || '').toUpperCase();
     const isICS = isICSCourse(courseStr);

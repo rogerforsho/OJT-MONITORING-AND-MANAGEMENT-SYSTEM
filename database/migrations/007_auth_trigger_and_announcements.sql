@@ -41,7 +41,7 @@ $$;
 
 -- 2. Announcements Table
 create table if not exists announcements (
-  announcement_id uuid primary key default uuid_generate_v4(),
+  announcement_id uuid primary key default extensions.uuid_generate_v4(),
   author_user_id uuid references users(user_id) on delete set null,
   title text not null,
   content text not null,

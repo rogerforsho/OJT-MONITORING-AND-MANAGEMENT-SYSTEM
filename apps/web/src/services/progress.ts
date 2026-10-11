@@ -1,6 +1,7 @@
 'use server';
 
 import { isICSCourse } from '@/src/lib/departments';
+import { departmentScope, restrictDepartment } from '@/src/lib/department-scope';
 import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
 import type { AppResult, ProgressStatus } from '@ojt/shared';
@@ -69,11 +70,20 @@ export interface DepartmentSummaryData {
 export async function listCohortProgress(
   page = 1,
   pageSize = 20,
-  courseFilter?: string
+  courseFilter?: string,
+  statusFilter?: ProgressStatus
 ): Promise<AppResult<{ students: StudentProgressDetail[]; total: number }>> {
-  const { profile } = await getAuthUserWithRole();
-  if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 200)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid page or page size.' } };
+  const scope = await departmentScope(supabase, user.id, profile.role);
+  if (scope.error) return { data: null, error: { code: 'FORBIDDEN', message: scope.error } };
+
+  if (statusFilter && !['not_started', 'in_progress', 'completed'].includes(statusFilter))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid progress status.' } };
 
   const service = serviceClient();
   const from = (page - 1) * pageSize;
@@ -89,6 +99,7 @@ export async function listCohortProgress(
       required_hours,
       users!inner ( full_name, email, account_status ),
       internship_progress ( completed_hours, progress_status ),
+      progress_filter:internship_progress (),
       student_assignments (
         assignment_status,
         companies ( company_name )
@@ -96,9 +107,15 @@ export async function listCohortProgress(
     `, { count: 'exact' })
     .eq('users.account_status', 'active')
     .order('student_number', { ascending: true })
+    .order('student_id', { ascending: true })
     .range(from, to);
 
   if (courseFilter && courseFilter !== 'all') query = query.eq('course', courseFilter);
+  if (statusFilter === 'not_started')
+    query = query.or('progress_filter.is.null,progress_filter.progress_status.eq.not_started');
+  else if (statusFilter)
+    query = query.eq('progress_filter.progress_status', statusFilter).not('progress_filter', 'is', 'null');
+  query = restrictDepartment(query, scope.department);
 
   const { data, error, count } = await query;
 
@@ -136,23 +153,36 @@ export async function listCohortProgress(
 }
 
 export async function getDepartmentSummary(): Promise<AppResult<DepartmentSummaryData>> {
-  const { profile } = await getAuthUserWithRole();
-  if (!profile || !['ProgramHead', 'Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active')
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || !profile || !['ProgramHead', 'Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+
+  const scope = await departmentScope(supabase, user.id, profile.role);
+  if (scope.error) return { data: null, error: { code: 'FORBIDDEN', message: scope.error } };
 
   const service = serviceClient();
 
-  const { data, error } = await service
+  // Read bounded pages so Supabase's response cap cannot silently truncate totals.
+  type ProgressRow = { course: string; internship_progress: { completed_hours: number; progress_status: string } | { completed_hours: number; progress_status: string }[] | null };
+  const data: ProgressRow[] = [];
+  for (let offset = 0; ; ) {
+    let query = service
     .from('students')
     .select(`
       student_id, course,
       users!inner ( account_status ),
       internship_progress ( completed_hours, progress_status )
     `)
-    .eq('users.account_status', 'active');
-
-  if (error)
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load department summary.' } };
+    .eq('users.account_status', 'active')
+    .order('student_id', { ascending: true })
+    .range(offset, offset + 199);
+    query = restrictDepartment(query, scope.department);
+    const { data: rows, error } = await query;
+    if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load department summary.' } };
+    if (!rows?.length) break;
+    data.push(...rows);
+    offset += rows.length;
+  }
 
   let totalStudents = 0;
   let activeTrainees = 0;
@@ -182,7 +212,7 @@ export async function getDepartmentSummary(): Promise<AppResult<DepartmentSummar
     },
   };
 
-  (data ?? []).forEach((row: any) => {
+  data.forEach((row) => {
     totalStudents++;
     const progress = Array.isArray(row.internship_progress) ? row.internship_progress[0] : row.internship_progress;
     const completed = progress?.completed_hours || 0;

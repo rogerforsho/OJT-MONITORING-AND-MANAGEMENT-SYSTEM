@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { Readable } from 'node:stream';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,12 +9,13 @@ const GITHUB_RELEASES_URL =
   'https://github.com/rogerforsho/OJT-MONITORING-AND-MANAGEMENT-SYSTEM/releases';
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
 
-  if (filename.toLowerCase().includes('cdm') || filename.toLowerCase().endsWith('.exe')) {
+  const installerNames = ['CdM-OJT-Portal-Setup-1.0.0.exe', 'CdM OJT Portal Setup 1.0.0.exe'];
+  if (installerNames.includes(filename)) {
     // Check if compiled desktop installer exists locally in desktop dist or public/downloads
     const possiblePaths = [
       path.join(process.cwd(), 'public', 'downloads', filename),
@@ -25,9 +27,9 @@ export async function GET(
     for (const localPath of possiblePaths) {
       if (fs.existsSync(localPath)) {
         const stats = fs.statSync(localPath);
+        if (!stats.isFile()) continue;
         const fileStream = fs.createReadStream(localPath);
-        // @ts-expect-error Next.js streaming response from readable stream
-        return new NextResponse(fileStream, {
+        return new NextResponse(Readable.toWeb(fileStream) as ReadableStream<Uint8Array>, {
           headers: {
             'Content-Type': 'application/vnd.microsoft.portable-executable',
             'Content-Disposition': `attachment; filename="${filename}"`,

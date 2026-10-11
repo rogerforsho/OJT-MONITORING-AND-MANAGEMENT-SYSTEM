@@ -1,3 +1,4 @@
+import { getWebPortalUrl } from './webPortal';
 /**
  * Unified Mobile Media & Document Storage Service
  * Colegio de Montalban - OJT Practicum System
@@ -213,29 +214,19 @@ export async function uploadReportToStorage(
 /**
  * Upload Validated Student ID Card during Registration
  */
-export async function uploadRegistrationIdCard(
-  fileUri: string,
-  fileName: string
-): Promise<AppResult<{ path: string }>> {
+export async function uploadRegistrationIdCard(fileUri: string, fileName: string, email: string): Promise<AppResult<{ path: string }>> {
   try {
-    const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
-    const filePath = `id-cards/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${ext}`;
-    const arrayBuffer = await convertSourceToArrayBuffer(fileUri);
-    const resolvedMime = resolveMimeType(fileName);
-
-    const { data, error } = await supabase.storage
-      .from('private-documents')
-      .upload(filePath, arrayBuffer, { contentType: resolvedMime, upsert: false });
-
-    if (error) {
-      console.error('[uploadRegistrationIdCard] Error:', error);
-      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to upload student ID: ' + error.message } };
-    }
-
-    return { data: { path: data.path }, error: null };
-  } catch (err: any) {
-    console.error('[uploadRegistrationIdCard] Exception:', err);
-    return { data: null, error: { code: 'SERVER_FAILURE', message: err?.message || 'Failed to upload student ID.' } };
-  }
+    const data = new FormData();
+    data.append('email', email.trim());
+    // React Native's native multipart file representation.
+    data.append('file', { uri: fileUri, name: fileName, type: resolveMimeType(fileName) } as unknown as Blob);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      const response = await fetch(getWebPortalUrl('/api/registration/id-card'), { method: 'POST', body: data, signal: controller.signal });
+      const result = await response.json();
+      if (!response.ok || result.error || !result.data?.file_path) return { data: null, error: { code: 'SERVER_FAILURE', message: result.error?.message || 'Unable to upload your ID. Please try again.' } };
+      return { data: { path: result.data.file_path }, error: null };
+    } finally { clearTimeout(timeout); }
+  } catch { return { data: null, error: { code: 'SERVER_FAILURE', message: 'Unable to upload your ID. Check your connection or contact your coordinator.' } }; }
 }
-

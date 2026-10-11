@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Alert from '@/src/components/ui/Alert';
 import Button from '@/src/components/ui/Button';
 import { Badge } from '@/src/components/ui/Badge';
@@ -32,6 +32,7 @@ export default function CoordinatorApprovalsPage() {
   const [batchLoading, setBatchLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [courseFilter, setCourseFilter] = useState('All');
+  const requestRef = useRef(0);
   const [viewingId, setViewingId] = useState<{ url: string; name: string; number: string; course: string } | null>(null);
 
   // Rejection modal state
@@ -41,20 +42,22 @@ export default function CoordinatorApprovalsPage() {
   const [rejectSubmitting, setRejectSubmitting] = useState(false);
 
   const load = useCallback(async (pageNumber: number) => {
+    const requestId = ++requestRef.current;
     setLoading(true);
     setError('');
-
-    const result = await listPendingStudents(pageNumber, PAGE_SIZE);
-    setLoading(false);
-
-    if (result.error) {
-      setError(result.error.message);
-      return;
+    setSelectedIds([]);
+    try {
+      const result = await listPendingStudents(pageNumber, PAGE_SIZE, courseFilter);
+      if (requestId !== requestRef.current) return;
+      if (result.error) { setError(result.error.message); return; }
+      setStudents(result.data?.students ?? []);
+      setTotal(result.data?.total ?? 0);
+    } catch {
+      if (requestId === requestRef.current) setError('Unable to load registrations. Please retry.');
+    } finally {
+      if (requestId === requestRef.current) setLoading(false);
     }
-
-    setStudents(result.data?.students ?? []);
-    setTotal(result.data?.total ?? 0);
-  }, []);
+  }, [courseFilter]);
 
   useEffect(() => {
     let active = true;
@@ -89,7 +92,8 @@ export default function CoordinatorApprovalsPage() {
       return;
     }
 
-    setSuccess('Student registration approved successfully and notification email dispatched.');
+    const followup = [!result.data?.notificationCreated ? 'in-app notification failed' : '', !result.data?.emailSent ? 'email could not be sent' : ''].filter(Boolean).join(' and ');
+    setSuccess(followup ? `Student approved, but ${followup}.` : 'Student registration approved successfully.');
     load(page);
   }
 
@@ -112,12 +116,14 @@ export default function CoordinatorApprovalsPage() {
     }
 
     setRejectModalOpen(false);
-    setSuccess(`Registration for ${rejectTarget.full_name} rejected and explanation email dispatched.`);
+    const followup = [!result.data?.notificationCreated ? 'in-app notification failed' : '', !result.data?.emailSent ? 'email could not be sent' : ''].filter(Boolean).join(' and ');
+    setSuccess(followup ? `Registration rejected, but ${followup}.` : `Registration for ${rejectTarget.full_name} rejected.`);
     load(page);
   }
 
   async function handleBatchApprove() {
-    const targetIds = selectedIds.length > 0 ? selectedIds : students.map(s => s.user_id);
+    const visibleIds = students.map(s => s.user_id);
+    const targetIds = selectedIds.length > 0 ? selectedIds.filter(id => visibleIds.includes(id)) : visibleIds;
     if (targetIds.length === 0) return;
 
     if (!confirm(`Are you sure you want to approve ${targetIds.length} pending student(s)?`)) return;
@@ -126,19 +132,24 @@ export default function CoordinatorApprovalsPage() {
     setError('');
     setSuccess('');
 
-    // Concurrent chunking for 5x performance improvement
-    const chunkSize = 5;
-    let approvedCount = 0;
-    for (let i = 0; i < targetIds.length; i += chunkSize) {
-      const chunk = targetIds.slice(i, i + chunkSize);
-      const results = await Promise.all(chunk.map(id => updateStudentAccountStatus(id, 'active')));
-      approvedCount += results.filter(r => !r.error).length;
-    }
-
-    setBatchLoading(false);
-    setSelectedIds([]);
-    setSuccess(`Successfully approved ${approvedCount} student(s) in batch.`);
-    load(page);
+    try {
+      const chunkSize = 5;
+      let approvedCount = 0;
+      let emailFailures = 0;
+      let notificationFailures = 0;
+      for (let i = 0; i < targetIds.length; i += chunkSize) {
+        const chunk = targetIds.slice(i, i + chunkSize);
+        const results = await Promise.allSettled(chunk.map(id => updateStudentAccountStatus(id, 'active')));
+        approvedCount += results.filter(r => r.status === 'fulfilled' && !r.value.error).length;
+        emailFailures += results.filter(r => r.status === 'fulfilled' && !r.value.error && !r.value.data?.emailSent).length;
+        notificationFailures += results.filter(r => r.status === 'fulfilled' && !r.value.error && !r.value.data?.notificationCreated).length;
+      }
+      setSelectedIds([]);
+      await load(page);
+      const deliveryIssues = [emailFailures ? `${emailFailures} email(s) failed` : '', notificationFailures ? `${notificationFailures} in-app notification(s) failed` : ''].filter(Boolean).join('; ');
+      setSuccess(`Approved ${approvedCount} of ${targetIds.length} registrations.${deliveryIssues ? ` Follow-up needed: ${deliveryIssues}.` : ''}`);
+      if (approvedCount < targetIds.length) setError('Some registrations could not be approved. Review the refreshed list before retrying.');
+    } finally { setBatchLoading(false); }
   }
 
   const toggleSelectAll = () => {
@@ -155,10 +166,8 @@ export default function CoordinatorApprovalsPage() {
     );
   };
 
-  const courses = ['All', 'BSIT', 'BSCS', 'BSBA-MKT', 'BSBA-HRM', 'BSBA-FM', 'BSA'];
-  const filteredStudents = courseFilter === 'All'
-    ? students
-    : students.filter(s => s.course === courseFilter);
+  const courses = ['All', 'BSIT', 'BSCS', 'BS-CPE', 'BSBA-MKT', 'BSBA-HRM', 'BSBA-FM', 'BSENTREP', 'BSA'];
+  const filteredStudents = students;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -174,9 +183,10 @@ export default function CoordinatorApprovalsPage() {
             <Button
               onClick={handleBatchApprove}
               loading={batchLoading}
+              disabled={loading || !!actionLoading || rejectSubmitting || !!error}
               className="bg-[#0A3D24] hover:bg-[#062415] text-white shadow-sm font-medium text-xs sm:text-sm px-4 py-2"
             >
-              ✓ Approve {selectedIds.length > 0 ? `Selected (${selectedIds.length})` : `All Pending (${students.length})`}
+              Approve {selectedIds.length > 0 ? `Selected (${selectedIds.length})` : `This Page (${students.length})`}
             </Button>
           </div>
         )}
@@ -190,7 +200,8 @@ export default function CoordinatorApprovalsPage() {
         {courses.map((c) => (
           <button
             key={c}
-            onClick={() => setCourseFilter(c)}
+            disabled={batchLoading}
+            onClick={() => { requestRef.current++; setSelectedIds([]); setPage(1); setCourseFilter(c); }}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
               courseFilter === c
                 ? 'bg-[#062415] text-white shadow-sm'
@@ -205,11 +216,13 @@ export default function CoordinatorApprovalsPage() {
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Loading pending students...</div>
+        ) : error ? (
+          <div className="p-8 text-center"><Button variant="outline" onClick={() => load(page)}>Retry loading registrations</Button></div>
         ) : filteredStudents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <span className="text-4xl mb-3">🎓</span>
-            <p className="text-sm font-medium text-slate-600">No pending student registrations at the moment.</p>
-            <p className="text-xs text-slate-400 mt-1">All 4th-year student applications have been processed.</p>
+            <p className="text-sm font-medium text-slate-600">No pending registrations match this view.</p>
+            <p className="text-xs text-slate-400 mt-1">Try another degree program or page.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

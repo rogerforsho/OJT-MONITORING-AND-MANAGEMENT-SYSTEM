@@ -15,13 +15,13 @@
     "dev:desktop": "electron ."
   },
   "devDependencies": {
-    "electron": "33.2.1",
-    "electron-builder": "^25.1.8"
+    "electron": "^44.7.0",
+    "electron-builder": "26.15.3"
   },
   "build": {
     "appId": "ph.edu.cdm.ojt.desktop",
     "productName": "CdM OJT Portal",
-    "electronVersion": "33.2.1",
+    "electronVersion": "44.7.0",
     "directories": {
       "output": "dist"
     },

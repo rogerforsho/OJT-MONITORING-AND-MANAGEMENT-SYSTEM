@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/src/lib/supabase/server';
 
+function redirectToPath(path: string) {
+  const response = new NextResponse(null, { status: 307 });
+  response.headers.set('Location', path);
+  return response;
+}
+
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  const requestedNext = searchParams.get('next') ?? '/dashboard';
+  const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//') && !requestedNext.includes('\\')
+    ? requestedNext
+    : '/dashboard';
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return redirectToPath(next);
     }
   }
 
-  return NextResponse.redirect(`${origin}/auth/sign-in?error=auth_callback_failed`);
+  return redirectToPath('/auth/sign-in?error=auth_callback_failed');
 }

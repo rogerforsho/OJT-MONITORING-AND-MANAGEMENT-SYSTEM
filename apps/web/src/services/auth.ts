@@ -1,15 +1,19 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
+import { departmentScope, canManageDepartmentStudent } from '@/src/lib/department-scope';
 import { getServiceClient } from '@/src/lib/supabase/service';
+import { toPublicSupabaseUrl } from '@/src/lib/supabase/public-url';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { isIP } from 'node:net';
 import crypto from 'crypto';
 import { sendOtpEmail } from '@/src/lib/email/send-otp';
 import { validateUploadedFile } from '@/src/lib/uploadValidation';
 import type { AppError, AppResult } from '@ojt/shared';
 import type { RegisterStudentInput, SignInInput } from '@ojt/shared';
 import { isICSCourse, isIBECourse } from '@/src/lib/departments';
-import { recordAuditEvent } from './audit';
+import { recordAuditEvent } from '@/src/lib/audit';
 
 let cachedServiceClient: any = null;
 
@@ -22,6 +26,21 @@ function serviceClient() {
 
 type AuthAction = 'login' | 'register' | 'password_reset_request' | 'password_reset_verify' | 'id_card_upload';
 
+function auditSubjectHash(value: string): string | undefined {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) return undefined;
+  return crypto.createHmac('sha256', secret).update(value.trim().toLowerCase()).digest('hex');
+}
+
+async function claimActionLimit(action: AuthAction, secret: string, subject: string, maxAttempts: number, windowSeconds: number): Promise<boolean | null> {
+  const subjectHash = crypto.createHmac('sha256', secret).update(subject).digest('hex');
+  const { data, error } = await serviceClient().rpc('claim_auth_rate_limit', {
+    p_action: action, p_subject_hash: subjectHash, p_max_attempts: maxAttempts, p_window_seconds: windowSeconds,
+  });
+  if (error) return null;
+  return data === true;
+}
+
 async function authActionLimit(
   action: AuthAction,
   email: string,
@@ -31,41 +50,61 @@ async function authActionLimit(
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secret) return { code: 'SERVER_FAILURE', message: 'Authentication service is not configured.' };
 
-  const subjectHash = crypto.createHmac('sha256', secret)
-    .update(email.trim().toLowerCase()).digest('hex');
-  const { data, error } = await serviceClient().rpc('claim_auth_rate_limit', {
-    p_action: action,
-    p_subject_hash: subjectHash,
-    p_max_attempts: maxAttempts,
-    p_window_seconds: windowSeconds,
-  });
-  if (error) {
-    console.error(`[authActionLimit] ${action} unavailable`);
+  const emailAllowed = await claimActionLimit(action, secret, 'email:' + email.trim().toLowerCase(), maxAttempts, windowSeconds);
+  if (emailAllowed === null) {
+    console.error('[authActionLimit] email limit unavailable');
     return { code: 'SERVER_FAILURE', message: 'Authentication service is temporarily unavailable.' };
   }
-  return data === true ? null : {
-    code: 'RATE_LIMITED', message: 'Too many attempts. Please wait before trying again.',
+  if (!emailAllowed) return { code: 'RATE_LIMITED', message: 'Too many attempts. Please wait before trying again.' };
+
+  let clientIp: string | null = null;
+  try {
+    const forwardedFor = (await headers()).get('x-forwarded-for');
+    const candidate = forwardedFor?.split(',')[0]?.trim();
+    if (candidate && isIP(candidate)) clientIp = candidate;
+  } catch { /* Unit tests and local non-request callers have no request headers. */ }
+  if (!clientIp && process.env.NODE_ENV === 'production') {
+    console.error('[authActionLimit] trusted client IP unavailable');
+    return { code: 'SERVER_FAILURE', message: 'Authentication service is temporarily unavailable.' };
+  }
+  const ipBudgets: Record<AuthAction, { max: number; seconds: number }> = {
+    login: { max: 100, seconds: 900 },
+    register: { max: 100, seconds: 3600 },
+    password_reset_request: { max: 40, seconds: 900 },
+    password_reset_verify: { max: 100, seconds: 900 },
+    id_card_upload: { max: 100, seconds: 3600 },
   };
+  const budget = ipBudgets[action];
+  const ipAllowed = await claimActionLimit(action, secret, 'ip:' + (clientIp || 'local-development'), budget.max, budget.seconds);
+  if (ipAllowed === null) {
+    console.error('[authActionLimit] network limit unavailable');
+    return { code: 'SERVER_FAILURE', message: 'Authentication service is temporarily unavailable.' };
+  }
+  return ipAllowed ? null : { code: 'RATE_LIMITED', message: 'Too many attempts from this network. Please wait before trying again.' };
 }
 
 async function assertCoordinator() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, authorized: false };
+  if (!user) return { supabase, user: null, role: '', authorized: false };
   const { data } = await supabase
     .from('users')
     .select('role, account_status')
     .eq('user_id', user.id)
     .single();
+  const scope = await departmentScope(supabase, user.id, data?.role ?? '');
   return {
     supabase,
-    authorized: ['Coordinator', 'Admin'].includes(data?.role ?? '') && data?.account_status === 'active',
+    user,
+    role: data?.role ?? '',
+    authorized: !scope.error && ['Coordinator', 'Admin', 'ProgramHead'].includes(data?.role ?? '') && data?.account_status === 'active',
   };
 }
 
 export async function listPendingStudents(
   page = 1,
-  pageSize = 20
+  pageSize = 20,
+  courseFilter?: string
 ): Promise<AppResult<{ students: Array<{ user_id: string; full_name: string; email: string; student_number: string; course: string; year_level: number; created_at: string; id_card_path?: string | null; id_card_signed_url?: string | null }>; total: number }>> {
   const { supabase, authorized } = await assertCoordinator();
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
@@ -73,13 +112,15 @@ export async function listPendingStudents(
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('users')
     .select('user_id, full_name, email, created_at, students!inner(student_number, course, year_level, id_card_path)', { count: 'exact' })
     .eq('role', 'Student')
     .eq('account_status', 'pending')
     .order('created_at', { ascending: false })
     .range(from, to);
+  if (courseFilter && courseFilter !== 'All') query = query.eq('students.course', courseFilter);
+  const { data, error, count } = await query;
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to load pending students.' } };
 
@@ -90,7 +131,7 @@ export async function listPendingStudents(
     if (path) {
       try {
         const { data: signed } = await service.storage.from('private-documents').createSignedUrl(path, 3600);
-        id_card_signed_url = signed?.signedUrl ?? null;
+        id_card_signed_url = signed?.signedUrl ? toPublicSupabaseUrl(signed.signedUrl) : null;
       } catch {
         // Fallback silently if signed URL generation fails
       }
@@ -113,19 +154,29 @@ export async function listPendingStudents(
 
 export async function listActiveStudents(
   page = 1,
-  pageSize = 20
+  pageSize = 20,
+  searchQuery = ''
 ): Promise<AppResult<{ students: Array<{ user_id: string; full_name: string; email: string; student_number: string; course: string; year_level: number; account_status: string; created_at: string }>; total: number }>> {
   const { supabase, authorized } = await assertCoordinator();
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100)
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid page or page size.' } };
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  const term = searchQuery.trim().replace(/[%,_*()\\]/g, ' ').replace(/\s+/g, ' ').slice(0, 100);
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('users')
-    .select('user_id, full_name, email, account_status, created_at, students!inner(student_number, course, year_level)', { count: 'exact' })
+    .select('user_id, full_name, email, account_status, created_at, students!inner(student_number, course, year_level), student_search:students()', { count: 'exact' })
     .eq('role', 'Student')
-    .eq('account_status', 'active')
+    .eq('account_status', 'active');
+  if (term) {
+    const pattern = '*' + term + '*';
+    query = query.or('full_name.ilike.' + pattern + ',email.ilike.' + pattern + ',student_search.not.is.null')
+      .or('student_number.ilike.' + pattern + ',course.ilike.' + pattern, { referencedTable: 'student_search' });
+  }
+  const { data, error, count } = await query
     .order('created_at', { ascending: false })
     .range(from, to);
 
@@ -151,57 +202,66 @@ export async function updateStudentAccountStatus(
   user_id: string,
   status: 'active' | 'rejected',
   reason?: string
-): Promise<AppResult<null>> {
+): Promise<AppResult<{ notificationCreated: boolean; emailSent: boolean }>> {
   if (!user_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'User ID is required.' } };
+  if (!['active', 'rejected'].includes(status))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid approval status.' } };
 
-  const { authorized } = await assertCoordinator();
+  const { supabase, user, role, authorized } = await assertCoordinator();
   if (!authorized) return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  if (!user || !await canManageDepartmentStudent(supabase, user.id, role, user_id, 'user_id'))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Student is outside your department.' } };
 
   const service = serviceClient();
+  if (status === 'active') {
+    const { data: authResult, error: authLookupError } = await service.auth.admin.getUserById(user_id);
+    if (authLookupError || !authResult?.user)
+      return { data: null, error: { code: 'SERVER_FAILURE', message: 'Could not verify the registration email status.' } };
+    if (!authResult.user.email_confirmed_at)
+      return { data: null, error: { code: 'FORBIDDEN', message: 'The student must confirm their email before coordinator approval.' } };
+  }
 
-  // Fetch student details for notification email
-  const { data: userRec } = await service
-    .from('users')
-    .select('user_id, full_name, email')
-    .eq('user_id', user_id)
-    .maybeSingle();
-
-  const { error } = await service
+  // Only a pending Student can be approved/rejected through this action.
+  // Keep the guard in the update so concurrent decisions cannot overwrite one another.
+  const { data: userRec, error } = await service
     .from('users')
     .update({ account_status: status, updated_at: new Date().toISOString() })
-    .eq('user_id', user_id);
+    .eq('user_id', user_id)
+    .eq('role', 'Student')
+    .eq('account_status', 'pending')
+    .select('user_id, full_name, email').maybeSingle();
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to update student status.' } };
+  if (!userRec) return { data: null, error: { code: 'NOT_FOUND', message: 'Pending student registration not found. It may already have been processed.' } };
 
-  // 1. Create in-app notification record matching schema
+  let notificationCreated = false;
   try {
-    await service.from('notifications').insert({
+    const { error: notificationError } = await service.from('notifications').insert({
       receiver_user_id: user_id,
       message: status === 'active'
-        ? 'Account Verified: Welcome to CdM OJT! Please submit your 5 pre-deployment gateway documents via the mobile app to unlock company assignment and daily attendance.'
-        : `Registration Not Approved: ${reason ? `Reason: ${reason}` : 'Please consult your Institute OJT Coordinator.'}`,
+        ? 'Account Verified: Welcome to CdM OJT! Please submit your pre-deployment requirements via the mobile app to unlock company assignment and daily attendance.'
+        : 'Registration Not Approved: ' + (reason ? 'Please review the coordinator feedback in your account.' : 'Please consult your Institute OJT Coordinator.'),
       status: 'unread',
       notification_date: new Date().toISOString(),
     });
-  } catch {
-    // Continue even if in-app notification fails
-  }
+    notificationCreated = !notificationError;
+  } catch { /* Approval remains recorded; the result reports notification failure. */ }
 
-  // 2. Dispatch official notification email
-  if (userRec?.email) {
+  let emailSent = false;
+  if (userRec.email) {
     try {
-      await sendAccountStatusEmail({
+      emailSent = (await sendAccountStatusEmail({
         to: userRec.email,
         fullName: userRec.full_name || 'Trainee',
         status,
         reason,
-      });
-    } catch (emailErr) {
-      console.error('[updateStudentAccountStatus] Email dispatch failed:', emailErr);
+      })).success;
+    } catch {
+      console.error('[updateStudentAccountStatus] email delivery failed');
     }
   }
 
-  return { data: null, error: null };
+  return { data: { notificationCreated, emailSent }, error: null };
 }
 
 export async function registerStudent(
@@ -226,13 +286,13 @@ export async function registerStudent(
   const limitError = await authActionLimit('register', input.email, 3, 3600);
   if (limitError) return { data: null, error: limitError };
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl || supabaseUrl.includes('your-project-id')) {
     return {
       data: null,
       error: {
         code: 'SERVER_FAILURE',
-        message: 'Supabase is not configured yet. Please open apps/web/.env.local and add your real NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+        message: 'The service is temporarily unavailable. Please try again later.',
       },
     };
   }
@@ -247,7 +307,7 @@ export async function registerStudent(
     .maybeSingle();
 
   if (existing)
-    return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Student number already registered.' } };
+    return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'If you can register with this information, you will receive a confirmation email. Otherwise, sign in or contact the coordinator.' } };
 
   // 2. Check and reconcile any orphaned user record in public.users (not present in auth.users)
   const { data: existingUser } = await service
@@ -259,7 +319,7 @@ export async function registerStudent(
   if (existingUser) {
     const { data: authUserCheck } = await service.auth.admin.getUserById(existingUser.user_id);
     if (authUserCheck?.user) {
-      return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email already registered.' } };
+      return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'If you can register with this information, you will receive a confirmation email. Otherwise, sign in or contact the coordinator.' } };
     } else {
       // Orphaned record: clean up from public.students and public.users to avoid unique constraint collisions
       await service.from('students').delete().eq('user_id', existingUser.user_id);
@@ -267,38 +327,45 @@ export async function registerStudent(
     }
   }
 
-  // 3. Create auth user with full metadata
-  const { data: authData, error: authError } = await service.auth.admin.createUser({
+  // Use the public signup flow so Supabase sends its email confirmation link.
+  // Admin createUser(email_confirm: true) silently bypasses email ownership checks.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:3000' : '');
+  if (!appUrl || (process.env.NODE_ENV === 'production' && !appUrl.startsWith('https://'))) {
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Registration email confirmation is not configured.' } };
+  }
+  const supabase = await createClient();
+  const { data: authData, error: authError } = await supabase.auth.signUp({
     email: input.email.trim(),
     password: input.password,
-    email_confirm: true,
-    user_metadata: {
-      full_name: input.full_name.trim(),
-      role: 'Student',
-      student_number: input.student_number.trim(),
-      course: input.course.trim(),
-      year_level: input.year_level,
-      id_card_path: input.id_card_path || null,
+    options: {
+      emailRedirectTo: new URL('/auth/callback', appUrl).toString(),
+      data: {
+        full_name: input.full_name.trim(),
+        role: 'Student',
+        student_number: input.student_number.trim(),
+        course: input.course.trim(),
+        year_level: input.year_level,
+        id_card_path: input.id_card_path || null,
+      },
     },
   });
 
-  if (authError || !authData.user) {
-    if (authError?.message?.includes('already registered'))
-      return { data: null, error: { code: 'DUPLICATE_REQUEST', message: 'Email already registered.' } };
-    if (
-      authError?.message?.toLowerCase().includes('fetch failed') ||
-      authError?.message?.toLowerCase().includes('failed to fetch')
-    ) {
-      return {
-        data: null,
-        error: {
-          code: 'SERVER_FAILURE',
-          message:
-            'Database connection failed (fetch failed). Your Supabase project appears to be paused due to inactivity. Please restore it in the Supabase Dashboard (https://supabase.com/dashboard).',
-        },
-      };
-    }
-    return { data: null, error: { code: 'SERVER_FAILURE', message: authError?.message || 'Registration failed. Please try again.' } };
+  if (authError || !authData.user || authData.user.identities?.length === 0) {
+    const duplicate = authError?.message?.toLowerCase().includes('already registered') || authData?.user?.identities?.length === 0;
+    return { data: null, error: {
+      code: duplicate ? 'DUPLICATE_REQUEST' : 'SERVER_FAILURE',
+      message: duplicate || authData?.user?.identities?.length === 0
+        ? 'If you can register with this information, you will receive a confirmation email. Otherwise, sign in or contact the coordinator.'
+        : 'Registration could not be completed. Check the email address or try again later.',
+    } };
+  }
+
+  // If Supabase is configured without email confirmations, do not silently create
+  // an unverified account; remove it and tell the operator to enable confirmations.
+  if (authData.session) {
+    await supabase.auth.signOut();
+    await service.auth.admin.deleteUser(authData.user.id);
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Email confirmation is disabled. Enable email confirmations in Supabase Auth before accepting registrations.' } };
   }
 
   // 4. Upsert student profile (handles both trigger-created row and ensures all fields are cleanly stored)
@@ -343,7 +410,7 @@ export async function uploadStudentIdCard(formData: FormData): Promise<AppResult
     });
 
   if (uploadErr) {
-    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to upload student ID card: ' + uploadErr.message } };
+    return { data: null, error: { code: 'SERVER_FAILURE', message: 'Unable to upload your ID right now. Please try again later.' } };
   }
 
   return { data: { file_path: filePath }, error: null };
@@ -358,7 +425,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
   const limitError = await authActionLimit('login', input.email, 10, 900);
   if (limitError) return { data: null, error: limitError };
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl || supabaseUrl.includes('your-project-id')) {
     return {
       data: null,
@@ -380,7 +447,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
     const rawMsg = error.message || '';
     let msg = rawMsg;
     if (!rawMsg || rawMsg.trim() === '{}') {
-      msg = 'Invalid email or password. Please make sure the demo accounts were initialized in your Supabase SQL Editor.';
+      msg = 'Sign-in failed. Please check your credentials and try again.';
     } else if (
       rawMsg.toLowerCase().includes('fetch failed') ||
       rawMsg.toLowerCase().includes('failed to fetch') ||
@@ -388,7 +455,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       rawMsg.toLowerCase().includes('enotfound')
     ) {
       msg =
-        'Database connection failed (fetch failed). Your Supabase project appears to be paused due to inactivity or the URL is unreachable. Please visit https://supabase.com/dashboard to click "Restore project", or verify the NEXT_PUBLIC_SUPABASE_URL in apps/web/.env.local.';
+        'The sign-in service is temporarily unavailable. Please try again later.';
     }
 
     // Record LOGIN_FAILED audit trail for incident response & brute-force monitoring
@@ -396,10 +463,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       actor_user_id: null,
       action: 'LOGIN_FAILED',
       entity_type: 'auth',
-      details: {
-        email: input.email.trim(),
-        reason: rawMsg || 'Invalid credentials',
-      },
+      details: { subject_hash: auditSubjectHash(input.email), reason: 'authentication_failed' },
     });
 
     return { data: null, error: { code: 'UNAUTHORIZED', message: msg } };
@@ -417,7 +481,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       actor_user_id: data.user.id,
       action: 'LOGIN_FAILED',
       entity_type: 'auth',
-      details: { email: input.email.trim(), reason: 'Profile record missing' },
+      details: { subject_hash: auditSubjectHash(input.email), reason: 'profile_record_missing' },
     });
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Account not found.' } };
   }
@@ -428,7 +492,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       actor_user_id: user.user_id,
       action: 'LOGIN_BLOCKED_PENDING',
       entity_type: 'auth',
-      details: { email: user.email, role: user.role, reason: 'Account pending coordinator approval' },
+      details: { role: user.role, reason: 'account_pending' },
     });
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account is pending approval.' } };
   }
@@ -439,7 +503,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       actor_user_id: user.user_id,
       action: 'LOGIN_BLOCKED_REJECTED',
       entity_type: 'auth',
-      details: { email: user.email, role: user.role },
+      details: { role: user.role },
     });
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account registration was rejected.' } };
   }
@@ -450,7 +514,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       actor_user_id: user.user_id,
       action: 'LOGIN_BLOCKED_DEACTIVATED',
       entity_type: 'auth',
-      details: { email: user.email, role: user.role },
+      details: { subject_hash: auditSubjectHash(user.email), role: user.role },
     });
     return { data: null, error: { code: 'FORBIDDEN', message: 'Your account has been deactivated.' } };
   }
@@ -462,7 +526,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
       actor_user_id: user.user_id,
       action: 'LOGIN_BLOCKED_WEB_STUDENT',
       entity_type: 'auth',
-      details: { email: user.email, reason: 'Students restricted to mobile application' },
+      details: { role: user.role, reason: 'web_access_restricted' },
     });
     return {
       data: null,
@@ -479,10 +543,7 @@ export async function signIn(input: SignInInput): Promise<AppResult<{ email: str
     action: 'LOGIN_SUCCESS',
     entity_type: 'auth',
     entity_id: user.user_id,
-    details: {
-      email: user.email,
-      role: user.role,
-    },
+    details: { subject_hash: auditSubjectHash(user.email), role: user.role },
   });
 
   return {
@@ -524,110 +585,27 @@ export async function requestPasswordReset(
   const service = serviceClient();
   const normalizedEmail = email.trim().toLowerCase();
 
-  // 1. Verify user exists in the system
-  const { data: userProfile, error: queryError } = await service
-    .from('users')
-    .select('user_id, role, full_name, employee_number')
-    .eq('email', normalizedEmail)
-    .maybeSingle();
-
-  if (queryError) {
-    if (
-      queryError.message?.toLowerCase().includes('fetch failed') ||
-      queryError.message?.toLowerCase().includes('failed to fetch')
-    ) {
-      return {
-        data: null,
-        error: {
-          code: 'SERVER_FAILURE',
-          message:
-            'Database connection failed (fetch failed). Your Supabase project appears to be paused due to inactivity. Please restore it in the Supabase Dashboard (https://supabase.com/dashboard).',
-        },
-      };
-    }
-  }
-
-  if (!userProfile) {
-    return {
-      data: null,
-      error: { code: 'NOT_FOUND', message: 'No registered CdM account was found with that email address.' },
-    };
-  }
-
-  // 2. Strict Role Tab Enforcement: Block cross-role recovery in the wrong tab
-  if (expectedRole === 'Student' && userProfile.role !== 'Student') {
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: `This account is registered as a ${userProfile.role} (Faculty/Staff). Please switch to the "Coordinator / Faculty" tab to reset your password.`,
-      },
-    };
-  }
-
-  if (expectedRole === 'Staff' && userProfile.role === 'Student') {
-    return {
-      data: null,
-      error: {
-        code: 'VALIDATION_FAILURE',
-        message: 'This account is registered as a Student Trainee. Password recovery for students is conducted exclusively through the CdM Mobile Application.',
-      },
-    };
-  }
-
-  // 3. Two-Point Identity Proofing against institutional ID records
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const accepted = { data: { email: normalizedEmail, maskedEmail: maskEmail(normalizedEmail), expiresAt }, error: null };
+  const { data: userProfile, error: queryError } = await service.from('users')
+    .select('user_id, role, full_name, employee_number').eq('email', normalizedEmail).maybeSingle();
+  if (queryError) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Account recovery is temporarily unavailable. Please try again later.' } };
+  // Same public response for missing accounts, role mismatch and ID mismatch.
+  if (!userProfile || (expectedRole === 'Student' && userProfile.role !== 'Student') ||
+      (expectedRole === 'Staff' && userProfile.role === 'Student')) return accepted;
+  const inputId = typeof identifier === 'string' ? identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+  let storedId = userProfile.employee_number || '';
   if (userProfile.role === 'Student') {
-    if (!identifier?.trim()) {
-      return {
-        data: null,
-        error: { code: 'VALIDATION_FAILURE', message: 'Student Number is required for student verification.' },
-      };
-    }
-
-    const { data: studentRecord } = await service
-      .from('students')
-      .select('student_number')
-      .eq('user_id', userProfile.user_id)
-      .maybeSingle();
-
-    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanDbId = (studentRecord?.student_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    if (!cleanDbId || cleanInputId !== cleanDbId) {
-      return {
-        data: null,
-        error: {
-          code: 'VALIDATION_FAILURE',
-          message: 'The provided Student ID does not match our institutional enrollment records for this account.',
-        },
-      };
-    }
-  } else {
-    if (!identifier?.trim()) {
-      return {
-        data: null,
-        error: { code: 'VALIDATION_FAILURE', message: 'Employee ID Number is required for faculty verification.' },
-      };
-    }
-
-    const cleanInputId = identifier.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanDbId = (userProfile.employee_number || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    if (!cleanDbId || cleanInputId !== cleanDbId) {
-      return {
-        data: null,
-        error: {
-          code: 'VALIDATION_FAILURE',
-          message: 'The provided Employee ID does not match our institutional records for this faculty account.',
-        },
-      };
-    }
+    const { data: student, error } = await service.from('students').select('student_number').eq('user_id', userProfile.user_id).maybeSingle();
+    if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Account recovery is temporarily unavailable. Please try again later.' } };
+    storedId = student?.student_number || '';
   }
+  if (!inputId || inputId !== storedId.toLowerCase().replace(/[^a-z0-9]/g, '')) return accepted;
 
   // 4. Generate cryptographically secure 6-digit numeric OTP
   const otp = crypto.randomInt(100000, 1000000).toString();
   const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
 
   // Invalidate any existing unused OTPs for this email address
   await service
@@ -647,7 +625,7 @@ export async function requestPasswordReset(
   });
 
   if (insertErr) {
-    console.error('[requestPasswordReset] Failed to store OTP in database:', insertErr);
+    console.error('[requestPasswordReset] OTP persistence failed');
     return {
       data: null,
       error: { code: 'SERVER_FAILURE', message: 'Failed to issue verification code. Please try again.' },
@@ -715,7 +693,7 @@ export async function verifyOtpAndResetPassword(
     p_email: normalizedEmail, p_otp_hash: otpHash,
   });
   if (claimError) {
-    console.error('[verifyOtpAndResetPassword] OTP claim failed:', claimError);
+    console.error('[verifyOtpAndResetPassword] OTP claim failed');
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Password reset is temporarily unavailable.' } };
   }
   const result = claim?.[0];
@@ -730,7 +708,7 @@ export async function verifyOtpAndResetPassword(
     password: newPassword,
   });
   if (adminAuthErr) {
-    console.error('[verifyOtpAndResetPassword] Auth password update failed:', adminAuthErr);
+    console.error('[verifyOtpAndResetPassword] Auth password update failed');
     return { data: null, error: { code: 'SERVER_FAILURE', message: 'Password update failed. Request a new code and try again.' } };
   }
 

@@ -1,10 +1,10 @@
-﻿-- ==============================================================================
+-- ==============================================================================
 -- Migration 010: Institutional Audit Trail & Security Hardening
 -- ISO/IEC 25010:2023 Non-repudiation & Accountability
 -- ==============================================================================
 
 create table if not exists audit_logs (
-  log_id uuid primary key default uuid_generate_v4(),
+  log_id uuid primary key default extensions.uuid_generate_v4(),
   actor_user_id uuid references users(user_id) on delete set null,
   action text not null,
   entity_type text not null,

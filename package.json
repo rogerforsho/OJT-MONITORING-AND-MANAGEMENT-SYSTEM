@@ -16,7 +16,8 @@
     "minimatch@^10.0.0": {
       "brace-expansion": "^5.0.12"
     },
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "shell-quote": "^1.11.0"
   },
   "scripts": {
     "build": "npm run build:web",
@@ -25,11 +26,12 @@
     "dev:desktop": "concurrently -k \"npm run dev -w apps/web\" \"wait-on http://localhost:3000 && electron apps/desktop\"",
     "build:web": "npm run build -w apps/web",
     "build:desktop": "npm run build -w apps/desktop",
-    "test": "node --test scripts/regressions.test.cjs scripts/security.test.cjs"
+    "test": "node --test scripts/regressions.test.cjs scripts/security.test.cjs && node scripts/check-security-boundaries.cjs && node scripts/check-department-rls.cjs"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "concurrently": "^9.1.2",
-    "electron": "^33.2.1",
+    "electron": "^44.7.0",
     "next": "^15.2.4",
     "wait-on": "^8.0.2"
   }

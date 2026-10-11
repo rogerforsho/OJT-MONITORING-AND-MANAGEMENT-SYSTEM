@@ -41,6 +41,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
   const [timeIn, setTimeIn] = useState('08:00');
   const [timeOut, setTimeOut] = useState('17:00');
   const [lunchMinutes, setLunchMinutes] = useState(60);
+  const [lunchBreakStart, setLunchBreakStart] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -71,6 +72,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
       if (s.time_in) setTimeIn(s.time_in.substring(0, 5));
       if (s.time_out) setTimeOut(s.time_out.substring(0, 5));
       if (s.lunch_break_minutes != null) setLunchMinutes(s.lunch_break_minutes);
+      if (s.lunch_break_start) setLunchBreakStart(s.lunch_break_start.substring(0, 5));
       if (s.start_date) setStartDate(s.start_date);
       if (s.end_date) setEndDate(s.end_date);
       if (s.student_notes) setNotes(s.student_notes);
@@ -99,10 +101,14 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
   const shiftMin = isTimeOrderValid ? (endMin - startMin) - lunchMinutes : 0;
   const dailyHours = isTimeOrderValid ? Math.max(0, Math.round((shiftMin / 60) * 100) / 100) : 0;
   const weeklyHours = Math.round((dailyHours * selectedDays.length) * 100) / 100;
+  const [lunchH, lunchM] = lunchBreakStart.split(':').map(Number);
+  const lunchStartMin = (lunchH || 0) * 60 + (lunchM || 0);
+  const isLunchValid = Number.isInteger(lunchMinutes) && lunchMinutes >= 0 && lunchMinutes <= 120 &&
+    (lunchMinutes === 0 || (/^([01]\d|2[0-3]):[0-5]\d$/.test(lunchBreakStart) && lunchStartMin >= startMin && lunchStartMin + lunchMinutes <= endMin));
 
   const isDailyExceeded = dailyHours > 8.0;
   const isWeeklyExceeded = weeklyHours > 40.0;
-  const isChedCompliant = isTimeOrderValid && isWithinDaytime && !isDailyExceeded && !isWeeklyExceeded && dailyHours > 0;
+  const isChedCompliant = isTimeOrderValid && isWithinDaytime && isLunchValid && !isDailyExceeded && !isWeeklyExceeded && dailyHours > 0;
 
   async function handleSubmit() {
     setError('');
@@ -124,6 +130,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
       time_in: timeIn,
       time_out: timeOut,
       lunch_break_minutes: lunchMinutes,
+      lunch_break_start: lunchMinutes > 0 ? lunchBreakStart : null,
       start_date: startDate,
       end_date: endDate || null,
       student_notes: notes.trim() || null,
@@ -303,6 +310,19 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                   </View>
                 </View>
 
+                <View style={{ marginTop: 8 }}>
+                  <Text style={s.label}>Lunch Break Starts (24-hour time)</Text>
+                  <TextInput
+                    style={s.timeInput}
+                    value={lunchBreakStart}
+                    onChangeText={setLunchBreakStart}
+                    placeholder={lunchMinutes > 0 ? 'e.g. 12:00' : 'Not required when break is 0'}
+                    placeholderTextColor="#94a3b8"
+                    keyboardType="numbers-and-punctuation"
+                  />
+                  <Text style={s.helperText}>Only the lunch minutes that overlap your recorded shift are deducted.</Text>
+                </View>
+
                 {/* Live CHED Compliance Card */}
                 <View style={[
                   s.complianceCard,
@@ -339,6 +359,9 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                     </View>
                   </View>
 
+                  {!isLunchValid && (
+                    <Text style={s.complianceWarning}>• Enter a valid lunch start inside the shift, with a break duration from 0 to 120 minutes.</Text>
+                  )}
                   {!isTimeOrderValid && (
                     <Text style={s.complianceWarning}>• Time In must be earlier than Time Out.</Text>
                   )}

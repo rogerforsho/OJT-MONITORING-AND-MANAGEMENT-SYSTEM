@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from '@/src/lib/supabase/server';
+import { canManageDepartmentRecord, canManageDepartmentStudent } from '@/src/lib/department-scope';
 import { getServiceClient } from '@/src/lib/supabase/service';
-import { recordAuditEvent } from './audit';
+import { recordAuditEvent } from '@/src/lib/audit';
 import { GATEWAY_DOCUMENT_SPECS, matchesDoc } from '@ojt/shared';
 import type { AppResult, DbReport } from '@ojt/shared';
 
@@ -112,18 +113,23 @@ export async function reviewReport(
   remarks?: string
 ): Promise<AppResult<null>> {
   if (!report_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Report ID is required.' } };
+  if (!['reviewed', 'approved', 'rejected'].includes(status))
+    return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid review status.' } };
 
   const { supabase, user, profile } = await getAuthUserWithRole();
   if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
+  if (!await canManageDepartmentRecord(supabase, user.id, profile.role, 'reports', 'report_id', report_id))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Report is outside your department.' } };
 
-  const { error } = await supabase.from('reports').update({
+  const { data: updated, error } = await supabase.from('reports').update({
     status,
     remarks: remarks?.trim() ?? null,
     updated_at: new Date().toISOString(),
-  }).eq('report_id', report_id);
+  }).eq('report_id', report_id).select('report_id').maybeSingle();
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to review report.' } };
+  if (!updated) return { data: null, error: { code: 'NOT_FOUND', message: 'Report not found or access denied.' } };
 
   await recordAuditEvent({
     actor_user_id: user.id,
@@ -189,16 +195,17 @@ export async function endorseReportBySupervisor(
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('reports')
     .update({
       supervisor_feedback: supervisor_feedback.trim(),
       supervisor_endorsed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq('report_id', report_id);
+    .eq('report_id', report_id).select('report_id').maybeSingle();
 
   if (error) return { data: null, error: { code: 'SERVER_FAILURE', message: 'Failed to record supervisor feedback.' } };
+  if (!updated) return { data: null, error: { code: 'NOT_FOUND', message: 'Report not found or access denied.' } };
 
   await recordAuditEvent({
     actor_user_id: user.id,
@@ -416,10 +423,12 @@ export async function getGatewayComplianceSummary(): Promise<AppResult<GatewayCo
 }
 
 export async function sendRequirementReminder(studentUserId: string, missingDocs: string[]): Promise<AppResult<null>> {
-  const { profile } = await getAuthUserWithRole();
-  if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active') {
+  const { supabase, user, profile } = await getAuthUserWithRole();
+  if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
   }
+  if (!await canManageDepartmentStudent(supabase, user.id, profile.role, studentUserId, 'user_id'))
+    return { data: null, error: { code: 'FORBIDDEN', message: 'Student is outside your department.' } };
 
   const service = getServiceClient();
   const docsText = missingDocs.join(', ');

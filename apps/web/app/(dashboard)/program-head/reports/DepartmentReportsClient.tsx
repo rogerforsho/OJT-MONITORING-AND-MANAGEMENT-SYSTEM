@@ -1,6 +1,7 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 import { Card, CardHeader, CardTitle, CardContent } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
@@ -44,6 +45,19 @@ export default function DepartmentReportsClient({
   const [courseFilter, setCourseFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [page, setPage] = useState(1);
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    // Also support the browser's own Print command without mounting hidden rows.
+    const before = () => flushSync(() => setPrinting(true));
+    const after = () => setPrinting(false);
+    window.addEventListener('beforeprint', before);
+    window.addEventListener('afterprint', after);
+    return () => {
+      window.removeEventListener('beforeprint', before);
+      window.removeEventListener('afterprint', after);
+    };
+  }, []);
 
   // Filter trainees strictly for the active department
   const filteredStudents = initialStudents.filter((s) => {
@@ -81,6 +95,9 @@ export default function DepartmentReportsClient({
 
   const deptMetrics = activeDept === 'ICS' ? summary.ics : summary.ibe;
   const isICSView = activeDept === 'ICS';
+  const pageCount = Math.max(1, Math.ceil(filteredStudents.length / 25));
+  const currentPage = Math.min(page, pageCount);
+  const visibleStudents = filteredStudents.slice((currentPage - 1) * 25, currentPage * 25);
 
   function exportCSV() {
     const headers = [
@@ -94,22 +111,25 @@ export default function DepartmentReportsClient({
       'Progress Status',
       'Completion %',
     ];
+    const csvCell = (value: string | number) => {
+      const text = String(value);
+      const safe = /^[\s]*[=+@-]/.test(text) ? `'${text}` : text;
+      return `"${safe.replaceAll('"', '""')}"`;
+    };
     const rows = filteredStudents.map((s) => [
-      `"${s.student_number}"`,
-      `"${s.full_name}"`,
-      `"${s.course}"`,
-      `"${s.company_name || 'Unassigned'}"`,
+      s.student_number,
+      s.full_name,
+      s.course,
+      s.company_name || 'Unassigned',
       s.required_hours,
       s.completed_hours,
       s.remaining_hours,
-      `"${s.progress_status}"`,
-      `"${s.percentage}%"`,
+      s.progress_status,
+      `${s.percentage}%`,
     ]);
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+    const encodedUri = URL.createObjectURL(new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
     link.setAttribute(
@@ -119,10 +139,12 @@ export default function DepartmentReportsClient({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(encodedUri);
   }
 
   function handlePrint() {
-    window.print();
+    flushSync(() => setPrinting(true));
+    try { window.print(); } finally { setPrinting(false); }
   }
 
   return (
@@ -210,9 +232,9 @@ export default function DepartmentReportsClient({
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active In Field</p>
               <p className="text-2xl font-bold text-[#0A3D24] mt-1">
-                {deptMetrics.total - deptMetrics.completed}
+                {isICSView ? summary.ics.bsit.active + summary.ics.bscpe.active : summary.ibe.bsbaHrm.active + summary.ibe.bsEntrep.active}
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Assigned to Partner Companies</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Practicum in progress</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center">
               <Building2 className="w-5 h-5" />
@@ -225,7 +247,7 @@ export default function DepartmentReportsClient({
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Completed Practicum</p>
               <p className="text-2xl font-bold text-emerald-600 mt-1">{deptMetrics.completed}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Reached 486.0 Target Hours</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Completed required practicum hours</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-emerald-700 flex items-center justify-center">
               <GraduationCap className="w-5 h-5" />
@@ -482,13 +504,15 @@ export default function DepartmentReportsClient({
                 type="text"
                 placeholder="Search trainee or company..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                aria-label="Search trainees or companies"
                 className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0A3D24] w-48 sm:w-64"
               />
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              aria-label="Filter by progress status"
               className="py-1.5 px-3 text-xs bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0A3D24]"
             >
               <option value="ALL">All Statuses</option>
@@ -520,7 +544,7 @@ export default function DepartmentReportsClient({
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((s) => (
+                  (printing ? filteredStudents : visibleStudents).map((s) => (
                     <tr key={s.student_id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-4">
                         <p className="font-bold text-slate-900">{s.full_name}</p>
@@ -572,6 +596,13 @@ export default function DepartmentReportsClient({
             </table>
           </div>
         </Card>
+        <div className="flex items-center justify-between gap-3 text-sm print:hidden">
+          <span>{filteredStudents.length} matching trainees · Page {currentPage} of {pageCount}. Export and print include all matches.</span>
+          <div className="flex gap-3">
+            <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} className="disabled:opacity-40">Previous</button>
+            <button type="button" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)} className="disabled:opacity-40">Next</button>
+          </div>
+        </div>
       </div>
     </div>
   );

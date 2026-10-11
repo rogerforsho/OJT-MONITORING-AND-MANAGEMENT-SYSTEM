@@ -61,7 +61,11 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
   ],
   ProgramHead: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Deployment Map', href: '/map', icon: MapPin },
+    { label: 'Department Approvals', href: '/coordinator/approvals', icon: UserCheck },
+    { label: 'Department Students', href: '/coordinator/students', icon: Users },
+    { label: 'Department Assignments', href: '/coordinator/assignments', icon: FileSignature },
+    { label: 'Department Submissions', href: '/coordinator/submissions', icon: ClipboardCheck },
+    { label: 'Department Progress', href: '/coordinator/progress', icon: BarChart3 },
     { label: 'Reports', href: '/program-head/reports', icon: BarChart3 },
   ],
   Admin: [

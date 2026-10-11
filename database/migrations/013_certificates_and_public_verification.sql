@@ -1,10 +1,10 @@
-﻿-- ==============================================================================
+-- ==============================================================================
 -- Migration 013: Certificates of Completion & Tamper-Proof Verification
 -- Colegio de Montalban OJT System (ICS & IBE Practicum)
 -- ==============================================================================
 
 create table if not exists public.certificates (
-  certificate_id uuid primary key default uuid_generate_v4(),
+  certificate_id uuid primary key default extensions.uuid_generate_v4(),
   student_id uuid not null references public.students(student_id) on delete cascade,
   verification_code text not null unique,
   hours_rendered numeric not null,

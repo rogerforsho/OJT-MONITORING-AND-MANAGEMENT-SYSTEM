@@ -41,6 +41,7 @@ export interface DbPracticumSchedule {
   time_in: string;
   time_out: string;
   lunch_break_minutes: number;
+  lunch_break_start: string | null;
   daily_hours: number;
   weekly_hours: number;
   start_date: string;

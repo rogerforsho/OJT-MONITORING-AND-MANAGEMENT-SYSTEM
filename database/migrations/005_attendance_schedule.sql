@@ -2,7 +2,7 @@
 -- Required for late status determination per FR-ATT-007
 -- Late status requires an assigned schedule; a total-hour goal alone cannot determine lateness
 create table work_schedules (
-  schedule_id uuid primary key default uuid_generate_v4(),
+  schedule_id uuid primary key default extensions.uuid_generate_v4(),
   company_id uuid not null references companies(company_id) on delete cascade,
   day_of_week int not null check (day_of_week between 1 and 5), -- 1=Mon, 5=Fri (no weekends per FR-ATT-005)
   time_in_start time not null,
@@ -41,7 +41,7 @@ create policy "student_read_own_schedule" on work_schedules
 -- QR TOKENS
 -- Server-issued, short-lived tokens for attendance validation per FR-QR-001
 create table qr_tokens (
-  token_id uuid primary key default uuid_generate_v4(),
+  token_id uuid primary key default extensions.uuid_generate_v4(),
   token text not null unique,
   company_id uuid not null references companies(company_id) on delete cascade,
   issued_at timestamptz not null default now(),

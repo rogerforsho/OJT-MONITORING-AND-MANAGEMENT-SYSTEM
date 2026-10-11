@@ -60,57 +60,47 @@ export async function saveImageToSandbox(source: string, filename: string): Prom
 export async function getOfflineQueue(): Promise<OfflineQueueItem[]> {
   try {
     const raw = await SecureStore.getItemAsync(QUEUE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as OfflineQueueItem[];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Appends a new attendance action to the offline queue.
- */
-export async function enqueueOfflineAttendance(
-  item: Omit<OfflineQueueItem, 'id' | 'created_at'>
-): Promise<OfflineQueueItem> {
-  const queue = await getOfflineQueue();
-  const newItem: OfflineQueueItem = {
-    ...item,
-    id: `offline_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    created_at: new Date().toISOString(),
-  };
-
-  queue.push(newItem);
-  await SecureStore.setItemAsync(QUEUE_KEY, JSON.stringify(queue));
-  return newItem;
-}
-
-/**
- * Removes a synced item from the offline queue and cleans up the sandboxed file.
- */
-export async function removeOfflineQueueItem(id: string): Promise<void> {
-  const queue = await getOfflineQueue();
-  const item = queue.find(q => q.id === id);
-  if (item && item.local_photo_uri) {
-    const isFileUri =
-      (item.local_photo_uri.startsWith('file://') || item.local_photo_uri.startsWith('/')) &&
-      !item.local_photo_uri.startsWith('/9j/') &&
-      item.local_photo_uri.length < 1000;
-
-    if (isFileUri) {
-      try {
-        const fileInfo = await FileSystem.getInfoAsync(item.local_photo_uri);
-        if (fileInfo.exists) {
-          await FileSystem.deleteAsync(item.local_photo_uri, { idempotent: true });
-        }
-      } catch {
-        // Ignore file deletion errors
-      }
+    if (raw === null) return [];
+    const queue: unknown = JSON.parse(raw);
+    if (!Array.isArray(queue) || queue.some(item => !item ||
+        !['time_in', 'time_out'].includes(item.type) ||
+        ['id', 'student_id', 'assignment_id', 'local_photo_uri', 'attendance_date', 'captured_at'].some(key => typeof item[key] !== 'string'))) {
+      throw new Error('Invalid queue');
     }
+    return queue as OfflineQueueItem[];
+  } catch {
+    // Never turn an unreadable queue into [], which a later save would overwrite.
+    throw new Error('Saved attendance could not be read. Do not clear app data. Retry or contact your coordinator.');
   }
+}
 
-  const updated = queue.filter(q => q.id !== id);
-  await SecureStore.setItemAsync(QUEUE_KEY, JSON.stringify(updated));
+let mutationQueue: Promise<unknown> = Promise.resolve();
+function mutateQueue<T>(operation: () => Promise<T>): Promise<T> {
+  const result = mutationQueue.then(operation, operation);
+  mutationQueue = result.then(() => undefined, () => undefined);
+  return result;
+}
+
+export function enqueueOfflineAttendance(item: Omit<OfflineQueueItem, 'id' | 'created_at'>): Promise<OfflineQueueItem> {
+  return mutateQueue(async () => {
+    const queue = await getOfflineQueue();
+    const newItem: OfflineQueueItem = { ...item, id: 'offline_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7), created_at: new Date().toISOString() };
+    await SecureStore.setItemAsync(QUEUE_KEY, JSON.stringify([...queue, newItem]));
+    return newItem;
+  });
+}
+
+export function removeOfflineQueueItem(id: string): Promise<void> {
+  return mutateQueue(async () => {
+    const queue = await getOfflineQueue();
+    const item = queue.find(q => q.id === id);
+    // Persist first: a failed write must leave both queue and photo recoverable.
+    await SecureStore.setItemAsync(QUEUE_KEY, JSON.stringify(queue.filter(q => q.id !== id)));
+    if (item?.local_photo_uri?.startsWith(FileSystem.documentDirectory + 'offline_selfies/') &&
+        !queue.some(q => q.id !== id && q.local_photo_uri === item.local_photo_uri)) {
+      try { await FileSystem.deleteAsync(item.local_photo_uri, { idempotent: true }); } catch { /* Cleanup can be retried without losing attendance. */ }
+    }
+  });
 }
 
 /**

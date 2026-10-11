@@ -31,7 +31,6 @@ import {
   BarChart3,
   Database,
   Download,
-  FileSpreadsheet,
 } from '@/src/components/ui/Icons';
 import {
   updateUserAccountStatus,
@@ -45,7 +44,6 @@ import {
   type CreateSystemUserInput,
   type DatabaseSnapshotResult,
   type PracticumReportSummary,
-  type PracticumRosterItem,
 } from '@/src/services/admin';
 import { createAnnouncement, listAnnouncements, deleteAnnouncement } from '@/src/services/announcements';
 import type { DbAnnouncement } from '@ojt/shared';
@@ -83,6 +81,8 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const usersRequestRef = useRef(0);
   const [tableLoading, setTableLoading] = useState(false);
   const [tableError, setTableError] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -123,6 +123,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
   const [anncLoading, setAnncLoading] = useState(false);
   const [announcements, setAnnouncements] = useState<DbAnnouncement[]>([]);
   const [anncListLoading, setAnncListLoading] = useState(true);
+  const [anncListError, setAnncListError] = useState('');
   const [deleteAnncModalOpen, setDeleteAnncModalOpen] = useState(false);
   const [anncToDelete, setAnncToDelete] = useState<DbAnnouncement | null>(null);
   const [deleteAnncLoading, setDeleteAnncLoading] = useState(false);
@@ -132,6 +133,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
   // Audit Logs State
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [auditLoading, setAuditLoading] = useState(true);
+  const [auditError, setAuditError] = useState('');
 
   // Top Level Segmented Main Tab: 'users' | 'reports' | 'backups'
   const [mainTab, setMainTab] = useState<'users' | 'reports' | 'backups'>('users');
@@ -155,22 +157,30 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
     targetStatus: string,
     targetSearch: string
   ) => {
+    const requestId = ++usersRequestRef.current;
     setTableLoading(true);
     setTableError(null);
     try {
       const res = await listAllUsers(targetPage, PAGE_SIZE, targetRole, targetStatus, targetSearch);
+      if (requestId !== usersRequestRef.current) return;
       if (res.data) {
         setUsers(res.data.users);
         setTotalCount(res.data.total);
       } else if (res.error) {
         setTableError(res.error.message || 'Failed to retrieve user records.');
       }
-    } catch (err: any) {
-      setTableError(err?.message || 'Network error while loading user records.');
+    } catch (err: unknown) {
+      if (requestId === usersRequestRef.current)
+        setTableError(err instanceof Error ? err.message : 'Network error while loading user records.');
     } finally {
-      setTableLoading(false);
+      if (requestId === usersRequestRef.current) setTableLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Fetch users when filters change, keeping initialUsers on first render if already present
   useEffect(() => {
@@ -182,16 +192,20 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
         return;
       }
     }
-    fetchUsers(page, roleFilter, statusFilter, searchQuery);
-  }, [page, roleFilter, statusFilter, searchQuery, fetchUsers, initialUsers, initialTotal]);
+    if (searchQuery !== debouncedSearch) return;
+    fetchUsers(page, roleFilter, statusFilter, debouncedSearch);
+  }, [page, roleFilter, statusFilter, searchQuery, debouncedSearch, fetchUsers, initialUsers, initialTotal]);
 
   const loadAnnouncements = useCallback(async () => {
     setAnncListLoading(true);
-    const res = await listAnnouncements();
-    if (res.data) {
-      setAnnouncements(res.data);
-    }
-    setAnncListLoading(false);
+    setAnncListError('');
+    try {
+      const res = await listAnnouncements();
+      if (res.error) setAnncListError(res.error.message);
+      else setAnnouncements(res.data ?? []);
+    } catch {
+      setAnncListError('Unable to load broadcasts. Please retry.');
+    } finally { setAnncListLoading(false); }
   }, []);
 
   useEffect(() => {
@@ -201,11 +215,14 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
 
   async function loadAudit() {
     setAuditLoading(true);
-    const res = await listAuditLogs(1, 10);
-    if (res.data?.logs) {
-      setAuditLogs(res.data.logs);
-    }
-    setAuditLoading(false);
+    setAuditError('');
+    try {
+      const res = await listAuditLogs(1, 10);
+      if (res.error) setAuditError(res.error.message);
+      else setAuditLogs(res.data?.logs ?? []);
+    } catch {
+      setAuditError('Unable to load audit records. Please refresh the log.');
+    } finally { setAuditLoading(false); }
   }
 
   const handleDeleteAnnouncementClick = (annc: DbAnnouncement) => {
@@ -231,6 +248,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
   };
 
   const handleSearchChange = (val: string) => {
+    usersRequestRef.current++;
     setSearchQuery(val);
     setPage(1);
   };
@@ -1142,6 +1160,10 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
               <div className="border-t border-slate-100 dark:border-slate-800">
                 {anncListLoading ? (
                   <div className="p-6 text-center text-xs text-slate-400">Loading broadcasts...</div>
+                ) : anncListError ? (
+                  <div role="alert" className="p-6 text-sm text-rose-700">
+                    {anncListError} <button type="button" onClick={loadAnnouncements} className="underline font-semibold">Retry</button>
+                  </div>
                 ) : announcements.length === 0 ? (
                   <div className="p-6 text-center text-xs text-slate-400">
                     No active broadcasts currently posted.
@@ -1198,6 +1220,8 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
           <CardContent className="p-0">
             {auditLoading ? (
               <div className="p-8 text-center text-xs text-slate-400">Loading audit records...</div>
+            ) : auditError ? (
+              <div role="alert" className="p-8 text-sm text-rose-700">{auditError} Use Refresh Log to retry.</div>
             ) : auditLogs.length === 0 ? (
               <div className="p-8 text-center text-xs text-slate-500">
                 <p className="font-semibold text-slate-700">No security audit events recorded yet.</p>

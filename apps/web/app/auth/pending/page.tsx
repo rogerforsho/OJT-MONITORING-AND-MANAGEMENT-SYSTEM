@@ -9,7 +9,7 @@ export default function PendingPage() {
       <div>
         <h1 className="text-xl font-black text-[#0A3D24] font-serif">Registration Under Review</h1>
         <p className="text-xs text-slate-600 mt-1.5 leading-relaxed max-w-xs mx-auto">
-          Your OJT trainee account has been successfully submitted and is awaiting approval by your designated OJT Coordinator.
+          Confirm your email using the link we sent. Your OJT Coordinator can approve your registration after your email is confirmed. If you have already confirmed it, your account is awaiting coordinator review.
         </p>
       </div>
       <div className="w-full rounded-xl bg-[#0A3D24]/5 border border-[#0A3D24]/20 px-5 py-4 text-left">

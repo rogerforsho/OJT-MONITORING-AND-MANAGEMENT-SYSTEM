@@ -13,10 +13,8 @@ if (!url || !serviceKey) {
 
   (async () => {
     const checks = [];
-    const { error: tableError } = await service.from('auth_rate_limits')
-      .select('action', { head: true }).limit(1);
-    checks.push(['Migration 028 counter table', !tableError]);
-
+    const { data: revision, error: revisionError } = await service.rpc('ojt_security_revision');
+    checks.push(['Migration 034 verified-attendance timeout boundary', !revisionError && revision >= 33]);
     const { data: bucket, error: bucketError } = await service.storage.getBucket('attendance-selfies');
     checks.push(['Migration 027 private selfie bucket', !bucketError && bucket?.public === false]);
 

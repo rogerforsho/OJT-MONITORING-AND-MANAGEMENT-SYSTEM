@@ -87,7 +87,7 @@ WITH CHECK (
 
 -- 4. Create practicum_schedules table for student work schedule proposals (Option A)
 CREATE TABLE IF NOT EXISTS public.practicum_schedules (
-  schedule_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  schedule_id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
   student_id UUID NOT NULL REFERENCES public.students(student_id) ON DELETE CASCADE,
   company_id UUID REFERENCES public.companies(company_id) ON DELETE SET NULL,
   custom_company_name TEXT,

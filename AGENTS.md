@@ -17,7 +17,7 @@
 1. **Student:** Online and offline attendance logging with GPS verification, selfie submission, hour tracking, digital report submission, notifications.
 2. **OJT Coordinator:** Student approval, company & supervisor assignment, attendance validation, report grading, progress monitoring.
 3. **Company Supervisor:** Trainee attendance verification, selfie evidence review, feedback, performance evaluations.
-4. **Program Head:** Department-level progress monitoring and summary reports (ICS / IBE).
+4. **Program Head:** Department-level progress monitoring and summary reports (ICS / IBE), plus student approvals, assignments, schedule review, and report/evaluation grading within their assigned department (confirmed by the user on 2026-10-06). No cross-department access, company administration, or certificate issuance/revocation.
 5. **System Administrator:** User account management, announcements, system configuration.
 6. **IT Experts / Evaluators:** Technical evaluation according to ISO/IEC 25010:2023.
 
