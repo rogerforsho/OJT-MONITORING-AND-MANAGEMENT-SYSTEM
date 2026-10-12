@@ -66,7 +66,7 @@ export default function ClearanceActionModal({
         onClick={handleOpen}
         className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
           completedHours >= 486
-            ? 'bg-[#0A3D24] text-[#FFCC00] hover:bg-[#062415] shadow-xs'
+            ? 'bg-[#0A3824] text-[var(--cdm-sand)] hover:bg-[#092E1D] shadow-xs'
             : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
         }`}
       >
@@ -87,7 +87,7 @@ export default function ClearanceActionModal({
               <Button
                 onClick={handleIssue}
                 loading={issuing}
-                className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md"
+                className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md"
               >
                 Sign Off & Issue Certificate
               </Button>
@@ -110,14 +110,14 @@ export default function ClearanceActionModal({
                 Student ID: <span className="font-mono text-slate-900 font-bold">{clearance.student_number}</span> • Program: <strong className="text-slate-900">{clearance.course}</strong>
               </p>
               <p className="text-slate-500 font-medium">
-                Rendered Hours: <span className="font-bold text-[#0A3D24]">{clearance.completed_hours.toFixed(1)}</span> / {clearance.required_hours} Hours
+                Rendered Hours: <span className="font-bold text-[#0A3824]">{clearance.completed_hours.toFixed(1)}</span> / {clearance.required_hours} Hours
               </p>
             </div>
 
             {/* 3 Clearance Pillars Checklist */}
             <div className="space-y-2.5">
               <h4 className="font-extrabold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-[#0A3D24]" /> Institutional Clearance Gateways
+                <Shield className="w-3.5 h-3.5 text-[#0A3824]" /> Institutional Clearance Gateways
               </h4>
 
               {/* Pillar 1 */}
@@ -185,8 +185,8 @@ export default function ClearanceActionModal({
 
             {/* Issued Certificate Details */}
             {issuedCode && (
-              <div className="p-3.5 bg-[#FAF8F5] border-2 border-[#0A3D24] rounded-xl text-center space-y-2">
-                <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#0A3D24]">
+              <div className="p-3.5 bg-[#FAF8F5] border-2 border-[#0A3824] rounded-xl text-center space-y-2">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#0A3824]">
                   <Award className="w-4 h-4" /> Official Certificate of Completion Issued
                 </div>
                 <p className="font-mono text-sm font-extrabold text-slate-900 tracking-wider">
@@ -196,7 +196,7 @@ export default function ClearanceActionModal({
                   href={`/verify-certificate/${issuedCode}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-[#0A3D24] font-bold underline block"
+                  className="text-xs text-[#0A3824] font-bold underline block"
                 >
                   Open Tamper-Proof Public Verification Portal →
                 </a>

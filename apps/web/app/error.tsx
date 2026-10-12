@@ -14,7 +14,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F6F9] px-4 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F6F2] px-4 text-center">
       <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-2xl font-bold mb-4 shadow-sm">
         !
       </div>
@@ -26,7 +26,7 @@ export default function Error({
       </p>
       <button
         onClick={() => reset()}
-        className="mt-6 inline-flex items-center px-5 py-2.5 rounded-xl bg-[#0A3D24] hover:bg-[#072a19] text-[#FFCC00] font-semibold text-sm shadow-md transition-all active:scale-[0.98]"
+        className="mt-6 inline-flex items-center px-5 py-2.5 rounded-xl bg-[#0A3824] hover:bg-[#072a19] text-[#D5B254] font-semibold text-sm shadow-md transition-all active:scale-[0.98]"
       >
         Try again
       </button>

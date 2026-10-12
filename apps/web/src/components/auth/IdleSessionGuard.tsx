@@ -136,7 +136,7 @@ export default function IdleSessionGuard({ user: _user }: Props) {
             type="button"
             size="sm"
             onClick={resetActivity}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer text-xs"
+            className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md shadow-[#0A3824]/20 cursor-pointer text-xs"
           >
             Stay Signed In
           </Button>

@@ -162,7 +162,7 @@ export default function SupervisorEvaluationsPage() {
             const res = await listAssignedStudentsForEvaluation();
             if (res.data) setStudents(res.data);
           }}
-          className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+          className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold"
         >
           + Rate Assigned Trainee
         </Button>
@@ -201,7 +201,7 @@ export default function SupervisorEvaluationsPage() {
                     <Badge className={`text-[10px] font-extrabold uppercase ${
                       e.evaluation_type === 'midterm'
                         ? 'bg-amber-50 text-amber-800 border-amber-200'
-                        : 'bg-[#0A3D24]/10 text-[#0A3D24] border-[#0A3D24]/30'
+                        : 'bg-[#0A3824]/10 text-[#0A3824] border-[#0A3824]/30'
                     }`}>
                       {e.evaluation_type === 'midterm' ? 'Midterm (243h)' : 'Final (486h)'}
                     </Badge>
@@ -242,7 +242,7 @@ export default function SupervisorEvaluationsPage() {
           <div className="flex items-center justify-between gap-3 w-full">
             <div className="flex items-center gap-2 text-xs">
               <span className="text-slate-500 font-medium">Calculated Rating:</span>
-              <span className="font-bold font-mono text-[#0A3D24] text-sm">{computedTotalScore}%</span>
+              <span className="font-bold font-mono text-[#0A3824] text-sm">{computedTotalScore}%</span>
             </div>
             <div className="flex gap-2.5">
               <Button variant="ghost" onClick={() => setModalOpen(false)} className="px-4">
@@ -252,7 +252,7 @@ export default function SupervisorEvaluationsPage() {
                 onClick={handleSave}
                 loading={saving}
                 disabled={students.length === 0 || !studentId}
-                className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md px-5"
+                className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md px-5"
               >
                 Submit Official Evaluation
               </Button>
@@ -272,7 +272,7 @@ export default function SupervisorEvaluationsPage() {
                 onClick={() => setEvaluationType('midterm')}
                 className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   evaluationType === 'midterm'
-                    ? 'border-[#0A3D24] bg-emerald-50/70 ring-2 ring-[#0A3D24]'
+                    ? 'border-[#0A3824] bg-emerald-50/70 ring-2 ring-[#0A3824]'
                     : 'border-slate-200 bg-white hover:bg-slate-50'
                 }`}
               >
@@ -290,7 +290,7 @@ export default function SupervisorEvaluationsPage() {
                 onClick={() => setEvaluationType('final')}
                 className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   evaluationType === 'final'
-                    ? 'border-[#0A3D24] bg-emerald-50/70 ring-2 ring-[#0A3D24]'
+                    ? 'border-[#0A3824] bg-emerald-50/70 ring-2 ring-[#0A3824]'
                     : 'border-slate-200 bg-white hover:bg-slate-50'
                 }`}
               >
@@ -324,7 +324,7 @@ export default function SupervisorEvaluationsPage() {
               <select
                 value={studentId}
                 onChange={e => handleStudentSelect(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] shadow-xs"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] shadow-xs"
               >
                 <option value="">Select assigned trainee ({students.length} available)</option>
                 {students.map(s => (
@@ -360,7 +360,7 @@ export default function SupervisorEvaluationsPage() {
               <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
                 CHED Practicum Competency Rubric
               </h4>
-              <span className="text-[11px] font-bold text-[#0A3D24] bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+              <span className="text-[11px] font-bold text-[#0A3824] bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
                 100 Point Scale
               </span>
             </div>
@@ -370,13 +370,13 @@ export default function SupervisorEvaluationsPage() {
               <div className="space-y-1 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
                 <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
                   <span className="truncate">1. Technical Competence</span>
-                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.technical_competence} / 25</span>
+                  <span className="font-bold font-mono text-[#0A3824] shrink-0">{criteria.technical_competence} / 25</span>
                 </div>
                 <input
                   type="range" min="10" max="25"
                   value={criteria.technical_competence}
                   onChange={e => setCriteria(c => ({ ...c, technical_competence: Number(e.target.value) }))}
-                  className="w-full accent-[#0A3D24] cursor-pointer"
+                  className="w-full accent-[#0A3824] cursor-pointer"
                 />
                 <p className="text-[10px] text-slate-400">Quality of output, technical skill</p>
               </div>
@@ -385,13 +385,13 @@ export default function SupervisorEvaluationsPage() {
               <div className="space-y-1 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
                 <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
                   <span className="truncate">2. Productivity & Dependability</span>
-                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.productivity_dependability} / 20</span>
+                  <span className="font-bold font-mono text-[#0A3824] shrink-0">{criteria.productivity_dependability} / 20</span>
                 </div>
                 <input
                   type="range" min="8" max="20"
                   value={criteria.productivity_dependability}
                   onChange={e => setCriteria(c => ({ ...c, productivity_dependability: Number(e.target.value) }))}
-                  className="w-full accent-[#0A3D24] cursor-pointer"
+                  className="w-full accent-[#0A3824] cursor-pointer"
                 />
                 <p className="text-[10px] text-slate-400">Deadlines, task completion</p>
               </div>
@@ -400,13 +400,13 @@ export default function SupervisorEvaluationsPage() {
               <div className="space-y-1 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
                 <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
                   <span className="truncate">3. Attendance & Punctuality</span>
-                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.attendance_punctuality} / 20</span>
+                  <span className="font-bold font-mono text-[#0A3824] shrink-0">{criteria.attendance_punctuality} / 20</span>
                 </div>
                 <input
                   type="range" min="8" max="20"
                   value={criteria.attendance_punctuality}
                   onChange={e => setCriteria(c => ({ ...c, attendance_punctuality: Number(e.target.value) }))}
-                  className="w-full accent-[#0A3D24] cursor-pointer"
+                  className="w-full accent-[#0A3824] cursor-pointer"
                 />
                 <p className="text-[10px] text-slate-400">Time compliance, shift discipline</p>
               </div>
@@ -415,13 +415,13 @@ export default function SupervisorEvaluationsPage() {
               <div className="space-y-1 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs">
                 <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
                   <span className="truncate">4. Communication & Teamwork</span>
-                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.communication_skills} / 15</span>
+                  <span className="font-bold font-mono text-[#0A3824] shrink-0">{criteria.communication_skills} / 15</span>
                 </div>
                 <input
                   type="range" min="5" max="15"
                   value={criteria.communication_skills}
                   onChange={e => setCriteria(c => ({ ...c, communication_skills: Number(e.target.value) }))}
-                  className="w-full accent-[#0A3D24] cursor-pointer"
+                  className="w-full accent-[#0A3824] cursor-pointer"
                 />
                 <p className="text-[10px] text-slate-400">Team collaboration, clarity</p>
               </div>
@@ -430,26 +430,26 @@ export default function SupervisorEvaluationsPage() {
               <div className="space-y-1 p-3 bg-white rounded-xl border border-slate-200/70 shadow-2xs sm:col-span-2">
                 <div className="flex justify-between items-center text-xs font-semibold text-slate-800">
                   <span className="truncate">5. Professionalism, Work Ethics & Initiative</span>
-                  <span className="font-bold font-mono text-[#0A3D24] shrink-0">{criteria.work_ethics_professionalism} / 20</span>
+                  <span className="font-bold font-mono text-[#0A3824] shrink-0">{criteria.work_ethics_professionalism} / 20</span>
                 </div>
                 <input
                   type="range" min="8" max="20"
                   value={criteria.work_ethics_professionalism}
                   onChange={e => setCriteria(c => ({ ...c, work_ethics_professionalism: Number(e.target.value) }))}
-                  className="w-full accent-[#0A3D24] cursor-pointer"
+                  className="w-full accent-[#0A3824] cursor-pointer"
                 />
                 <p className="text-[10px] text-slate-400">Etiquette, proactive problem solving</p>
               </div>
             </div>
 
             {/* Composite Score Card */}
-            <div className="p-3.5 rounded-xl bg-white border border-[#0A3D24]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
+            <div className="p-3.5 rounded-xl bg-white border border-[#0A3824]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
               <div>
                 <span className="text-xs font-bold text-slate-800">Overall Calculated Competency Rating:</span>
                 <p className="text-[11px] text-slate-500">Auto-aggregated composite across all 5 dimensions</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-black font-mono text-[#0A3D24]">{computedTotalScore}%</span>
+                <span className="text-2xl font-black font-mono text-[#0A3824]">{computedTotalScore}%</span>
                 <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full border ${
                   computedTotalScore >= 90 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                   computedTotalScore >= 80 ? 'bg-teal-50 text-teal-700 border-teal-200' :
@@ -474,7 +474,7 @@ export default function SupervisorEvaluationsPage() {
               onChange={e => setFeedback(e.target.value)}
               rows={3}
               placeholder="Detail the trainee's technical strengths, key contributions during their practicum shift, and recommended areas for continuous improvement..."
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] shadow-xs"
+              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] shadow-xs"
               required
             />
           </div>

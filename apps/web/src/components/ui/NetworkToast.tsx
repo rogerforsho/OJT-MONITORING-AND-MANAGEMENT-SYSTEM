@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 
@@ -42,8 +42,8 @@ export default function NetworkToast() {
           <span>No internet connection. Please reconnect.</span>
         </div>
       ) : (
-        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#062415]/95 text-white border border-[#FFCC00]/40 shadow-2xl backdrop-blur-md text-xs font-medium">
-          <span className="w-2 h-2 rounded-full bg-[#FFCC00] animate-ping" />
+        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#092E1D]/95 text-white border border-[var(--cdm-sand)]/40 shadow-2xl backdrop-blur-md text-xs font-medium">
+          <span className="w-2 h-2 rounded-full bg-[var(--cdm-sand)] animate-ping" />
           <span>Slow connection detected, processing your request...</span>
         </div>
       )}

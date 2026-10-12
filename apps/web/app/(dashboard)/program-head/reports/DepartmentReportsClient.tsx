@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
@@ -153,7 +153,7 @@ export default function DepartmentReportsClient({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase font-extrabold tracking-wider text-[#FFCC00] bg-[#0A3D24] px-2.5 py-0.5 rounded-full border border-[#FFCC00]/40">
+            <span className="text-xs uppercase font-extrabold tracking-wider text-[var(--cdm-sand)] bg-[#0A3824] px-2.5 py-0.5 rounded-full border border-[var(--cdm-sand)]/40">
               {isICSView ? 'ICS Department' : 'IBE Department'}
             </span>
             <span className="text-xs text-slate-500 font-medium">Academic Practicum Analytics</span>
@@ -177,7 +177,7 @@ export default function DepartmentReportsClient({
               <button
                 onClick={() => { setActiveDept('ICS'); setCourseFilter('ALL'); }}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeDept === 'ICS' ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  activeDept === 'ICS' ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 ICS
@@ -185,7 +185,7 @@ export default function DepartmentReportsClient({
               <button
                 onClick={() => { setActiveDept('IBE'); setCourseFilter('ALL'); }}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeDept === 'IBE' ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  activeDept === 'IBE' ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 IBE
@@ -202,9 +202,9 @@ export default function DepartmentReportsClient({
           </button>
           <button
             onClick={exportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-[#0A3D24] text-white hover:bg-[#062415] shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-[#0A3824] text-white hover:bg-[#092E1D] shadow-sm transition-all cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4 text-[#FFCC00]" />
+            <FileSpreadsheet className="w-4 h-4 text-[var(--cdm-sand)]" />
             Export CSV
           </button>
         </div>
@@ -221,7 +221,7 @@ export default function DepartmentReportsClient({
               <p className="text-2xl font-bold text-slate-900 mt-1">{deptMetrics.total}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Active senior cohort</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3824] flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
           </CardContent>
@@ -231,12 +231,12 @@ export default function DepartmentReportsClient({
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active In Field</p>
-              <p className="text-2xl font-bold text-[#0A3D24] mt-1">
+              <p className="text-2xl font-bold text-[#0A3824] mt-1">
                 {isICSView ? summary.ics.bsit.active + summary.ics.bscpe.active : summary.ibe.bsbaHrm.active + summary.ibe.bsEntrep.active}
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">Practicum in progress</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3824] flex items-center justify-center">
               <Building2 className="w-5 h-5" />
             </div>
           </CardContent>
@@ -262,7 +262,7 @@ export default function DepartmentReportsClient({
               <p className="text-2xl font-bold text-slate-900 mt-1">{deptMetrics.hours.toFixed(1)}</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Verified Industry Hours</p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3824] flex items-center justify-center">
               <Timer className="w-5 h-5" />
             </div>
           </CardContent>
@@ -278,7 +278,7 @@ export default function DepartmentReportsClient({
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3824] flex items-center justify-center shrink-0">
                       <Laptop className="w-5 h-5" />
                     </div>
                     <div>
@@ -314,7 +314,7 @@ export default function DepartmentReportsClient({
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3824] flex items-center justify-center shrink-0">
                       <Cpu className="w-5 h-5" />
                     </div>
                     <div>
@@ -352,7 +352,7 @@ export default function DepartmentReportsClient({
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3824] flex items-center justify-center shrink-0">
                       <Briefcase className="w-5 h-5" />
                     </div>
                     <div>
@@ -388,7 +388,7 @@ export default function DepartmentReportsClient({
               <CardHeader className="p-5 pb-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3D24] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/90 text-[#0A3824] flex items-center justify-center shrink-0">
                       <TrendingUp className="w-5 h-5" />
                     </div>
                     <div>
@@ -433,7 +433,7 @@ export default function DepartmentReportsClient({
                   onClick={() => setCourseFilter('ALL')}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                     courseFilter === 'ALL'
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -443,7 +443,7 @@ export default function DepartmentReportsClient({
                   onClick={() => setCourseFilter('BSIT')}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                     courseFilter === 'BSIT'
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -453,7 +453,7 @@ export default function DepartmentReportsClient({
                   onClick={() => setCourseFilter('BS-CPE')}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                     courseFilter === 'BS-CPE'
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -466,7 +466,7 @@ export default function DepartmentReportsClient({
                   onClick={() => setCourseFilter('ALL')}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                     courseFilter === 'ALL'
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -476,7 +476,7 @@ export default function DepartmentReportsClient({
                   onClick={() => setCourseFilter('BSBA-HRM')}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                     courseFilter === 'BSBA-HRM'
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -486,7 +486,7 @@ export default function DepartmentReportsClient({
                   onClick={() => setCourseFilter('BSENTREP')}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                     courseFilter === 'BSENTREP'
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -506,14 +506,14 @@ export default function DepartmentReportsClient({
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 aria-label="Search trainees or companies"
-                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0A3D24] w-48 sm:w-64"
+                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0A3824] w-48 sm:w-64"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               aria-label="Filter by progress status"
-              className="py-1.5 px-3 text-xs bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0A3D24]"
+              className="py-1.5 px-3 text-xs bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0A3824]"
             >
               <option value="ALL">All Statuses</option>
               <option value="completed">Completed</option>
@@ -551,7 +551,7 @@ export default function DepartmentReportsClient({
                         <p className="text-xs text-slate-400 font-mono mt-0.5">{s.student_number}</p>
                       </td>
                       <td className="px-5 py-4">
-                        <Badge variant="outline" className="text-xs font-bold text-[#0A3D24] bg-emerald-50/50 border-emerald-200">
+                        <Badge variant="outline" className="text-xs font-bold text-[#0A3824] bg-emerald-50/50 border-emerald-200">
                           {s.course}
                         </Badge>
                       </td>
@@ -566,7 +566,7 @@ export default function DepartmentReportsClient({
                         <div className="w-24 h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1.5">
                           <div
                             className={`h-full rounded-full transition-all ${
-                              s.percentage >= 100 ? 'bg-emerald-500' : 'bg-[#0A3D24]'
+                              s.percentage >= 100 ? 'bg-emerald-500' : 'bg-[#0A3824]'
                             }`}
                             style={{ width: `${s.percentage}%` }}
                           />

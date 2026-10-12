@@ -11,7 +11,7 @@ export async function GET() {
         service.rpc('ojt_security_revision').abortSignal(AbortSignal.timeout(3000)),
         service.storage.getBucket('attendance-selfies'),
       ]);
-      if (revision.error || revision.data < 33 || storage.error || storage.data?.public !== false) throw new Error('Dependency unavailable');
+      if (revision.error || revision.data < 34 || storage.error || storage.data?.public !== false) throw new Error('Dependency unavailable');
     };
     await Promise.race([checks(), new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Readiness deadline exceeded')), 4000); })]);
     return Response.json({ status: 'ready' }, { headers: { 'Cache-Control': 'no-store' } });

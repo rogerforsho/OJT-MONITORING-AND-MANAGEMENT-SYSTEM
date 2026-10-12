@@ -44,7 +44,7 @@ export default function ComplianceFramework() {
                 />
                 
                 {/* Subtle dark gradient overlay at bottom */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#062415]/80 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#092E1D]/80 via-transparent to-transparent pointer-events-none" />
 
                 <div className="absolute bottom-4 left-4 right-4 text-white">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/90 text-amber-300 text-[10px] font-bold border border-emerald-700/50 mb-1">
@@ -61,7 +61,7 @@ export default function ComplianceFramework() {
               </div>
 
               {/* FLOATING BADGE */}
-              <div className="absolute -bottom-4 -right-2 sm:-bottom-5 sm:-right-4 bg-[#FFCC00] text-slate-950 rounded-2xl p-4 shadow-xl border-2 border-white flex flex-col items-center justify-center text-center">
+              <div className="absolute -bottom-4 -right-2 sm:-bottom-5 sm:-right-4 bg-[var(--cdm-sand)] text-slate-950 rounded-2xl p-4 shadow-xl border-2 border-white flex flex-col items-center justify-center text-center">
                 <span className="text-2xl sm:text-3xl font-black font-mono leading-none">
                   ISO
                 </span>
@@ -78,14 +78,14 @@ export default function ComplianceFramework() {
             
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-1 bg-[#0A3D24] rounded-full" />
-                <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3D24]">
+                <span className="w-6 h-1 bg-[#0A3824] rounded-full" />
+                <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3824]">
                   PRACTICUM MONITORING
                 </span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 font-serif tracking-tight leading-tight">
                 Authentic Verification.<br />
-                <span className="text-[#0A3D24]">Accurate Hour Tracking.</span>
+                <span className="text-[#0A3824]">Accurate Hour Tracking.</span>
               </h2>
             </div>
 
@@ -115,7 +115,7 @@ export default function ComplianceFramework() {
             <div className="pt-2">
               <a
                 href="#resources"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#062415] hover:bg-[#0A3D24] text-white font-bold text-xs sm:text-sm shadow-md transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#092E1D] hover:bg-[#0A3824] text-white font-bold text-xs sm:text-sm shadow-md transition-colors"
               >
                 <span>Downloads &amp; Verification</span>
                 <ArrowRight className="w-4 h-4 text-amber-400" />

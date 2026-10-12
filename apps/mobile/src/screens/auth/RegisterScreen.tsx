@@ -143,7 +143,7 @@ export default function RegisterScreen({ navigation }: Props) {
                   value={form[field]}
                   onChangeText={(v: string) => set(field, v)}
                   placeholder={placeholder}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                   keyboardType={keyboard}
                   autoCapitalize={field === 'email' ? 'none' : 'words'}
                 />
@@ -173,7 +173,7 @@ export default function RegisterScreen({ navigation }: Props) {
             <View style={s.fieldGroup}>
               <Text style={s.label}>Year Standing</Text>
               <View style={s.fixedPill}>
-                <Text style={s.fixedPillText}>🎓 4th Year Graduating Trainee</Text>
+                <Text style={s.fixedPillText}>�“ 4th Year Graduating Trainee</Text>
               </View>
             </View>
 
@@ -181,7 +181,7 @@ export default function RegisterScreen({ navigation }: Props) {
             <View style={s.fieldGroup}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                 <Text style={s.label}>Validated Student ID Card *</Text>
-                <Text style={{ fontSize: 10, color: '#0A3D24', fontWeight: '700' }}>Front & Back</Text>
+                <Text style={{ fontSize: 10, color: '#0A3824', fontWeight: '700' }}>Front & Back</Text>
               </View>
               <TouchableOpacity
                 style={[s.uploadBox, idCardFile && s.uploadBoxSelected]}
@@ -191,10 +191,10 @@ export default function RegisterScreen({ navigation }: Props) {
                 <Ionicons
                   name={idCardFile ? "checkmark-circle" : "cloud-upload-outline"}
                   size={24}
-                  color={idCardFile ? "#0A3D24" : "#64748b"}
+                  color={idCardFile ? "#0A3824" : "#526257"}
                 />
                 <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={[s.uploadBoxTitle, idCardFile && { color: '#0A3D24', fontWeight: '700' }]} numberOfLines={1}>
+                  <Text style={[s.uploadBoxTitle, idCardFile && { color: '#0A3824', fontWeight: '700' }]} numberOfLines={1}>
                     {idCardFile ? idCardFile.name : 'Select Student ID File / Photo'}
                   </Text>
                   <Text style={s.uploadBoxSub}>
@@ -217,7 +217,7 @@ export default function RegisterScreen({ navigation }: Props) {
                   value={form[field]}
                   onChangeText={(v: string) => set(field, v)}
                   placeholder={placeholder}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                   secureTextEntry
                 />
               </View>
@@ -234,7 +234,7 @@ export default function RegisterScreen({ navigation }: Props) {
               </View>
               <Text style={s.consentText}>
                 I consent to the collection of my academic & practicum records under the{' '}
-                <Text style={{ fontWeight: '700', color: '#0A3D24' }}>Data Privacy Act (RA 10173)</Text>.
+                <Text style={{ fontWeight: '700', color: '#0A3824' }}>Data Privacy Act (RA 10173)</Text>.
               </Text>
             </TouchableOpacity>
 
@@ -243,7 +243,7 @@ export default function RegisterScreen({ navigation }: Props) {
             )}
 
             <TouchableOpacity style={s.btn} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
-              {loading ? <ActivityIndicator color="#FFCC00" /> : <Text style={s.btnText}>Submit Registration</Text>}
+              {loading ? <ActivityIndicator color="#E4DBC4" /> : <Text style={s.btnText}>Submit Registration</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
@@ -259,7 +259,7 @@ export default function RegisterScreen({ navigation }: Props) {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#062415' },
+  root: { flex: 1, backgroundColor: '#092E1D' },
   inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 40 },
   brand: { alignItems: 'center', marginBottom: 20 },
   logoContainer: {
@@ -269,13 +269,13 @@ const s = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 2.5,
     borderWidth: 2,
-    borderColor: '#FFCC00',
+    borderColor: '#E4DBC4',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
   logo: { width: '100%', height: '100%', borderRadius: 28 },
-  brandTitle: { fontSize: 18, fontWeight: '900', color: '#FFCC00' },
+  brandTitle: { fontSize: 18, fontWeight: '900', color: '#E4DBC4' },
   brandSub: { fontSize: 12, fontWeight: '700', color: '#ffffff', marginTop: 2 },
   badge: {
     marginTop: 6,
@@ -284,9 +284,9 @@ const s = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'rgba(6,36,21,0.8)',
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.4)',
+    borderColor: 'rgba(228,219,196,0.4)',
   },
-  badgeText: { fontSize: 10, fontWeight: '700', color: '#FFCC00' },
+  badgeText: { fontSize: 10, fontWeight: '700', color: '#E4DBC4' },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
@@ -297,19 +297,19 @@ const s = StyleSheet.create({
     shadowRadius: 10,
     elevation: 10,
   },
-  title: { fontSize: 20, fontWeight: '800', color: '#0A3D24', marginBottom: 2 },
-  subtitle: { fontSize: 12, color: '#64748b', marginBottom: 14 },
+  title: { fontSize: 20, fontWeight: '800', color: '#0A3824', marginBottom: 2 },
+  subtitle: { fontSize: 12, color: '#526257', marginBottom: 14 },
   fieldGroup: { marginBottom: 11 },
-  label: { fontSize: 11, fontWeight: '700', color: '#334155', marginBottom: 4 },
+  label: { fontSize: 11, fontWeight: '700', color: '#37483C', marginBottom: 4 },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 9,
     fontSize: 13,
-    color: '#0f172a',
-    backgroundColor: '#f8fafc',
+    color: '#18271D',
+    backgroundColor: '#F7F9F5',
   },
   pillRow: { flexDirection: 'row', gap: 6, paddingVertical: 2 },
   pill: {
@@ -317,21 +317,21 @@ const s = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: '#DCE5DB',
+    backgroundColor: '#F7F9F5',
   },
-  pillActive: { borderColor: '#0A3D24', backgroundColor: '#0A3D24' },
-  pillText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
-  pillTextActive: { color: '#FFCC00' },
+  pillActive: { borderColor: '#0A3824', backgroundColor: '#0A3824' },
+  pillText: { fontSize: 11, fontWeight: '700', color: '#526257' },
+  pillTextActive: { color: '#E4DBC4' },
   fixedPill: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: 'rgba(10,61,36,0.06)',
+    backgroundColor: 'rgba(10,56,36,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(10,61,36,0.2)',
+    borderColor: 'rgba(10,56,36,0.2)',
   },
-  fixedPillText: { fontSize: 12, fontWeight: '700', color: '#0A3D24' },
+  fixedPillText: { fontSize: 12, fontWeight: '700', color: '#0A3824' },
   uploadBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -339,25 +339,25 @@ const s = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#cbd5e1',
-    backgroundColor: '#f8fafc',
+    borderColor: '#C7D2C7',
+    backgroundColor: '#F7F9F5',
   },
   uploadBoxSelected: {
-    borderColor: '#0A3D24',
-    backgroundColor: 'rgba(10,61,36,0.04)',
+    borderColor: '#0A3824',
+    backgroundColor: 'rgba(10,56,36,0.04)',
     borderStyle: 'solid',
   },
-  uploadBoxTitle: { fontSize: 12, fontWeight: '600', color: '#1e293b' },
-  uploadBoxSub: { fontSize: 10, color: '#64748b', marginTop: 2 },
+  uploadBoxTitle: { fontSize: 12, fontWeight: '600', color: '#26372D' },
+  uploadBoxSub: { fontSize: 10, color: '#526257', marginTop: 2 },
   consentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
     padding: 10,
-    backgroundColor: 'rgba(10,61,36,0.04)',
+    backgroundColor: 'rgba(10,56,36,0.04)',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(10,61,36,0.15)',
+    borderColor: 'rgba(10,56,36,0.15)',
     marginVertical: 4,
   },
   checkbox: {
@@ -365,14 +365,14 @@ const s = StyleSheet.create({
     height: 16,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: '#0A3D24',
+    borderColor: '#0A3824',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   },
-  checkboxChecked: { backgroundColor: '#0A3D24' },
-  checkmark: { color: '#FFCC00', fontSize: 10, fontWeight: '900' },
-  consentText: { flex: 1, fontSize: 11, color: '#334155', lineHeight: 15 },
+  checkboxChecked: { backgroundColor: '#0A3824' },
+  checkmark: { color: '#E4DBC4', fontSize: 10, fontWeight: '900' },
+  consentText: { flex: 1, fontSize: 11, color: '#37483C', lineHeight: 15 },
   alertError: {
     backgroundColor: '#fef2f2',
     borderWidth: 1,
@@ -383,7 +383,7 @@ const s = StyleSheet.create({
   },
   alertErrorText: { color: '#b91c1c', fontSize: 12, fontWeight: '600', textAlign: 'center' },
   btn: {
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',
@@ -394,7 +394,7 @@ const s = StyleSheet.create({
     shadowRadius: 5,
     elevation: 4,
   },
-  btnText: { color: '#FFCC00', fontSize: 14, fontWeight: '800' },
-  linkCenter: { textAlign: 'center', color: '#64748b', fontSize: 12, marginTop: 14 },
-  linkBold: { color: '#0A3D24', fontWeight: '800' },
+  btnText: { color: '#E4DBC4', fontSize: 14, fontWeight: '800' },
+  linkCenter: { textAlign: 'center', color: '#526257', fontSize: 12, marginTop: 14 },
+  linkBold: { color: '#0A3824', fontWeight: '800' },
 });

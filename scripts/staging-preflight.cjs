@@ -14,7 +14,10 @@ if (!url || !serviceKey) {
   (async () => {
     const checks = [];
     const { data: revision, error: revisionError } = await service.rpc('ojt_security_revision');
-    checks.push(['Migration 034 verified-attendance timeout boundary', !revisionError && revision >= 33]);
+    // This marker is necessary but does not prove the policy definition exists.
+    // Confirm student_complete_verified_attendance_timeout with the read-only
+    // launch_security_checks.sql query before considering the database ready.
+    checks.push(['Security revision marker >= 34 (035 policy checked separately)', !revisionError && revision >= 34]);
     const { data: bucket, error: bucketError } = await service.storage.getBucket('attendance-selfies');
     checks.push(['Migration 027 private selfie bucket', !bucketError && bucket?.public === false]);
 

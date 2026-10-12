@@ -1,6 +1,7 @@
 'use server';
 
-import { createClient } from '@/src/lib/supabase/server';
+import { getTrustedActor } from '@/src/lib/trusted-actor';
+
 import { getServiceClient } from '@/src/lib/supabase/service';
 import { recordAuditEvent } from '@/src/lib/audit';
 import { departmentScope, restrictDepartment } from '@/src/lib/department-scope';
@@ -8,17 +9,7 @@ import type { AppResult } from '@ojt/shared';
 
 const serviceClient = getServiceClient;
 
-async function getAuthUserWithRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null };
-  const { data: profile } = await supabase
-    .from('users')
-    .select('role, account_status')
-    .eq('user_id', user.id)
-    .single();
-  return { supabase, user, profile };
-}
+
 
 export interface ClearanceCheckResult {
   student_id: string;
@@ -45,7 +36,7 @@ export interface ClearanceCheckResult {
 export async function checkClearanceStatus(student_id: string): Promise<AppResult<ClearanceCheckResult>> {
   if (!student_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.account_status !== 'active' || !['Student', 'Coordinator', 'Admin', 'ProgramHead'].includes(profile.role))
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
   const scope = await departmentScope(supabase, user.id, profile.role);
@@ -147,7 +138,7 @@ export async function checkClearanceStatus(student_id: string): Promise<AppResul
 export async function issueCertificate(student_id: string): Promise<AppResult<{ verification_code: string }>> {
   if (!student_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
 
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || !profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
   }
@@ -216,7 +207,7 @@ export async function revokeCertificate(certificate_id: string, reason: string):
   if (!certificate_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Certificate ID is required.' } };
   if (!reason?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Revocation reason is required.' } };
 
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || !profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
   }

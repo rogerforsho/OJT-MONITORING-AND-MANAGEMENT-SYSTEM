@@ -132,7 +132,7 @@ export default function SupervisorAttendancePage() {
             onClick={() => setBatchIds(records.filter(record => record.verification_status === 'pending').map(record => record.attendance_id))}
             loading={batchLoading}
             disabled={loading}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-white font-bold text-xs shadow-2xs py-2 px-4 whitespace-nowrap"
+            className="bg-[#0A3824] hover:bg-[#092E1D] text-white font-bold text-xs shadow-2xs py-2 px-4 whitespace-nowrap"
           >
             Verify this page ({records.length})
           </Button>
@@ -304,7 +304,7 @@ export default function SupervisorAttendancePage() {
                         <Button
                           variant="ghost"
                           onClick={() => openRecord(r)}
-                          className="bg-slate-50 hover:bg-slate-100 text-[#0A3D24] text-xs font-semibold px-3 py-1.5 border border-slate-200"
+                          className="bg-slate-50 hover:bg-slate-100 text-[#0A3824] text-xs font-semibold px-3 py-1.5 border border-slate-200"
                         >
                           Inspect & Verify
                         </Button>
@@ -485,7 +485,7 @@ export default function SupervisorAttendancePage() {
                 <Button
                   onClick={() => handleVerify('verified')}
                   loading={verifying}
-                  className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-white py-2 font-medium"
+                  className="flex-1 bg-[#0A3824] hover:bg-[#092E1D] text-white py-2 font-medium"
                 >
                   ✓ Verify Attendance
                 </Button>

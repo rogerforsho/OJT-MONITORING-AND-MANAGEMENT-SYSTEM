@@ -1,5 +1,7 @@
 'use server';
 
+import { getTrustedActor } from '@/src/lib/trusted-actor';
+
 import { createClient } from '@/src/lib/supabase/server';
 import { canManageDepartmentRecord, canManageDepartmentStudent } from '@/src/lib/department-scope';
 import { getServiceClient } from '@/src/lib/supabase/service';
@@ -7,17 +9,7 @@ import { recordAuditEvent } from '@/src/lib/audit';
 import { GATEWAY_DOCUMENT_SPECS, matchesDoc } from '@ojt/shared';
 import type { AppResult, DbReport } from '@ojt/shared';
 
-async function getAuthUserWithRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null };
-  const { data: profile } = await supabase
-    .from('users')
-    .select('role, account_status')
-    .eq('user_id', user.id)
-    .single();
-  return { supabase, user, profile };
-}
+
 
 export interface ReportWithStudent extends DbReport {
   students: {
@@ -34,7 +26,7 @@ export interface ReportInput {
 }
 
 export async function listStudentReports(page = 1, pageSize = 20): Promise<AppResult<{ reports: DbReport[]; total: number }>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -60,7 +52,7 @@ export async function submitReport(input: ReportInput): Promise<AppResult<null>>
   if (!input.report_type?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Report type is required.' } };
   if (!input.file_path?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'File path is required.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -89,7 +81,7 @@ export async function submitReport(input: ReportInput): Promise<AppResult<null>>
 }
 
 export async function listReportsForCoordinator(page = 1, pageSize = 20): Promise<AppResult<{ reports: ReportWithStudent[]; total: number }>> {
-  const { supabase, profile } = await getAuthUserWithRole();
+  const { supabase, profile } = await getTrustedActor();
   if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -116,7 +108,7 @@ export async function reviewReport(
   if (!['reviewed', 'approved', 'rejected'].includes(status))
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid review status.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
   if (!await canManageDepartmentRecord(supabase, user.id, profile.role, 'reports', 'report_id', report_id))
@@ -146,7 +138,7 @@ export async function listReportsForSupervisor(
   page = 1,
   pageSize = 20
 ): Promise<AppResult<{ reports: ReportWithStudent[]; total: number }>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -191,7 +183,7 @@ export async function endorseReportBySupervisor(
   if (!report_id) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Report ID is required.' } };
   if (!supervisor_feedback?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Feedback remarks are required.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -285,7 +277,7 @@ export async function checkStudentGatewayStatus(student_id: string): Promise<{ i
 }
 
 export async function getGatewayComplianceSummary(): Promise<AppResult<GatewayComplianceSummary>> {
-  const { supabase, profile } = await getAuthUserWithRole();
+  const { supabase, profile } = await getTrustedActor();
   if (!profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -423,7 +415,7 @@ export async function getGatewayComplianceSummary(): Promise<AppResult<GatewayCo
 }
 
 export async function sendRequirementReminder(studentUserId: string, missingDocs: string[]): Promise<AppResult<null>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
   }

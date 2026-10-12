@@ -21,21 +21,28 @@ async function main(){
  GRANT ALL ON ALL TABLES IN SCHEMA storage TO anon,authenticated,service_role;
  `);
  const dir=path.join(__dirname,'../database/migrations');
+ const migrationByPrefix=prefix=>{
+   const name=fs.readdirSync(dir).find(file=>prefix==='035_'
+     ? file.endsWith('_program_head_announcement_scope.sql')
+     : file.startsWith(prefix));
+   if(!name) throw new Error('Missing migration '+prefix);
+   return fs.readFileSync(path.join(dir,name),'utf8');
+ };
  for(const file of fs.readdirSync(dir).filter(f=>/^\d{3}.*\.sql$/.test(f)).sort()){
    // PGlite has gen_random_uuid; only uuid-ossp extension loading is substituted.
    const sql=fs.readFileSync(path.join(dir,file),'utf8').replace(/^\uFEFF/,'').replace(/create extension if not exists "uuid-ossp";/i,'');
    try {await db.exec(sql);} catch(error){console.error(error);throw new Error(file+': '+error.message);}
  }
  const revision=(await db.query('SELECT public.ojt_security_revision() AS revision')).rows[0].revision;
- assert.equal(Number(revision),33,'migration 034 must advance readiness revision to 33');checks++;
+ assert.equal(Number(revision),34,'migration 035 must advance readiness revision to 34');checks++;
  await db.exec(fs.readFileSync(path.join(__dirname,'../database/verification/launch_security_checks.sql'),'utf8'));
  checks++;
  // Reapplying the new migrations must be safe.
- for(const prefix of ['030_','031_','032_','033_','034_']) await db.exec(fs.readFileSync(path.join(dir,fs.readdirSync(dir).find(f=>f.startsWith(prefix))),'utf8'));
+ for(const prefix of ['030_','031_','032_','033_','034_','035_']) await db.exec(migrationByPrefix(prefix));
  // This deployment's attendance table is missing an optional legacy QR column.
  // Re-run both migrations after removing that field to simulate the reported schema.
  await db.exec('ALTER TABLE public.attendance DROP COLUMN qr_validation_status');
- for(const prefix of ['030_','031_','032_','033_','034_']) await db.exec(fs.readFileSync(path.join(dir,fs.readdirSync(dir).find(f=>f.startsWith(prefix))),'utf8'));
+ for(const prefix of ['030_','031_','032_','033_','034_','035_']) await db.exec(migrationByPrefix(prefix));
  checks++;
  await db.exec(`
  INSERT INTO users(user_id,full_name,email,role,account_status) VALUES
@@ -49,11 +56,17 @@ async function main(){
  INSERT INTO companies(company_id,company_name,address,contact_person,contact_email,contact_number) VALUES ('${id(20)}','Synthetic','Test','Test','test@example.invalid','0');
  INSERT INTO supervisors(supervisor_id,user_id,company_id,position) VALUES ('${id(13)}','${id(3)}','${id(20)}','Test');
  INSERT INTO program_heads(user_id,department_or_program) VALUES ('${id(5)}','ICS');
+ INSERT INTO announcements(announcement_id,author_user_id,title,content,target_role,target_department) VALUES
+ ('${id(50)}','${id(4)}','ICS Notice','ICS only','All','ICS'),
+ ('${id(51)}','${id(4)}','IBE Notice','IBE only','All','IBE'),
+ ('${id(52)}','${id(4)}','Campus Notice','All departments','All','All');
  INSERT INTO student_assignments(assignment_id,student_id,company_id,supervisor_id,start_date) VALUES ('${id(30)}','${id(11)}','${id(20)}','${id(13)}','2026-10-01');
  INSERT INTO practicum_schedules(student_id,time_in,time_out,lunch_break_minutes,lunch_break_start,start_date,status,reviewed_by,reviewed_at) VALUES ('${id(11)}','08:00','17:00',60,'12:00','2026-10-01','approved','${id(4)}',now());
  `);
  async function asUser(n,sql){await db.exec(`RESET ROLE; SET ROLE authenticated; SET request.jwt.claim.sub='${id(n)}'`);return (await db.query(sql)).rows;}
  async function denied(n,sql){await assert.rejects(()=>asUser(n,sql),undefined,sql);checks++;}
+ const icsAnnouncements=await asUser(5,"SELECT title FROM announcements ORDER BY title");
+ assert.deepEqual(icsAnnouncements.map(row=>row.title),['Campus Notice','ICS Notice']);checks++;
  const att=status=>`INSERT INTO attendance(student_id,assignment_id,attendance_date,time_in,verification_status,time_in_selfie_path) VALUES ('${id(11)}','${id(30)}','2026-10-08','2026-10-08 08:00+08','${status}','${id(11)}/time-in.jpg')`;
  await denied(4,`UPDATE users SET role='Admin' WHERE user_id='${id(4)}'`);
  await denied(4,`UPDATE users SET account_status='active' WHERE user_id='${id(1)}'`);

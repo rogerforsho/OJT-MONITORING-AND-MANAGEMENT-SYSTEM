@@ -88,7 +88,7 @@ export default function CoordinatorStudentsPage() {
             placeholder="Search name, email, ID, or course..."
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); if (page !== 1) setPage(1); }}
-            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#0A3D24]/20 dark:focus:ring-emerald-500/20 focus:border-[#0A3D24] dark:focus:border-emerald-600 transition-all shadow-2xs"
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#0A3824]/20 dark:focus:ring-emerald-500/20 focus:border-[#0A3824] dark:focus:border-emerald-600 transition-all shadow-2xs"
           />
         </div>
       </div>

@@ -34,7 +34,7 @@ export default function ProgressScreen() {
   if (loading) {
     return (
       <View style={s.center}>
-        <ActivityIndicator size="large" color="#0A3D24" />
+        <ActivityIndicator size="large" color="#0A3824" />
       </View>
     );
   }
@@ -47,7 +47,7 @@ export default function ProgressScreen() {
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3824']} />}
       >
         <View style={s.header}>
           <Text style={s.headerKicker}>Colegio de Montalban OJT</Text>
@@ -136,7 +136,7 @@ export default function ProgressScreen() {
 
         {/* Info banner */}
         <View style={s.infoBanner}>
-          <Ionicons name="school-outline" size={26} color="#0A3D24" />
+          <Ionicons name="school-outline" size={26} color="#0A3824" />
           <View style={{ flex: 1 }}>
             <Text style={s.infoBannerTitle}>486.0 Hours Target</Text>
             <Text style={s.infoBannerSub}>
@@ -150,18 +150,18 @@ export default function ProgressScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f4f6f9' },
-  center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center' },
+  root: { flex: 1, backgroundColor: '#F4F6F2' },
+  center: { flex: 1, backgroundColor: '#F4F6F2', alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
   header: { marginBottom: 18 },
-  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
-  title: { fontSize: 24, fontWeight: '900', color: '#062415' },
-  subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3824', textTransform: 'uppercase', letterSpacing: 0.5 },
+  title: { fontSize: 24, fontWeight: '900', color: '#092E1D' },
+  subtitle: { fontSize: 12, color: '#526257', marginTop: 2 },
   alertError: { backgroundColor: '#fbf2f2', borderWidth: 1, borderColor: '#f1cdcd', borderRadius: 12, padding: 12, marginBottom: 16 },
   alertErrorText: { color: '#7f1d1d', fontSize: 13, fontWeight: '600' },
   retryText: { color: '#991b1b', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   progressCard: {
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     borderRadius: 24,
     padding: 22,
     shadowColor: '#000',
@@ -171,33 +171,33 @@ const s = StyleSheet.create({
     elevation: 4,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.3)',
+    borderColor: 'rgba(228,219,196,0.3)',
   },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   cardTopLabel: { fontSize: 10, fontWeight: '800', color: '#a7f3d0', letterSpacing: 0.8 },
   statusPill: {
-    backgroundColor: 'rgba(255,204,0,0.2)',
+    backgroundColor: 'rgba(228,219,196,0.2)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.4)',
+    borderColor: 'rgba(228,219,196,0.4)',
   },
-  statusPillText: { fontSize: 10, fontWeight: '800', color: '#FFCC00', textTransform: 'uppercase' },
+  statusPillText: { fontSize: 10, fontWeight: '800', color: '#E4DBC4', textTransform: 'uppercase' },
   percentRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 16 },
-  percentNum: { fontSize: 44, fontWeight: '900', color: '#FFCC00' },
-  percentLabel: { fontSize: 14, fontWeight: '700', color: '#e2e8f0' },
+  percentNum: { fontSize: 44, fontWeight: '900', color: '#E4DBC4' },
+  percentLabel: { fontSize: 14, fontWeight: '700', color: '#DCE5DB' },
   progressBarTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 5, overflow: 'hidden', marginBottom: 18 },
-  progressBarFill: { height: '100%', backgroundColor: '#FFCC00', borderRadius: 5 },
+  progressBarFill: { height: '100%', backgroundColor: '#E4DBC4', borderRadius: 5 },
   hoursGrid: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)', paddingTop: 14 },
-  statLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '600' },
+  statLabel: { fontSize: 11, color: '#879687', fontWeight: '600' },
   statVal: { fontSize: 16, fontWeight: '800', color: '#ffffff', marginTop: 2 },
   profileCard: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -205,23 +205,23 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     elevation: 1,
   },
-  profileHeading: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8, marginBottom: 12 },
+  profileHeading: { fontSize: 10, fontWeight: '800', color: '#879687', letterSpacing: 0.8, marginBottom: 12 },
   profileList: { gap: 10 },
   profileRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  pLabel: { fontSize: 13, color: '#64748b', fontWeight: '500' },
-  pVal: { fontSize: 13, fontWeight: '700', color: '#1e293b', flex: 1, textAlign: 'right' },
-  pValGreen: { color: '#0A3D24' },
-  divider: { height: 1, backgroundColor: '#f1f5f9' },
+  pLabel: { fontSize: 13, color: '#526257', fontWeight: '500' },
+  pVal: { fontSize: 13, fontWeight: '700', color: '#26372D', flex: 1, textAlign: 'right' },
+  pValGreen: { color: '#0A3824' },
+  divider: { height: 1, backgroundColor: '#F4F6F2' },
   infoBanner: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F7F9F5',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  infoBannerTitle: { fontSize: 13, fontWeight: '800', color: '#0A3D24' },
-  infoBannerSub: { fontSize: 11, color: '#64748b', marginTop: 2, lineHeight: 16 },
+  infoBannerTitle: { fontSize: 13, fontWeight: '800', color: '#0A3824' },
+  infoBannerSub: { fontSize: 11, color: '#526257', marginTop: 2, lineHeight: 16 },
 });

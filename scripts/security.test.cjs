@@ -91,6 +91,13 @@ function workflowFixture(role = 'Admin', options = {}) {
   function module(name) {
     return modules[name] ||= load(`apps/web/src/services/${name}.ts`, {
       '@/src/lib/supabase/server': { createClient: async () => client },
+      '@/src/lib/trusted-actor': { async getTrustedActor() {
+        const { data: { user } } = await client.auth.getUser();
+        const profile = user ? (tables.users || []).find(row => row.user_id === user.id) || null : null;
+        return profile?.account_status === 'active'
+          ? { supabase: client, user, profile }
+          : { supabase: client, user: null, profile: null };
+      } },
       '@/src/lib/supabase/service': { getServiceClient: () => { serviceCalls++; return service; } },
       '@/src/lib/supabase/public-url': load('apps/web/src/lib/supabase/public-url.ts'),
       '@/src/lib/departments': load('apps/web/src/lib/departments.ts'),
@@ -99,7 +106,12 @@ function workflowFixture(role = 'Admin', options = {}) {
       '@/src/lib/email/send-account-status': { sendAccountStatusEmail: async () => { emailCount++; return { success: true }; } },
       '@/src/lib/audit': { recordAuditEvent: async input => { events.push(input); } },
       './reports': { checkStudentGatewayStatus: async () => ({ isCleared: true, approvedCount: 5, missing: [] }) },
-      '@ojt/shared': load('shared/gateway.ts'),
+      '@ojt/shared': {
+        ...load('shared/gateway.ts'),
+        ...load('shared/schedulePolicy.ts'),
+      },
+      'server-only': {},
+      'next/headers': { async headers() { return new Headers(); } },
       'next/navigation': { redirect() {} },
     }, { NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'unit-test-hmac-key', NEXT_PUBLIC_APP_URL: 'https://portal.test' });
   }
@@ -252,6 +264,22 @@ test('Program Heads can approve, assign, and grade their own department', async 
     assert.equal(fixture.tables.student_assignments[0].student_id, 'own');
     assert.equal(fixture.tables.practicum_schedules[0].status, 'approved');
   }
+});
+
+test('web schedule insert persists the policy-normalized lunch interval', async () => {
+  const fixture = workflowFixture('Student', { tables: {
+    students: [{ student_id: 'student', user_id: 'actor' }],
+  } });
+  const result = await fixture.module('schedule').submitPracticumSchedule({
+    work_days: [1, 2, 3, 4, 5], time_in: '08:00', time_out: '17:00',
+    lunch_break_minutes: undefined, lunch_break_start: '12:00', start_date: '2026-10-12',
+    work_modality: 'onsite',
+  });
+  assert.equal(result.error, null);
+  const inserted = fixture.tables.practicum_schedules?.[0];
+  assert.equal(inserted.lunch_break_minutes, 60);
+  assert.equal(inserted.lunch_break_start, '12:00');
+  assert.equal(inserted.daily_hours, 8);
 });
 
 test('evaluation summaries deny cross-department and unassigned reads before service-role access', async () => {
@@ -555,6 +583,12 @@ function load(relative, mocks = {}, env = {}, globals = {}) {
     fetch: globals.fetch || fetch,
     require(name) {
       if (Object.hasOwn(mocks, name)) return mocks[name];
+      if (name === 'server-only') return {};
+      if (name.startsWith('.')) {
+        let target = path.resolve(path.dirname(filename), name);
+        if (!path.extname(target)) target += '.ts';
+        return load(path.relative(root, target), mocks, env, globals);
+      }
       if (name === '@/src/lib/supabase/public-url') return load('apps/web/src/lib/supabase/public-url.ts');
       if (name === '@/src/lib/department-scope') return load('apps/web/src/lib/department-scope.ts', { 'server-only': {} });
       if (name === '@/src/lib/uploadValidation')
@@ -564,6 +598,50 @@ function load(relative, mocks = {}, env = {}, globals = {}) {
   }, { filename });
   return exports;
 }
+
+test('trusted web actor requires an active public profile matching the Auth user', async () => {
+  let authUser = { id: 'actor' };
+  let profile = { user_id: 'actor', role: 'Student', account_status: 'active' };
+  let profileError = null;
+  const supabase = {
+    auth: { async getUser() { return { data: { user: authUser }, error: null }; } },
+    from(table) {
+      assert.equal(table, 'users');
+      return {
+        select() { return this; }, eq(_column, id) { this.id = id; return this; },
+        async maybeSingle() { return { data: profile, error: profileError }; },
+      };
+    },
+  };
+  const { getTrustedActor } = load('apps/web/src/lib/trusted-actor.ts', {
+    'server-only': {}, '@/src/lib/supabase/server': { async createClient() { return supabase; } },
+  });
+  assert.equal((await getTrustedActor()).user.id, 'actor');
+  profile = { ...profile, user_id: 'another-user' };
+  assert.equal((await getTrustedActor()).user, null);
+  profile = { ...profile, user_id: 'actor', account_status: 'pending' };
+  assert.equal((await getTrustedActor()).profile, null);
+  profile = null;
+  assert.equal((await getTrustedActor()).user, null);
+  profileError = { message: 'profile lookup failed' };
+  profile = { user_id: 'actor', role: 'Admin', account_status: 'active' };
+  assert.equal((await getTrustedActor()).user, null);
+  authUser = null;
+  profileError = null;
+  assert.equal((await getTrustedActor()).profile, null);
+});
+
+test('approved web workflows share trusted identity resolution while retaining their own authorization', () => {
+  for (const service of ['announcements', 'attendance', 'certificates', 'evaluations', 'progress', 'reports', 'schedule']) {
+    const source = fs.readFileSync(path.join(root, `apps/web/src/services/${service}.ts`), 'utf8');
+    assert.match(source, /import \{ getTrustedActor \} from '@\/src\/lib\/trusted-actor';/);
+    assert.doesNotMatch(source, /function getAuthUserWithRole/);
+  }
+  const facade = fs.readFileSync(path.join(root, 'apps/web/src/services/auth.ts'), 'utf8');
+  for (const exportedAction of ['registerStudent', 'signIn', 'signOut', 'requestPasswordReset', 'verifyOtpAndResetPassword', 'changeUserPassword', 'getAuthUser']) {
+    assert.match(facade, new RegExp(`\\b${exportedAction}\\b`));
+  }
+});
 
 function file(name, type, bytes) {
   return new File([bytes], name, { type });
@@ -904,11 +982,11 @@ test('readiness checks allowed schema revision and private bucket without readin
     }) } }, env, globals);
   }
   const bucket = Promise.resolve({ data: { public: false }, error: null });
+  assert.equal((await ready(33, bucket).GET()).status, 503);
+  assert.equal((await ready(34, bucket).GET()).status, 200);
   assert.equal((await ready(32, bucket).GET()).status, 503);
-  assert.equal((await ready(33, bucket).GET()).status, 200);
-  assert.equal((await ready(31, bucket).GET()).status, 503);
   assert.equal((await ready(30, bucket).GET()).status, 503);
-  const hanging = ready(33, new Promise(() => {}), { setTimeout(callback, ms) { assert.equal(ms, 4000); return setTimeout(callback, 1); } });
+  const hanging = ready(34, new Promise(() => {}), { setTimeout(callback, ms) { assert.equal(ms, 4000); return setTimeout(callback, 1); } });
   assert.equal((await hanging.GET()).status, 503);
 });
 test('mobile recovery requires an explicit HTTPS portal for release builds', () => {

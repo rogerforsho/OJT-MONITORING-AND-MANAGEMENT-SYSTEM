@@ -1,23 +1,14 @@
 'use server';
 
-import { createClient } from '@/src/lib/supabase/server';
+import { getTrustedActor } from '@/src/lib/trusted-actor';
+
 import { getServiceClient } from '@/src/lib/supabase/service';
 import type { AppResult, DbAnnouncement } from '@ojt/shared';
 import { isICSCourse, isIBECourse } from '@/src/lib/departments';
 
 const serviceClient = getServiceClient;
 
-async function getAuthUserWithRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null };
-  const { data: profile } = await supabase
-    .from('users')
-    .select('user_id, full_name, email, role, account_status')
-    .eq('user_id', user.id)
-    .single();
-  return { supabase, user, profile };
-}
+
 
 export interface AnnouncementInput {
   title: string;
@@ -29,7 +20,7 @@ export interface AnnouncementInput {
 }
 
 export async function listAnnouncements(): Promise<AppResult<DbAnnouncement[]>> {
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -51,7 +42,7 @@ export async function createAnnouncement(input: AnnouncementInput): Promise<AppR
   if (!input.content?.trim())
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Content is required.' } };
 
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || !['Coordinator', 'Admin'].includes(profile?.role ?? '') || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -138,7 +129,7 @@ export async function deleteAnnouncement(announcement_id: string): Promise<AppRe
   if (!announcement_id)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Announcement ID is required.' } };
 
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || !['Coordinator', 'Admin'].includes(profile?.role ?? '') || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 

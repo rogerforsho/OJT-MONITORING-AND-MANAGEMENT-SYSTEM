@@ -14,12 +14,12 @@ interface LeafletDeploymentMapProps {
 const CDM_COORDINATES: [number, number] = [14.731358, 121.137882];
 
 function createPinIcon(isGeofenced: boolean, isSelected: boolean, traineesCount: number) {
-  const pinColor = isSelected ? '#FFCC00' : isGeofenced ? '#0A3D24' : '#F59E0B';
-  const textColor = isSelected ? '#062415' : '#FFFFFF';
-  const strokeColor = isSelected ? '#0A3D24' : '#FFFFFF';
+  const pinColor = isSelected ? '#E4DBC4' : isGeofenced ? '#0A3824' : '#F59E0B';
+  const textColor = isSelected ? '#092E1D' : '#FFFFFF';
+  const strokeColor = isSelected ? '#0A3824' : '#FFFFFF';
 
   const badgeHtml = traineesCount > 0
-    ? `<span style="position: absolute; top: -6px; right: -8px; background: #0A3D24; color: #FFCC00; border: 1.5px solid #FFFFFF; border-radius: 9999px; font-size: 10px; font-weight: 800; padding: 1px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.25);">${traineesCount}</span>`
+    ? `<span style="position: absolute; top: -6px; right: -8px; background: #0A3824; color: #E4DBC4; border: 1.5px solid #FFFFFF; border-radius: 9999px; font-size: 10px; font-weight: 800; padding: 1px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.25);">${traineesCount}</span>`
     : '';
 
   const pinSvg = `
@@ -71,7 +71,7 @@ export default function LeafletDeploymentMap({
     // College marker for institutional reference
     const cdmIcon = L.divIcon({
       html: `
-        <div style="background: #062415; color: #FFCC00; border: 2px solid #FFCC00; border-radius: 12px; padding: 4px 8px; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 4px;">
+        <div style="background: #092E1D; color: #E4DBC4; border: 2px solid #E4DBC4; border-radius: 12px; padding: 4px 8px; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 4px;">
           <span>🏛️</span>
           <span>CdM Main Campus</span>
         </div>
@@ -85,7 +85,7 @@ export default function LeafletDeploymentMap({
       .addTo(map)
       .bindPopup(`
         <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
-          <strong style="color: #062415; font-size: 13px;">Colegio de Montalban</strong><br/>
+          <strong style="color: #092E1D; font-size: 13px;">Colegio de Montalban</strong><br/>
           <span style="color: #64748B;">Kasiglahan Village, Rodriguez, Rizal</span><br/>
           <span style="display: inline-block; margin-top: 4px; padding: 2px 6px; background: #ECFDF5; color: #047857; border-radius: 4px; font-size: 10px; font-weight: 700;">Academic Center (ICS & IBE)</span>
         </div>
@@ -128,8 +128,8 @@ export default function LeafletDeploymentMap({
       if (isGeofenced) {
         const circle = L.circle([lat, lng], {
           radius: company.geofence_radius_meters || 150,
-          color: isSelected ? '#0A3D24' : '#059669',
-          fillColor: isSelected ? '#0A3D24' : '#10B981',
+          color: isSelected ? '#0A3824' : '#059669',
+          fillColor: isSelected ? '#0A3824' : '#10B981',
           fillOpacity: isSelected ? 0.28 : 0.15,
           weight: isSelected ? 2.5 : 1.5,
           dashArray: isSelected ? undefined : '5, 5',
@@ -202,7 +202,7 @@ export default function LeafletDeploymentMap({
           Map Legend
         </span>
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-          <span className="w-3 h-3 rounded-full bg-[#0A3D24] border border-white shrink-0" />
+          <span className="w-3 h-3 rounded-full bg-[#0A3824] border border-white shrink-0" />
           <span>Workplace Perimeter (150m Radius)</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
@@ -210,7 +210,7 @@ export default function LeafletDeploymentMap({
           <span>Coordinates Unset / Inactive</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-          <span className="w-3 h-3 rounded-full bg-[#FFCC00] border border-[#0A3D24] shrink-0" />
+          <span className="w-3 h-3 rounded-full bg-[var(--cdm-sand)] border border-[#0A3824] shrink-0" />
           <span>Selected Establishment</span>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use server';
 
-import { createClient } from '@/src/lib/supabase/server';
+import { getTrustedActor } from '@/src/lib/trusted-actor';
+
 import { getServiceClient } from '@/src/lib/supabase/service';
 import { toPublicSupabaseUrl } from '@/src/lib/supabase/public-url';
 import { recordAuditEvent } from '@/src/lib/audit';
@@ -16,24 +17,14 @@ export interface AttendanceWithStudent extends DbAttendance {
   };
 }
 
-async function getAuthUserWithRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null };
-  const { data: profile } = await supabase
-    .from('users')
-    .select('role, account_status')
-    .eq('user_id', user.id)
-    .single();
-  return { supabase, user, profile };
-}
+
 
 export async function listAttendanceForSupervisor(
   page = 1,
   pageSize = 20,
   verificationFilter?: VerificationStatus
 ): Promise<AppResult<{ records: AttendanceWithStudent[]; total: number }>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -95,7 +86,7 @@ export async function verifyAttendance(
   if (!['verified', 'rejected'].includes(verification_status))
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Invalid verification status.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -162,7 +153,7 @@ export async function batchVerifyAttendance(attendanceIds: string[]): Promise<Ap
       attendanceIds.some(id => typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)))
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Choose between 1 and 20 visible attendance records.' } };
   const requestedIds = [...new Set(attendanceIds)];
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -229,7 +220,7 @@ export async function coordinatorOverrideVerifyAttendance(
   if (!attendance_id)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Attendance ID is required.' } };
 
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || !['Coordinator', 'Admin'].includes(profile?.role ?? '') || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Institutional Coordinator privileges required.' } };
 
@@ -280,7 +271,7 @@ export async function coordinatorBatchOverrideForStudent(
   if (!student_id)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Student ID is required.' } };
 
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || !['Coordinator', 'Admin'].includes(profile?.role ?? '') || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Institutional Coordinator privileges required.' } };
 
@@ -317,7 +308,7 @@ export async function getSelfieUrl(selfie_path: string): Promise<AppResult<{ url
   if (!selfie_path)
     return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Selfie path is required.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.account_status !== 'active' || !['Supervisor', 'Coordinator', 'Admin'].includes(profile.role))
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -348,7 +339,7 @@ export async function listAttendanceForCoordinator(
   page = 1,
   pageSize = 20
 ): Promise<AppResult<{ records: AttendanceWithStudent[]; total: number }>> {
-  const { supabase, profile } = await getAuthUserWithRole();
+  const { supabase, profile } = await getTrustedActor();
   if (!profile || !['Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -371,7 +362,7 @@ export async function listOwnAttendance(
   page = 1,
   pageSize = 20
 ): Promise<AppResult<{ records: DbAttendance[]; total: number }>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 

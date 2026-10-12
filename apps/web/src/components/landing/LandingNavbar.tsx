@@ -14,7 +14,7 @@ export default function LandingNavbar({ onOpenAccessPortal }: LandingNavbarProps
   const [verificationOpen, setVerificationOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#062415]/95 backdrop-blur-md border-b border-emerald-950/60 transition-all">
+    <header className="sticky top-0 z-40 w-full bg-[#092E1D]/95 backdrop-blur-md border-b border-emerald-950/60 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
@@ -46,19 +46,19 @@ export default function LandingNavbar({ onOpenAccessPortal }: LandingNavbarProps
             <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
               <a
                 href="#hero"
-                className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[#FFCC00] hover:bg-white/5 rounded-lg transition-colors"
+                className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[var(--cdm-sand)] hover:bg-white/5 rounded-lg transition-colors"
               >
                 Home
               </a>
               <a
                 href="#programs"
-                className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[#FFCC00] hover:bg-white/5 rounded-lg transition-colors"
+                className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[var(--cdm-sand)] hover:bg-white/5 rounded-lg transition-colors"
               >
                 Academic Programs
               </a>
               <a
                 href="#capabilities"
-                className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[#FFCC00] hover:bg-white/5 rounded-lg transition-colors"
+                className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[var(--cdm-sand)] hover:bg-white/5 rounded-lg transition-colors"
               >
                 Capabilities
               </a>
@@ -72,26 +72,26 @@ export default function LandingNavbar({ onOpenAccessPortal }: LandingNavbarProps
                 <button
                   type="button"
                   onClick={() => setVerificationOpen((prev) => !prev)}
-                  className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[#FFCC00] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-2 text-sm font-bold text-slate-100 hover:text-[var(--cdm-sand)] hover:bg-white/5 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                   aria-expanded={verificationOpen}
                 >
                   <Shield className="w-4 h-4 text-emerald-400" />
                   <span>Verification</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${verificationOpen ? 'rotate-180 text-[#FFCC00]' : 'text-slate-400'}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${verificationOpen ? 'rotate-180 text-[var(--cdm-sand)]' : 'text-slate-400'}`} />
                 </button>
 
                 {verificationOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-64 rounded-xl bg-[#062415] border border-emerald-800/80 shadow-2xl p-1.5 space-y-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute top-full left-0 mt-1 w-64 rounded-xl bg-[#092E1D] border border-emerald-800/80 shadow-2xl p-1.5 space-y-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                     <Link
                       href="/verify-certificate/search"
                       onClick={() => setVerificationOpen(false)}
                       className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-white/10 transition-colors group"
                     >
-                      <div className="w-7 h-7 rounded-lg bg-emerald-900/60 text-[#FFCC00] flex items-center justify-center shrink-0 border border-emerald-700/50 mt-0.5">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-900/60 text-[var(--cdm-sand)] flex items-center justify-center shrink-0 border border-emerald-700/50 mt-0.5">
                         <Shield className="w-3.5 h-3.5" />
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white group-hover:text-[#FFCC00] block">
+                        <span className="text-xs font-bold text-white group-hover:text-[var(--cdm-sand)] block">
                           Verify Certificate
                         </span>
                         <span className="text-[10px] text-slate-300 block">
@@ -109,7 +109,7 @@ export default function LandingNavbar({ onOpenAccessPortal }: LandingNavbarProps
                         <Download className="w-3.5 h-3.5" />
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white group-hover:text-[#FFCC00] block">
+                        <span className="text-xs font-bold text-white group-hover:text-[var(--cdm-sand)] block">
                           Downloads &amp; Tools
                         </span>
                         <span className="text-[10px] text-slate-300 block">
@@ -127,7 +127,7 @@ export default function LandingNavbar({ onOpenAccessPortal }: LandingNavbarProps
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={onOpenAccessPortal}
-              className="h-10 px-4 sm:px-5 rounded-xl bg-[#FFCC00] hover:bg-amber-400 active:scale-98 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 leading-none transition-all shadow-md shadow-amber-500/10 cursor-pointer"
+              className="h-10 px-4 sm:px-5 rounded-xl bg-[var(--cdm-sand)] hover:bg-amber-400 active:scale-98 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 leading-none transition-all shadow-md shadow-amber-500/10 cursor-pointer"
             >
               <Lock className="w-3.5 h-3.5 text-slate-900 shrink-0" />
               <span className="inline-block pt-0.5">Access Portal</span>
@@ -149,40 +149,40 @@ export default function LandingNavbar({ onOpenAccessPortal }: LandingNavbarProps
 
       {/* MOBILE DRAWER */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-emerald-950/80 bg-[#062415] px-4 py-5 space-y-3 animate-in slide-in-from-top-2 duration-150">
+        <div className="lg:hidden border-t border-emerald-950/80 bg-[#092E1D] px-4 py-5 space-y-3 animate-in slide-in-from-top-2 duration-150">
           <div className="space-y-1">
             <a
               href="#hero"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-bold text-slate-100 hover:text-[#FFCC00] hover:bg-white/10 rounded-lg transition-colors"
+              className="block px-3 py-2 text-sm font-bold text-slate-100 hover:text-[var(--cdm-sand)] hover:bg-white/10 rounded-lg transition-colors"
             >
               Home
             </a>
             <a
               href="#programs"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-bold text-slate-100 hover:text-[#FFCC00] hover:bg-white/10 rounded-lg transition-colors"
+              className="block px-3 py-2 text-sm font-bold text-slate-100 hover:text-[var(--cdm-sand)] hover:bg-white/10 rounded-lg transition-colors"
             >
               Academic Programs
             </a>
             <a
               href="#capabilities"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-bold text-slate-100 hover:text-[#FFCC00] hover:bg-white/10 rounded-lg transition-colors"
+              className="block px-3 py-2 text-sm font-bold text-slate-100 hover:text-[var(--cdm-sand)] hover:bg-white/10 rounded-lg transition-colors"
             >
               Capabilities
             </a>
             <Link
               href="/verify-certificate/search"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-bold text-emerald-300 hover:text-[#FFCC00] hover:bg-white/10 rounded-lg transition-colors"
+              className="block px-3 py-2 text-sm font-bold text-emerald-300 hover:text-[var(--cdm-sand)] hover:bg-white/10 rounded-lg transition-colors"
             >
               Verify Certificate
             </Link>
             <a
               href="#resources"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-bold text-slate-200 hover:text-[#FFCC00] hover:bg-white/10 rounded-lg transition-colors"
+              className="block px-3 py-2 text-sm font-bold text-slate-200 hover:text-[var(--cdm-sand)] hover:bg-white/10 rounded-lg transition-colors"
             >
               Downloads &amp; Tools
             </a>
@@ -194,7 +194,7 @@ export default function LandingNavbar({ onOpenAccessPortal }: LandingNavbarProps
                 setMobileMenuOpen(false);
                 onOpenAccessPortal();
               }}
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-[#FFCC00] text-slate-950 font-bold text-sm shadow-md cursor-pointer"
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-[var(--cdm-sand)] text-slate-950 font-bold text-sm shadow-md cursor-pointer"
             >
               <Lock className="w-4 h-4" />
               <span>Launch Sign In Portal</span>

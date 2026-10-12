@@ -26,7 +26,7 @@
     "dev:desktop": "concurrently -k \"npm run dev -w apps/web\" \"wait-on http://localhost:3000 && electron apps/desktop\"",
     "build:web": "npm run build -w apps/web",
     "build:desktop": "npm run build -w apps/desktop",
-    "test": "node --test scripts/regressions.test.cjs scripts/security.test.cjs && node scripts/check-security-boundaries.cjs && node scripts/check-department-rls.cjs"
+    "test": "node --test scripts/regressions.test.cjs scripts/security.test.cjs scripts/desktop-connection.test.cjs && node scripts/check-security-boundaries.cjs && node scripts/check-department-rls.cjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

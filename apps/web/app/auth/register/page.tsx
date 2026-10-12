@@ -114,7 +114,7 @@ export default function RegisterPage() {
   return (
     <>
       <div className="mb-5">
-        <h1 className="text-xl font-black text-[#0A3D24] font-serif">Student Registration</h1>
+        <h1 className="text-xl font-black text-[#0A3824] font-serif">Student Registration</h1>
         <p className="text-xs text-slate-500 mt-1">
           Enroll your 4th-Year OJT trainee profile (ICS / IBE).
         </p>
@@ -151,7 +151,7 @@ export default function RegisterPage() {
               value={form.course}
               onChange={(e) => set('course', e.target.value)}
               required
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] focus:border-[#0A3D24] hover:border-slate-300 transition-all font-medium"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] focus:border-[#0A3824] hover:border-slate-300 transition-all font-medium"
             >
               {COURSES.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -166,7 +166,7 @@ export default function RegisterPage() {
               value={form.year_level}
               onChange={(e) => set('year_level', e.target.value)}
               required
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] focus:border-[#0A3D24] hover:border-slate-300 transition-all font-medium"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] focus:border-[#0A3824] hover:border-slate-300 transition-all font-medium"
             >
               <option value="4">4th Year (Graduating / Practicum)</option>
             </select>
@@ -189,7 +189,7 @@ export default function RegisterPage() {
             accept="image/*,application/pdf"
             onChange={handleFileChange}
             required
-            className="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#0A3D24] file:text-white hover:file:bg-[#062415] file:cursor-pointer cursor-pointer"
+            className="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#0A3824] file:text-white hover:file:bg-[#092E1D] file:cursor-pointer cursor-pointer"
           />
           {idCardPreview && (
             <div className="mt-2 relative w-full h-32 rounded-lg border border-slate-200 overflow-hidden bg-white flex items-center justify-center">
@@ -232,11 +232,11 @@ export default function RegisterPage() {
             checked={dataPrivacyConsent}
             onChange={(e) => setDataPrivacyConsent(e.target.checked)}
             required
-            className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-[#0A3D24] focus:ring-[#0A3D24] cursor-pointer"
+            className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-[#0A3824] focus:ring-[#0A3824] cursor-pointer"
           />
           <label htmlFor="data-privacy-consent" className="cursor-pointer leading-tight select-none">
             I consent to the collection and processing of my academic and practicum records in accordance with the{' '}
-            <span className="font-bold text-[#0A3D24]">Philippine Data Privacy Act of 2012 (RA 10173)</span> for official OJT monitoring.
+            <span className="font-bold text-[#0A3824]">Philippine Data Privacy Act of 2012 (RA 10173)</span> for official OJT monitoring.
           </label>
         </div>
 
@@ -248,7 +248,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-xs text-slate-500 pt-1">
           Already have an active account?{' '}
-          <Link href="/auth/sign-in" className="text-[#0A3D24] hover:underline font-bold">
+          <Link href="/auth/sign-in" className="text-[#0A3824] hover:underline font-bold">
             Sign in
           </Link>
         </p>

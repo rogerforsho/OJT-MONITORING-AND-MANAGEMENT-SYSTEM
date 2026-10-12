@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
 interface NetworkToastProps {
@@ -64,7 +64,7 @@ const s = StyleSheet.create({
     elevation: 8,
   },
   pillSlow: {
-    backgroundColor: '#062415',
+    backgroundColor: '#092E1D',
     borderWidth: 1,
     borderColor: 'rgba(255, 204, 0, 0.4)',
   },
@@ -79,7 +79,7 @@ const s = StyleSheet.create({
     borderRadius: 3.5,
   },
   dotSlow: {
-    backgroundColor: '#FFCC00',
+    backgroundColor: '#E4DBC4',
   },
   dotOffline: {
     backgroundColor: '#ef4444',

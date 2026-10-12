@@ -101,7 +101,7 @@ export default function SupervisorReportsPage() {
               onClick={() => setFilter(tab)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
                 filter === tab
-                  ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                  ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -171,7 +171,7 @@ export default function SupervisorReportsPage() {
                       <button
                         onClick={() => handleOpenDocument(r.file_path, r.report_id)}
                         disabled={openingDocId === r.report_id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-[#0A3D24] border border-emerald-200 hover:bg-emerald-100 text-xs font-bold transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-[#0A3824] border border-emerald-200 hover:bg-emerald-100 text-xs font-bold transition-all cursor-pointer"
                       >
                         {openingDocId === r.report_id ? 'Opening...' : '📄 View Document'}
                       </button>
@@ -204,7 +204,7 @@ export default function SupervisorReportsPage() {
                           setEndorsingReport(r);
                           setFeedback(r.supervisor_feedback || '');
                         }}
-                        className="text-xs font-bold text-[#0A3D24] hover:bg-emerald-50"
+                        className="text-xs font-bold text-[#0A3824] hover:bg-emerald-50"
                       >
                         {r.supervisor_feedback ? 'Edit Feedback' : '+ Add Feedback'}
                       </Button>
@@ -244,7 +244,7 @@ export default function SupervisorReportsPage() {
             <Button
               onClick={handleSaveEndorsement}
               loading={submittingFeedback}
-              className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+              className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold"
             >
               Save & Endorse Log
             </Button>
@@ -275,7 +275,7 @@ export default function SupervisorReportsPage() {
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Confirm intern's accomplishments, verify weekly tasks performed, or note areas for improvement..."
               rows={4}
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824]"
               required
             />
           </div>

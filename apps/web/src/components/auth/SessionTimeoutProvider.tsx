@@ -106,7 +106,7 @@ export default function SessionTimeoutProvider({ children }: { children: React.R
             </div>
 
             <div className="py-2">
-              <span className="font-mono text-3xl font-extrabold text-[#0A3D24] px-4 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+              <span className="font-mono text-3xl font-extrabold text-[#0A3824] px-4 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
                 {Math.floor(secondsRemaining / 60)}:
                 {String(secondsRemaining % 60).padStart(2, '0')}
               </span>
@@ -123,7 +123,7 @@ export default function SessionTimeoutProvider({ children }: { children: React.R
               <button
                 type="button"
                 onClick={resetTimer}
-                className="px-5 py-2 text-xs font-semibold text-white bg-[#0A3D24] hover:bg-[#082e1b] rounded-lg shadow-xs transition-colors"
+                className="px-5 py-2 text-xs font-semibold text-white bg-[#0A3824] hover:bg-[#082e1b] rounded-lg shadow-xs transition-colors"
               >
                 Keep Me Signed In
               </button>

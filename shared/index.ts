@@ -7,3 +7,4 @@ export * from './validation';
 export * from './geo';
 export * from './gateway';
 export * from './attendanceDate';
+export * from './schedulePolicy';

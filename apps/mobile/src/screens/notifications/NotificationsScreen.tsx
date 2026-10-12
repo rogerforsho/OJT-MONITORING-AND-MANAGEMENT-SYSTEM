@@ -62,7 +62,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <View style={s.center}>
-        <ActivityIndicator size="large" color="#0A3D24" />
+        <ActivityIndicator size="large" color="#0A3824" />
       </View>
     );
   }
@@ -79,7 +79,7 @@ export default function NotificationsScreen() {
           {unreadCount > 0 && (
             <TouchableOpacity onPress={handleMarkAllRead} style={s.markAllBtn} activeOpacity={0.8}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Ionicons name="checkmark-done" size={14} color="#0A3D24" />
+                <Ionicons name="checkmark-done" size={14} color="#0A3824" />
                 <Text style={s.markAllText}>Mark all read</Text>
               </View>
             </TouchableOpacity>
@@ -107,7 +107,7 @@ export default function NotificationsScreen() {
               <Ionicons
                 name="megaphone-outline"
                 size={13}
-                color={filter === 'announcements' ? '#FFCC00' : '#475569'}
+                color={filter === 'announcements' ? '#E4DBC4' : '#37483C'}
               />
               <Text style={[s.filterText, filter === 'announcements' && s.filterTextActive]}>
                 Announcements
@@ -123,7 +123,7 @@ export default function NotificationsScreen() {
               <Ionicons
                 name="notifications-outline"
                 size={13}
-                color={filter === 'alerts' ? '#FFCC00' : '#475569'}
+                color={filter === 'alerts' ? '#E4DBC4' : '#37483C'}
               />
               <Text style={[s.filterText, filter === 'alerts' && s.filterTextActive]}>
                 Alerts {unreadCount > 0 ? `(${unreadCount})` : ''}
@@ -153,10 +153,10 @@ export default function NotificationsScreen() {
         data={filteredFeed}
         keyExtractor={(item) => item.id}
         contentContainerStyle={s.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3824']} />}
         ListEmptyComponent={
           <View style={s.emptyBox}>
-            <Ionicons name="notifications-off-outline" size={44} color="#94a3b8" style={{ marginBottom: 8 }} />
+            <Ionicons name="notifications-off-outline" size={44} color="#879687" style={{ marginBottom: 8 }} />
             <Text style={s.emptyTitle}>No notifications yet</Text>
             <Text style={s.emptySub}>
               You are all caught up with your OJT coordinator and supervisor updates.
@@ -178,7 +178,7 @@ export default function NotificationsScreen() {
                   <Ionicons
                     name={isAnnouncement ? 'megaphone' : 'notifications'}
                     size={14}
-                    color="#0A3D24"
+                    color="#0A3824"
                   />
                   <Text style={s.tagText}>
                     {isAnnouncement ? 'ANNOUNCEMENT' : 'DIRECT NOTICE'}
@@ -201,32 +201,32 @@ export default function NotificationsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f4f6f9' },
-  center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center' },
+  root: { flex: 1, backgroundColor: '#F4F6F2' },
+  center: { flex: 1, backgroundColor: '#F4F6F2', alignItems: 'center', justifyContent: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14 },
-  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
-  title: { fontSize: 24, fontWeight: '900', color: '#062415' },
-  subtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  markAllBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: 'rgba(10,61,36,0.08)' },
-  markAllText: { fontSize: 11, fontWeight: '700', color: '#0A3D24' },
+  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3824', textTransform: 'uppercase', letterSpacing: 0.5 },
+  title: { fontSize: 24, fontWeight: '900', color: '#092E1D' },
+  subtitle: { fontSize: 12, color: '#526257', marginTop: 2 },
+  markAllBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: 'rgba(10,56,36,0.08)' },
+  markAllText: { fontSize: 11, fontWeight: '700', color: '#0A3824' },
   filterRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  filterPill: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ffffff', borderWidth: 1.5, borderColor: '#e2e8f0' },
-  filterPillActive: { backgroundColor: '#0A3D24', borderColor: '#0A3D24' },
-  filterText: { fontSize: 12, fontWeight: '700', color: '#475569' },
-  filterTextActive: { color: '#FFCC00' },
+  filterPill: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ffffff', borderWidth: 1.5, borderColor: '#DCE5DB' },
+  filterPillActive: { backgroundColor: '#0A3824', borderColor: '#0A3824' },
+  filterText: { fontSize: 12, fontWeight: '700', color: '#37483C' },
+  filterTextActive: { color: '#E4DBC4' },
   alertError: { marginHorizontal: 20, backgroundColor: '#fbf2f2', borderWidth: 1, borderColor: '#f1cdcd', borderRadius: 12, padding: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
   alertErrorText: { color: '#7f1d1d', fontSize: 13, fontWeight: '600', flex: 1 },
   listContent: { paddingHorizontal: 20, paddingBottom: 32, gap: 12 },
-  feedCard: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
-  feedCardUnread: { backgroundColor: 'rgba(10,61,36,0.04)', borderColor: '#0A3D24' },
+  feedCard: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#DCE5DB', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  feedCardUnread: { backgroundColor: 'rgba(10,56,36,0.04)', borderColor: '#0A3824' },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   tagRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tagText: { fontSize: 11, fontWeight: '800', color: '#0A3D24', letterSpacing: 0.5 },
-  unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFCC00' },
-  dateText: { fontSize: 11, color: '#94a3b8' },
-  feedTitle: { fontSize: 15, fontWeight: '800', color: '#062415', marginBottom: 4 },
-  feedMessage: { fontSize: 13, color: '#475569', lineHeight: 18 },
+  tagText: { fontSize: 11, fontWeight: '800', color: '#0A3824', letterSpacing: 0.5 },
+  unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#E4DBC4' },
+  dateText: { fontSize: 11, color: '#879687' },
+  feedTitle: { fontSize: 15, fontWeight: '800', color: '#092E1D', marginBottom: 4 },
+  feedMessage: { fontSize: 13, color: '#37483C', lineHeight: 18 },
   emptyBox: { alignItems: 'center', paddingVertical: 48 },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#334155' },
-  emptySub: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4, paddingHorizontal: 20 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#37483C' },
+  emptySub: { fontSize: 13, color: '#879687', textAlign: 'center', marginTop: 4, paddingHorizontal: 20 },
 });

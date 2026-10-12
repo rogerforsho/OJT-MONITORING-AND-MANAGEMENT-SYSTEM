@@ -73,8 +73,8 @@ export default function AudienceGateways() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-6 h-1 bg-[#0A3D24] rounded-full" />
-              <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3D24]">
+              <span className="w-6 h-1 bg-[#0A3824] rounded-full" />
+              <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3824]">
                 ACADEMIC DEPARTMENTS
               </span>
             </div>
@@ -120,7 +120,7 @@ export default function AudienceGateways() {
                   </span>
                   <Link
                     href={t.href}
-                    className="text-xs font-bold text-[#0A3D24] group-hover:text-amber-600 flex items-center gap-1 transition-colors"
+                    className="text-xs font-bold text-[#0A3824] group-hover:text-amber-600 flex items-center gap-1 transition-colors"
                   >
                     <span>{t.id === 'portals' ? 'Staff Portal' : 'Register'}</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

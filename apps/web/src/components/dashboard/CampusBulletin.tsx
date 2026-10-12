@@ -75,7 +75,7 @@ export default function CampusBulletin({ announcements = [] }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#0A3D24] text-amber-300 flex items-center justify-center shrink-0 shadow-2xs">
+          <div className="w-8 h-8 rounded-xl bg-[#0A3824] text-amber-300 flex items-center justify-center shrink-0 shadow-2xs">
             <Megaphone className="w-4 h-4 text-amber-300" />
           </div>
           <div>
@@ -98,8 +98,8 @@ export default function CampusBulletin({ announcements = [] }: Props) {
             >
               <div className="flex items-center justify-between gap-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FFCC00] animate-pulse" />
+                  <span className="inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#0A3824] text-[var(--cdm-sand)] uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--cdm-sand)] animate-pulse" />
                     {annc.target_department === 'All' ? 'Campus-Wide' : `${annc.target_department} Dept`}
                   </span>
                   <span className="text-[10px] text-slate-400 font-medium">
@@ -140,7 +140,7 @@ export default function CampusBulletin({ announcements = [] }: Props) {
           <button
             type="button"
             onClick={() => setShowDismissed(!showDismissed)}
-            className="w-full flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-[#0A3D24] dark:hover:text-emerald-400 transition-colors py-1 cursor-pointer"
+            className="w-full flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-[#0A3824] dark:hover:text-emerald-400 transition-colors py-1 cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
               {showDismissed ? <EyeOff className="w-3.5 h-3.5 text-slate-400" /> : <Eye className="w-3.5 h-3.5 text-slate-400" />}
@@ -160,7 +160,7 @@ export default function CampusBulletin({ announcements = [] }: Props) {
                 <button
                   type="button"
                   onClick={handleClearAllDismissed}
-                  className="text-[10px] font-bold text-[#0A3D24] dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                  className="text-[10px] font-bold text-[#0A3824] dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
                 >
                   <RotateCcw className="w-2.5 h-2.5" />
                   Restore All
@@ -189,7 +189,7 @@ export default function CampusBulletin({ announcements = [] }: Props) {
                     type="button"
                     onClick={(e) => handleRestore(annc.announcement_id, e)}
                     title="Restore to active board"
-                    className="text-[10px] font-bold text-[#0A3D24] dark:text-emerald-400 hover:text-[#062415] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0 cursor-pointer"
+                    className="text-[10px] font-bold text-[#0A3824] dark:text-emerald-400 hover:text-[#092E1D] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shrink-0 cursor-pointer"
                   >
                     Restore
                   </button>

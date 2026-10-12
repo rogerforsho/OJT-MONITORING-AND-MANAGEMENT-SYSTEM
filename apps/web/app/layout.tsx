@@ -92,8 +92,10 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Browsers mask nonce attributes in the DOM, causing a false React 19.2 hydration warning. */}
         <script
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               try {
@@ -108,7 +110,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#F4F6F9] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-150">
+      <body className="min-h-full flex flex-col bg-[#F4F6F2] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-150">
         <ClientProviders>
           {children}
         </ClientProviders>

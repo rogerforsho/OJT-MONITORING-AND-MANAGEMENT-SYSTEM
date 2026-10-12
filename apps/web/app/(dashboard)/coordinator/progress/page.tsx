@@ -43,7 +43,7 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
           <p className="text-sm text-slate-500 mt-1">Real-time rendered hours and milestone tracking for 4th-year ICS & IBE trainees; targets follow each student’s configured requirement.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="px-3.5 py-1.5 text-sm font-semibold bg-emerald-50 text-[#0A3D24] border-emerald-200">
+          <Badge variant="outline" className="px-3.5 py-1.5 text-sm font-semibold bg-emerald-50 text-[#0A3824] border-emerald-200">
             {total} Total Trainees
           </Badge>
         </div>
@@ -64,7 +64,7 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
               href={href}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 isSelected
-                  ? 'bg-[#0A3D24] text-white shadow-sm'
+                  ? 'bg-[#0A3824] text-white shadow-sm'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -89,7 +89,7 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
               href={href}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 isSelected
-                  ? 'bg-[#062415] text-[#FFCC00] font-semibold shadow-sm'
+                  ? 'bg-[#092E1D] text-[var(--cdm-sand)] font-semibold shadow-sm'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -158,7 +158,7 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
                                 isDone
                                   ? 'bg-emerald-500'
                                   : s.percentage >= 75
-                                  ? 'bg-[#0A3D24]'
+                                  ? 'bg-[#0A3824]'
                                   : s.percentage >= 25
                                   ? 'bg-amber-500'
                                   : 'bg-slate-400'
@@ -175,7 +175,7 @@ export default async function CoordinatorProgressPage({ searchParams }: Props) {
                               isDone
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-semibold'
                                 : s.percentage >= 75
-                                ? 'bg-emerald-50 text-[#0A3D24] border-emerald-200 text-xs font-semibold'
+                                ? 'bg-emerald-50 text-[#0A3824] border-emerald-200 text-xs font-semibold'
                                 : s.percentage >= 25
                                 ? 'bg-amber-50 text-amber-700 border-amber-200 text-xs font-semibold'
                                 : 'bg-slate-100 text-slate-600 border-slate-200 text-xs font-semibold'

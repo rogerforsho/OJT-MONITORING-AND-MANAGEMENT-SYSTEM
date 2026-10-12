@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { validateSchedulePolicy } from '@ojt/shared';
 import type { AppResult, DbPracticumSchedule, WorkModality } from '@ojt/shared';
 
 export interface MobileScheduleInput {
@@ -80,55 +81,11 @@ export async function submitScheduleProposal(
 
     if (!student) return { data: null, error: { code: 'NOT_FOUND', message: 'Student not found.' } };
 
-    if (!input.work_days || input.work_days.length === 0) {
-      return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Select at least one work day.' } };
+    const policy = validateSchedulePolicy(input);
+    if (!policy.ok) {
+      return { data: null, error: { code: 'VALIDATION_FAILURE', message: policy.message } };
     }
-
-    // Time calculations
-    const toMinutes = (value: string) => {
-      const match = /^(\d{2}):(\d{2})$/.exec(value);
-      if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return NaN;
-      return Number(match[1]) * 60 + Number(match[2]);
-    };
-    const startMin = toMinutes(input.time_in);
-    const endMin = toMinutes(input.time_out);
-    const lunchStartMin = input.lunch_break_start ? toMinutes(input.lunch_break_start) : null;
-    if (!Number.isFinite(startMin) || !Number.isFinite(endMin) ||
-        !Number.isInteger(input.lunch_break_minutes) || input.lunch_break_minutes < 0 || input.lunch_break_minutes > 120 ||
-        (input.lunch_break_minutes > 0 && (lunchStartMin === null || !Number.isFinite(lunchStartMin) || lunchStartMin < startMin || lunchStartMin + input.lunch_break_minutes > endMin)) ||
-        (input.lunch_break_minutes === 0 && input.lunch_break_start !== null)) {
-      return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Enter a valid lunch interval inside the scheduled shift.' } };
-    }
-
-    if (startMin >= endMin) {
-      return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Time In must be earlier than Time Out.' } };
-    }
-
-    // Graveyard shift check (06:00 to 21:00)
-    if (startMin < 6 * 60 || endMin > 21 * 60) {
-      return {
-        data: null,
-        error: { code: 'VALIDATION_FAILURE', message: 'Practicum shifts must be between 6:00 AM and 9:00 PM (no graveyard shifts).' },
-      };
-    }
-
-    const shiftMin = (endMin - startMin) - input.lunch_break_minutes;
-    const dailyHours = Math.round((shiftMin / 60) * 100) / 100;
-
-    if (dailyHours > 8.0) {
-      return {
-        data: null,
-        error: { code: 'VALIDATION_FAILURE', message: `Daily hours (${dailyHours}h) exceed the 8.0 hours/day CHED limit.` },
-      };
-    }
-
-    const weeklyHours = Math.round((dailyHours * input.work_days.length) * 100) / 100;
-    if (weeklyHours > 40.0) {
-      return {
-        data: null,
-        error: { code: 'VALIDATION_FAILURE', message: `Weekly hours (${weeklyHours}h) exceed the 40.0 hours/week CHED limit.` },
-      };
-    }
+    const { lunch_break_minutes: lunchMinutes, lunch_break_start: lunchStart, daily_hours: dailyHours, weekly_hours: weeklyHours } = policy.value;
 
     // Check existing pending
     const { data: existing } = await supabase
@@ -150,8 +107,8 @@ export async function submitScheduleProposal(
           work_days: input.work_days,
           time_in: input.time_in,
           time_out: input.time_out,
-          lunch_break_minutes: input.lunch_break_minutes,
-          lunch_break_start: input.lunch_break_start,
+          lunch_break_minutes: lunchMinutes,
+          lunch_break_start: lunchStart,
           daily_hours: dailyHours,
           weekly_hours: weeklyHours,
           start_date: input.start_date,
@@ -173,7 +130,8 @@ export async function submitScheduleProposal(
           work_days: input.work_days,
           time_in: input.time_in,
           time_out: input.time_out,
-          lunch_break_minutes: input.lunch_break_minutes,
+          lunch_break_minutes: lunchMinutes,
+          lunch_break_start: lunchStart,
           daily_hours: dailyHours,
           weekly_hours: weeklyHours,
           start_date: input.start_date,

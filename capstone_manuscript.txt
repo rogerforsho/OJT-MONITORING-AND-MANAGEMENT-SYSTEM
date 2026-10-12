@@ -1,566 +1,434 @@
- Cross-Platform On-the-Job Training (OJT) 
-Monitoring and Management System 
- 
- 
- 
-An Undergraduate Thesis Presented to the
- Institute of Computing Studies
- Colegio de Montalban
- Rodriguez, Rizal
-  
- 
-In Partial Fulfillment of the Requirement
- for the Degree on Bachelor of Science
- in Information Technology
- 
- 
-  
+CROSS-PLATFORM ON-THE-JOB TRAINING (OJT)
+MONITORING AND MANAGEMENT SYSTEM
+
+An Undergraduate Thesis
+Presented to the
+Institute of Computing Studies
+Colegio de Montalban
+Rodriguez, Rizal
+
+In Partial Fulfillment of the Requirements
+for the Degree of
+Bachelor of Science in Information Technology
+
 Group Members:
- 
 Jay-e G. Baui
 Jovelyn Golis
 Jomar G. Suralta
-Ralph Roger M. Vicente 
- 
- 
-BSIT 3C 
-GROUP 11  
- 
- 
- 
- 
+Ralph Roger M. Vicente
+
+BSIT 3C
+Group 11
 2026
 
+ABSTRACT
+This study aimed to design, develop, and evaluate a Cross-Platform On-the-Job Training (OJT) Monitoring and Management System for the Institute of Computing Studies (ICS) and the Institute of Business and Entrepreneurship (IBE) of Colegio de Montalban. The existing manual OJT process was found to be inefficient due to reliance on paper-based attendance logbooks, delayed report submissions, fragmented communication channels, and difficulty in tracking rendered hours and student progress.
+
+The proposed system was developed using the Agile Software Development Life Cycle and operates across web, mobile, and desktop platforms. Core features include student identity proofing via validated school ID upload; a pre-deployment gateway requiring the Pre-OJT Orientation Certificate and Endorsement Letter; a Practicum Work Schedule Commitment engine enforcing CHED CMO No. 104, s. 2017 compliance; dual-biometric live selfie verification (Time In and Time Out) paired with modality-aware point-in-time GPS geotagging and supervisor verification; store-and-forward offline attendance synchronization via SQLite; supervisor-endorsed weekly report submission; real-time progress monitoring; structured two-tier performance evaluations; tamper-proof digital completion certificate verification; and a dedicated administrative desktop application via Electron. The system utilizes Next.js for the web application, React Native with Expo for the mobile application, Electron for the desktop application, and Supabase for cloud backend services.
+
+The system was evaluated by selected students, OJT coordinators, company supervisors, and IT experts using selected characteristics of the ISO/IEC 25010 Software Product Quality Model, namely Functional Suitability, Performance Efficiency, Usability, and Security (evaluating security-related features). Results of the evaluation demonstrate that the system adequately addresses the identified operational limitations of the manual process and provides an efficient, transparent, and legally compliant platform for managing OJT activities.
+
+Keywords: On-the-Job Training, Cross-Platform System, Attendance Monitoring, Internship Management, CHED CMO 104, ISO/IEC 25010, Agile Methodology
 
 
+CHAPTER 1
+INTRODUCTION
 
+1.1 Background of the Study
+In today’s rapidly evolving professional landscape, academic knowledge alone is no longer sufficient to ensure graduate employability. Employers increasingly seek individuals who can apply theoretical concepts in real-world workplace settings. On-the-Job Training (OJT) serves as a vital bridge between classroom instruction and professional practice. Globally, OJT and Work-Integrated Learning (WIL) programs are recognized for developing both technical competencies and essential soft skills such as communication, teamwork, adaptability, and time management (Garavan et al., as cited in Bouchrika, 2026; Deloitte, 2025).
 
+Higher education institutions worldwide are progressively shifting from fragmented, paper-based internship management toward unified digital platforms. These systems function as central repositories for attendance logs, daily task reports, and performance assessments. They improve data integrity, reduce administrative overhead, and support compliance with institutional quality assurance standards.
 
-CHAPTER 1: INTRODUCTION
-1.1  Background of the Study
-In today’s fast-changing world, having academic knowledge alone is no longer enough to succeed in the workplace. Employers now look for individuals who not only understand concepts but can also apply them in real-life situations. This is where On-the-Job Training (OJT) becomes important, as it allows students to experience the actual work environment before they graduate. Globally, On-the-Job Training (OJT) is recognized as an important part of education that helps students transition from school to employment by bridging the gap between theoretical learning and practical application. Through exposure to real-world tasks and responsibilities, students develop not only technical skills but also essential soft skills such as communication, teamwork, adaptability, and time management. According to Garavan et al. (as cited in Bouchrika, 2026), OJT involves structured learning within organizations that improves job performance, while a study by Deloitte (2025) revealed that most Gen Z and Millennial workers consider soft skills essential for career growth. Globally, Higher Education Institutions (HEIs) are increasingly adopting Work-Integrated Learning (WIL) frameworks to enhance student employability and align academic curricula with evolving industry standards. Effective WIL programs depend on transparent monitoring, accurate verification of practical hours, and seamless collaboration between educational institutions and industry partners. In modern academic administration, digital transformation has shifted internship management away from disparate, paper-based tracking toward unified, cloud-hosted platforms. These automated platforms serve as central repositories for attendance logs, daily task reports, and performance assessments, ensuring data integrity, reducing administrative overhead, and maintaining compliance with institutional quality assurance standards.
-In the Philippines, OJT is widely implemented in higher education institutions as part of the curriculum to ensure that students are prepared for employment. However, despite its importance, many challenges still exist in managing and monitoring OJT programs. Students often face problems such as lack of proper supervision, unclear assigned tasks, delayed feedback, and limited opportunities to apply their knowledge. At the same time, coordinators rely on traditional methods such as manual logbooks and paper-based reports, which are prone to errors, delays, and data inconsistencies. These issues make it difficult to effectively track student progress and ensure that internship requirements are met (Commission on Higher Education [CHED], 2021). A study conducted by researchers from Bohol Island State University titled “OJT AtTRACK – On-the-Job Trainee Remote Attendance Monitoring System using Face Recognition System” identified similar challenges in monitoring OJT programs, particularly in validating students’ attendance, tracking trainees’ progress, and managing records due to the heavy reliance on manual logbooks and paper-based monitoring. These traditional methods often resulted in inaccurate records, delayed reports, and possible attendance fraud. To address these issues, the researchers developed the OJT AtTRACK system, which utilizes face recognition and cloud-based technology for attendance monitoring. The system enables coordinators to monitor trainees in real time, automatically record attendance, compute rendered hours, and generate updated reports more efficiently. By replacing manual monitoring with a digital system, the study improved accuracy, transparency, and easier management of OJT programs (Bohol Island State University Researchers, 2023). Similarly, several studies highlight the importance of improving systems used in managing On-the-Job Training (OJT) programs. Cabalbag and Ontiveros (2024) developed a management information system that enhanced record tracking and improved data accessibility, while Reyes and Dela Cruz (2020) introduced an internship information system that reduced paperwork and increased data accuracy. These studies emphasize the importance of integrating digital solutions into OJT management to address inefficiencies and improve the monitoring process.
-Currently, Colegio de Montalban still implements a manual process in handling the OJT requirements of fourth-year students under the ICS and IBE departments. The existing process involves distributing application forms, processing requests, submitting reports, monitoring student progress, and handling completion documents throughout the training period. Although the current system remains functional, it presents several challenges for the institution, faculty members, students, and partner companies. For professors and coordinators, manual management of student applications, attendance, progress reports, and related concerns requires significant time and effort, which may result in misplaced documents, delayed processing, inconsistent records, and difficulties in tracking students’ OJT status. These issues affect productivity and make it challenging for coordinators and professors to balance OJT responsibilities with their other academic tasks. Students also encounter difficulties in preparing and submitting physical requirements, as well as delays in communication regarding approvals, schedules, reports, and other OJT-related concerns. Since communication is conducted through different platforms and manual transactions, students may experience confusion, delayed responses, and difficulty monitoring their own progress and requirements. Similarly, partner companies face challenges in processing student applications, coordinating with the institution, monitoring trainee performance, and issuing completion certificates. Communication commonly relies on general-purpose applications such as Gmail, Viber, or Messenger, which are not specifically designed for OJT management. As a result, information may become scattered, difficult to organize, and less transparent among the school, students, and partner companies.
-In response to these challenges, this study proposes the development of a Cross-Platform On-the-Job Training (OJT) Monitoring and Management System. The proposed system aims to provide a centralized and accessible platform for attendance monitoring, report tracking, performance evaluation, and communication among students, partner companies, coordinators, and supervisors involved in OJT programs. Through the use of modern technology, the system seeks to improve efficiency, accuracy, transparency, and the overall management of OJT processes. These challenges indicate that the current manual process is no longer efficient in addressing the increasing demands of OJT management. Therefore, the researchers propose the development of a Cross-Platform OJT Monitoring and Management System to address these concerns. The proposed system will serve as a centralized platform where schools, students, and partner companies can efficiently manage OJT-related processes. Specifically, the system aims to simplify attendance monitoring, report submission, application processing, progress tracking, and communication through digital automation and real-time monitoring. By implementing the proposed system, the researchers aim to reduce delays, minimize errors, improve transparency, and provide a more organized and effective OJT management process for the ICS and IBE departments of Colegio de Montalban.
+In the Philippines, the Commission on Higher Education (CHED, 2021) mandates the inclusion of OJT in the curriculum of higher education programs. Despite this requirement, many institutions continue to rely on traditional manual processes. Students frequently encounter delayed feedback, unclear task assignments, and difficulty in monitoring their rendered hours. Coordinators face challenges related to paper logbooks, misplaced documents, inconsistent records, and time-consuming verification procedures. Partner companies often rely on general messaging applications that are not designed for structured internship management, resulting in scattered information and reduced transparency.
+
+Previous local studies have attempted to address these challenges. Researchers from Bohol Island State University developed OJT AtTRACK, a face-recognition-based system that improved real-time monitoring and reduced attendance fraud (Abad et al., 2023). Other studies introduced management information systems that enhanced record tracking and reduced paperwork (Cabalbag & Ontiveros, 2024; Reyes & Dela Cruz, 2020). While these efforts demonstrate the value of digital solutions, most existing systems remain limited to a single platform or address only selected functions such as attendance or report submission.
+
+At Colegio de Montalban, the OJT program for fourth-year students under the Institute of Computing Studies (ICS) and the Institute of Business and Entrepreneurship (IBE) is still managed through manual application forms, physical reports, paper logbooks, and decentralized communication channels. This situation creates operational inefficiencies for students, coordinators, and partner companies. In response, this study proposes the development of a Cross-Platform OJT Monitoring and Management System that integrates attendance verification, document management, progress tracking, performance evaluation, and stakeholder communication into a single accessible platform operating on web, mobile, and desktop environments.
 
 1.2 Statement of the Problem
-Currently, Colegio de Montalban manages the On-the-Job Training (OJT) operations for fourth-year students in the Institute of Computing Studies (ICS) and Institute of Business and Entrepreneurship (IBE) using fragmented and manual methods. Students encounter operational delays in submitting application requirements, tracking rendered internship hours, and communicating with program coordinators. Concurrently, faculty coordinators and partner company supervisors face administrative inefficiencies due to manual verification of attendance logbooks, delayed physical report submissions, and decentralized communication channels. These operational bottlenecks lead to inconsistent record-keeping, delayed progress tracking, and increased vulnerability to data errors. 
-To address these challenges, this study covers the design, development, and implementation of a Cross-Platform On-the-Job Training (OJT) Monitoring and Management System. The proposed system provides centralized web and mobile platforms for real-time attendance verification, document management, progress tracking, and structured stakeholder communication. 
-Specifically, this study seeks to answer the following sub-problems:
-What are the current operational workflows, limitations, and administrative challenges in the existing manual OJT monitoring process at Colegio de Montalban regarding:
-1.1 Attendance logging and rendered hour calculation? 
-1.2 Requirement submission and document verification? 
-1.3 Communication and performance evaluation between students, coordinators, and company supervisors? 
-What features and architecture must be integrated into the Cross-Platform OJT Monitoring and Management System to address the identified operational limitations? 
-What is the evaluation level of the developed system as assessed by IT experts, OJT coordinators, company supervisors, and student users based on the ISO/IEC 25010 Software Quality Product Model in terms of:
-3.1 Functional Suitability (Functional completeness, correctness, and appropriateness of application processing and progress tracking)? 
-3.2 Performance Efficiency (Response time and data synchronization across web and mobile platforms)? 
-3.3 Usability (User interface clarity, operational accessibility, and user satisfaction)? 
-3.4 Security (Data privacy compliance, user authentication, and data integrity protection)?
- 
-1.3 Statement of the Objectives
+Colegio de Montalban currently manages the On-the-Job Training (OJT) program for fourth-year students of the Institute of Computing Studies (ICS) and the Institute of Business and Entrepreneurship (IBE) through fragmented and manual methods. Students experience delays in submitting requirements, tracking rendered hours, and communicating with coordinators. Faculty coordinators and company supervisors face inefficiencies caused by manual logbook verification, delayed physical submissions, and decentralized communication. These conditions result in inconsistent records, delayed progress monitoring, and increased risk of data errors.
+
+This study therefore aims to design, develop, and evaluate a Cross-Platform On-the-Job Training Monitoring and Management System that provides centralized web, mobile, and desktop platforms for real-time attendance verification, document management, progress tracking, and structured communication among stakeholders.
+
+Specifically, the study seeks to answer the following questions:
+1. What are the current operational workflows, limitations, and administrative challenges in the existing manual OJT monitoring process at Colegio de Montalban with respect to:
+   1.1 Attendance logging and rendered-hour calculation?
+   1.2 Requirement submission and document verification?
+   1.3 Communication and performance evaluation among students, coordinators, and company supervisors?
+2. What features and system architecture must be incorporated into the Cross-Platform OJT Monitoring and Management System to address the identified operational limitations in terms of:
+   2.1 User account management, role-based access control, and student identity proofing via validated school ID verification;
+   2.2 Pre-deployment documentary gateway requiring the Pre-OJT Orientation Certificate and Endorsement Letter;
+   2.3 Practicum Work Schedule Commitment enforcing CHED CMO No. 104, s. 2017 regulatory compliance (shift caps, modality selection, and night-shift prohibition);
+   2.4 Attendance logging with modality-aware point-in-time GPS geotagging, supervisor-discretionary triage, dual-biometric selfie capture on Time In and Time Out, and offline SQLite synchronization;
+   2.5 Weekly accomplishment report submissions with supervisor endorsement, progress tracking, and structured midterm and final performance evaluations; and
+   2.6 Centralized administrative oversight, desktop runtime client integration via Electron, and tamper-proof digital certificate verification?
+3. What is the level of evaluation of the developed system as assessed by IT experts, OJT coordinators, company supervisors, and student users based on the ISO/IEC 25010 Software Product Quality Model in terms of:
+   3.1 Functional Suitability
+   3.2 Performance Efficiency
+   3.3 Usability
+   3.4 Security (evaluating security-related features)
+
+1.3 Objectives of the Study
 
 1.3.1 General Objective
-The primary objective of this study is to design, develop, and evaluate a Cross-Platform On-the-Job Training (OJT) Monitoring and Management System for Colegio de Montalban to streamline attendance logging, document management, progress tracking, and stakeholder communication.
+The primary objective of this study is to design, develop, and evaluate a Cross-Platform On-the-Job Training (OJT) Monitoring and Management System for Colegio de Montalban that streamlines attendance logging, document management, progress tracking, and stakeholder communication.
 
 1.3.2 Specific Objectives
-Specifically, this study aims to achieve the following:
+1. To analyze the current operational workflows, limitations, and administrative challenges in the existing manual OJT monitoring process of the Institute of Computing Studies (ICS) and the Institute of Business and Entrepreneurship (IBE) at Colegio de Montalban.
+2. To design and develop a Cross-Platform OJT Monitoring and Management System operating across web, mobile, and desktop platforms that incorporates the following core modules:
+   2.1 A secure role-based authentication and account management module with student identity proofing through uploaded front-and-back validated school ID credentials;
+   2.2 A pre-deployment documentary gateway requiring coordinator verification of the Pre-OJT Orientation Certificate and Endorsement Letter prior to company deployment;
+   2.3 A Practicum Work Schedule Commitment engine governed by CHED Memorandum Order (CMO) No. 104, Series of 2017, capping daily training at 8.0 hours and weekly training at 40.0 hours within a compliant 6:00 AM to 9:00 PM operating window;
+   2.4 A dual-biometric mobile attendance mechanism capturing live un-cached camera selfies at both Time In and Time Out, supported by modality-aware point-in-time GPS coordinate capture with non-blocking supervisor exception triage and offline SQLite queue synchronization;
+   2.5 A progress tracking and evaluation module featuring weekly narrative reports with company supervisor endorsement and a standardized two-tier (midterm and final) evaluation rubric; and
+   2.6 An administrative management console with local archival capabilities packaged for desktop runtime via Electron and verifiable digital completion certificate generation.
+3. To evaluate the technical quality and usability of the developed system based on the ISO/IEC 25010 Software Product Quality Model in terms of Functional Suitability, Performance Efficiency, Usability, and Security.
 
-1. To analyze the current operational workflows, limitations, and administrative challenges in the existing manual OJT monitoring process of the Institute of Computing Studies (ICS) and Institute of Business and Entrepreneurship (IBE) at Colegio de Montalban.
+1.4 Conceptual Framework
+This study adopts the Input-Process-Output (IPO) model to guide the systematic development of the proposed system (Ravitch & Riggan, 2016). The IPO model provides a clear structure for organizing the research components and illustrating the relationships among inputs, processes, and expected outputs.
 
-2. To design and develop a Cross-Platform OJT Monitoring and Management System operating across web and mobile platforms with core features including:
-   2.1 Selfie-based attendance verification and automatic rendered hour calculation;
-   2.2 Digital report submission and document verification;
-   2.3 Real-time progress monitoring and performance evaluation tools; and
-   2.4 Centralized notification and communication management.
+Input
+The inputs of the study include the current OJT processes of Colegio de Montalban, the identified problems (attendance inaccuracies, delayed submissions, inconsistent records, and lack of real-time updates), the profiles of the respondents (ICS and IBE students, OJT coordinators, and partner company representatives), the gathered user requirements, and the necessary hardware and software resources.
 
-3. To evaluate the technical quality and usability of the developed system based on the ISO/IEC 25010 Software Quality Product Model in terms of Functional Suitability, Performance Efficiency, Usability, and Security.1 
- 
- 1.4 Conceptual Framework
- 
-Figure 1. Input-Process-Output (IPO) Model
-This study adopts the Input-Process-Output (IPO) model to guide system development, helping organize and connect all its important parts (Ravitch & Riggan, 2016). It shows how different elements of the research relate to each other and helps researchers clearly understand and conduct a well-structured and meaningful study. This study follows the Input-Process-Output (IPO) model to guide the development of the Cross-Platform OJT Monitoring and Management System.
-Input includes the current OJT process, identified problems such as attendance issues, delays in submission, inaccurate records, and lack of real-time updates. It also includes the respondent profiles composed of ICS and IBE students, OJT coordinators, and partner companies, as well as the user requirements and hardware and software requirements needed for the development of the proposed system.
-Process involves the use of the Agile methodology in developing the proposed system. The process begins with the planning phase, followed by designing, developing, testing, deploying, and reviewing the system. These phases ensure continuous improvement, proper system functionality, and effective implementation of features necessary for OJT monitoring and management.
-Output is the developed Cross-Platform OJT Monitoring and Management System. 
- 
+Process
+The process involves the application of the Agile Software Development Life Cycle. This includes planning and requirements analysis, system and interface design, iterative development, testing, deployment, and continuous review based on user feedback.
+
+Output
+The output of the study is the developed Cross-Platform OJT Monitoring and Management System that addresses the identified limitations of the existing manual process.
+
+[Insert Figure 1. Input-Process-Output (IPO) Model here]
+
 1.5 Operational Framework
- 
-Figure 2. Agile Methodology Development
-The study will design and develop the Cross-Platform OJT Monitoring and Management System using the Agile Software Development Life Cycle (SDLC) methodology. Agile is a software development approach that focuses on continuous improvement, collaboration, and step-by-step system development. This methodology allows the researchers to develop the system in smaller phases while continuously gathering feedback from users such as students, coordinators, and supervisors to ensure that the system meets their needs effectively (Kadenic, 2023).
-The development of the system will begin with the planning phase, where the researchers will gather information regarding the current OJT process of the ICS and IBE departments of Colegio de Montalban. During this phase, interviews, observations, and consultations with students, professors, coordinators, and partner companies will be conducted to identify the common problems encountered in the manual OJT process. The researchers will determine the necessary features of the proposed system, such as attendance monitoring, report submission, progress tracking, notification management, and communication tools.
-The next phase is the design phase, where the researchers will create the structure and interface design of the system. This includes designing the database, system architecture, user interfaces, navigation flow, and overall functionality of the application. Wireframes, flowcharts, and diagrams will also be prepared to visualize how users will interact with the system across different platforms.
-After the design phase, the researchers will proceed to the development phase, where the actual coding and implementation of the system will take place. The researchers will develop the features identified during the planning phase, including login and account management, attendance monitoring, report uploading, progress tracking, notifications, and communication modules. Since Agile follows an iterative approach, the system will be developed gradually in smaller functional parts, allowing continuous improvements during development.
-The fourth phase is the testing phase, where the developed system will be evaluated to identify errors, bugs, and technical issues. The researchers will conduct functionality testing, usability testing, and compatibility testing to ensure that the system operates properly across different devices and platforms. Selected students, coordinators, and supervisors will also test the system and provide feedback regarding its performance, accessibility, and ease of use.
-The fifth phase is the deployment phase, where the developed system will be implemented and introduced to the intended users. The Cross-Platform OJT Monitoring and Management System will be utilized to improve attendance monitoring, report submission, communication, and progress tracking of students during their On-the-Job Training.
-Lastly, the review phase will assess whether the proposed system successfully addresses the problems identified in the current manual OJT process. Feedback gathered from users during system implementation will be analyzed to determine the effectiveness, efficiency, accuracy, and usability of the system. Necessary improvements and revisions will then be implemented to further enhance the performance and functionality of the Cross-Platform OJT Monitoring and Management System.
- 
+The proposed system will be developed using the Agile Software Development Life Cycle. Agile is an iterative and incremental approach that emphasizes continuous collaboration, frequent feedback, and progressive refinement of the product (Kadenic, 2023). This methodology is appropriate for the present study because it allows the researchers to develop the system in manageable increments while incorporating feedback from students, coordinators, and supervisors.
+
+The development process begins with the planning phase, during which interviews, observations, and consultations are conducted to identify existing problems and determine the required system features. In the design phase, the system architecture, database structure, user interfaces, navigation flows, and prototypes are prepared. The development phase implements the identified features through iterative sprints covering authentication and role management, attendance logging with selfie verification, rendered-hour computation, document and report submission, progress monitoring, performance evaluation, and notification management.
+
+The testing phase includes functional testing, usability testing, compatibility testing across supported platforms, and security-related checks. Selected users participate in testing and provide feedback. The deployment phase introduces the system to the intended users, while the review phase assesses whether the system successfully addresses the problems identified in the current manual OJT process and determines necessary improvements.
+
+[Insert Figure 2. Agile Methodology Development Process here]
+
 1.6 Scope and Limitations
-This study focuses on the design, development, and implementation of a Cross-Platform On-the-Job Training (OJT) Monitoring and Management System for Colegio de Montalban. It aims to centralize OJT processes and improve the efficiency, accuracy, and accessibility of training management.
+
 Scope
-The system covers the following functionalities:
-·        Fourth-Year Students under ICS and IBE Departments – Use the system to record attendance through digital time in and time out, submit internship reports and requirements, upload documents, and monitor their OJT progress and rendered hours in real time.
-·        OJT Coordinators and Program Heads – Monitor student attendance, validate submitted reports and requirements, review internship progress, evaluate student performance, and track completion of required internship hours.
-·        Company Supervisors and HR Personnel – Verify student attendance, monitor trainee activities, and submit performance evaluations and feedback regarding students’ internship performance.
+This study focuses on the design, development, and evaluation of a Cross-Platform On-the-Job Training Monitoring and Management System for fourth-year students of the Institute of Computing Studies (ICS) and the Institute of Business and Entrepreneurship (IBE) at Colegio de Montalban.
+
+The system supports the following user groups and functions:
+• Students – Self-registration with mandatory school ID credential upload; pre-deployment credential submission (specifically limited to the Pre-OJT Orientation Certificate and Endorsement Letter); Practicum Work Schedule Commitment submission; dual-biometric attendance tracking (live selfie on Time In and Time Out) with modality-aware point-in-time GPS location verification; offline attendance storage via SQLite with automatic background synchronization; automated rendered-hour progress calculation; weekly accomplishment report submission; and supervisor evaluation review.
+• OJT Coordinators and Program Heads – Validation of student registrations and ID credentials; pre-deployment gateway clearance; review of practicum schedule proposals; assignment of company supervisors; validation of attendance records; verification and grading of submitted weekly reports; real-time monitoring of student progress; and generation of departmental summary reports.
+• Company Supervisors – Verification of trainee attendance with side-by-side Time In and Time Out selfie review; monitoring of daily activities; endorsement of weekly reports; and submission of midterm and final performance evaluations.
+• System Administrators – Management of user accounts and roles; institutional announcements; system configuration; and administrative document archival via a dedicated desktop application developed using Electron.
+
 Limitations
-The study is limited to BSIT 4th Year ICS and IBE students of Colegio de Montalban and excludes other academic levels and institutions. It does not cover job application processes, hiring systems, or MOA-related transactions. Administrative functions such as payroll and HR management are also outside its scope. While web administrative, coordinator, and supervisor portals require an active internet connection, the mobile application supports offline attendance logging with GPS satellite verification and automated data synchronization upon internet reconnection; general offline operations for other modules remain excluded. Furthermore, the development and evaluation of the proposed system are limited to the scope and duration of the study, which may limit long-term assessment and enhancement.
+The study is limited to fourth-year BSIT students of the ICS and IBE departments of Colegio de Montalban. The system does not support job placement/recruitment, student hiring workflows, or the legal preparation of Memoranda of Agreement (MOA). Administrative tasks such as payroll computation and general human resource management are strictly excluded.
+
+Technical limitations include:
+1. Offline Functionality Boundary: Offline operation is strictly limited to mobile attendance logging with GPS satellite coordinate capture and local SQLite caching. All other modules—including account registration, document submission, schedule approval, evaluations, and administrative reporting—require an active internet connection.
+2. Point-in-Time Proximity & Non-Lockout Boundary: Point-in-time GPS verification captures device coordinates strictly upon Time In and Time Out without continuous background tracking. While on-site trainees are evaluated against a 150-meter workplace proximity baseline, the system never prevents or blocks attendance submission. Trainees outside the perimeter (due to off-site errands, client fieldwork, or indoor GPS signal drift) provide an explanatory note and proceed to selfie capture, routing the log to the supervisor’s Smart Compliance Triage for human verification. Approved remote trainees are automatically tagged with a 'Remote Work' status.
+3. Inactivity Session Boundary: Web portals enforce an automatic 30-minute inactivity session timeout to safeguard unattended institutional workstations in university computer laboratories.
+
 1.7 Significance of the Study
-        	The development of the Cross-Platform On-the-Job Training (OJT) Monitoring and Management System for Colegio de Montalban provides a digital solution for efficiently tracking and managing student internship activities. This study is significant to the following stakeholders:
-For the OJT Coordinators, specifically the faculty members assigned to supervise internship programs under the ICS (Institute of Computer Studies) and IBE (Institute of Business and Entrepreneurship) departments of Colegio de Montalban, the proposed system helps simplify the monitoring of attendance, internship hours, submitted reports, and student progress. It reduces the time and effort required in checking physical logbooks and organizing paper-based records, allowing coordinators to manage OJT requirements more efficiently.
-For the Fourth-Year Students of programs such as Bachelor of Science in Computing Studies (ICS), and Institute of Business and Entrepreneurship (IBE), the system provides a centralized platform for attendance logging, report submission, and tracking of rendered hours. This allows students to monitor their internship requirements more conveniently while minimizing delays and confusion caused by manual transactions.
-For the Program Heads, particularly the heads of ICS and IBE programs, the system provides organized access to internship records, evaluation results, and student performance data. This supports better supervision of OJT implementation and helps ensure that students meet the required learning outcomes and training objectives.
-For the Company Supervisors, specifically the assigned supervisors, trainers, or human resource personnel from partner companies accepting OJT students, the system provides a convenient way to verify attendance, evaluate trainee performance, and coordinate with the institution regarding internship concerns.
-For the School Administration, including department offices, internship offices, and school administrators responsible for managing student records and internship operations, the system improves the organization and monitoring of OJT data through digital processes and centralized record management.
-Lastly, for Future Researchers, particularly students and researchers conducting studies related to internship systems, educational technology, and digital monitoring platforms, this study may serve as a reference for future system development and related research.
- 
+The development of the Cross-Platform OJT Monitoring and Management System is expected to provide the following benefits:
+For OJT Coordinators. The system will simplify the monitoring of attendance, internship hours, submitted reports, and student progress. It will reduce the time and effort required in checking physical logbooks and organizing paper-based records.
+For Fourth-Year Students. The system will provide a centralized platform for attendance logging, report submission, and tracking of rendered hours, thereby minimizing delays and confusion associated with manual transactions.
+For Program Heads. The system will provide organized access to internship records, evaluation results, and student performance data, supporting better supervision of OJT implementation.
+For Company Supervisors. The system will offer a convenient means of verifying attendance, evaluating trainee performance, and coordinating with the institution regarding internship concerns.
+For School Administration. The system will improve the organization and monitoring of OJT data through digital processes and centralized record management.
+For Future Researchers. This study may serve as a reference for subsequent research and system development efforts related to internship monitoring, educational technology, and digital management platforms.
+
+1.8 Definition of Terms
+
+Attendance Monitoring
+Plain Meaning: The automated digital process of recording when a student starts and ends their daily internship work.
+System Context: The mobile app records the exact date, time, GPS coordinates, and selfie photos of trainees during Time In and Time Out without relying on paper logbooks.
+
+CHED CMO No. 104, Series of 2017 Compliance Engine
+Plain Meaning: National government regulations issued by the Commission on Higher Education to protect student interns from being overworked or subjected to hazardous night shifts.
+System Context: A built-in logic check that automatically rejects proposed internship schedules exceeding 8 hours per day or 40 hours per week, and restricts work hours strictly between 6:00 AM and 9:00 PM.
+
+Dual-Biometric Selfie Verification
+Plain Meaning: Taking a live photo of the trainee's face with the phone camera at two separate moments: upon arriving and upon leaving.
+System Context: Requires students to take a live selfie at both Time In and Time Out, allowing the company supervisor to view both photos side-by-side to verify that the student did not leave immediately after logging in.
+
+Electron Desktop Application
+Plain Meaning: A technology that packages a web program so that it runs as an independent desktop software application on a computer, complete with its own desktop icon and window.
+System Context: Provides system administrators with a dedicated desktop software program to manage accounts, broadcast announcements, and monitor records without opening a web browser.
+
+Modality-Aware Point-in-Time GPS Geotagging
+Plain Meaning: An instantaneous location check captured only when a student clocks in or out, providing proof of location without continuous monitoring or unfair lockouts.
+System Context: Captures satellite coordinates at the moment of Time In and Time Out to verify proximity to the host establishment. If a trainee is deployed on an official off-site errand or working remotely, the system allows the entry with an activity note for supervisor review rather than blocking their attendance.
+
+PostgreSQL Database
+Plain Meaning: A secure digital filing cabinet that stores, organizes, and protects large volumes of institutional data.
+System Context: The primary cloud database that permanently stores user accounts, student profiles, attendance logs, evaluation scores, and uploaded file references.
+
+Pre-Deployment Documentary Gateway
+Plain Meaning: A mandatory digital checkpoint that prevents students from advancing until their required paperwork is verified.
+System Context: A system block that prevents students from selecting work schedules or logging attendance until the OJT Coordinator has inspected and approved both their Pre-OJT Orientation Certificate and Endorsement Letter.
+
+Role-Based Access Control (RBAC)
+Plain Meaning: A digital security system that ensures users can only see and do what their specific role allows.
+System Context: Restricts access so that students can only see their own attendance and reports, supervisors can only manage their assigned trainees, coordinators can review their department, and administrators can manage system accounts.
+
+SQLite (Offline Local Database)
+Plain Meaning: A miniature storage notebook built directly inside the mobile phone that operates without an internet connection.
+System Context: Temporarily saves attendance records and selfie photos on the student's phone when cellular signal is unavailable, automatically sending them to the main database once the phone reconnects to the internet.
+
+Supabase
+Plain Meaning: A secure cloud platform that provides database storage, user account logins, and file hosting services in one unified package.
+System Context: The backend service that manages secure user logins, stores uploaded student ID cards and selfies, and executes data security policies.
+
+Tamper-Proof Digital Certificate Verification
+Plain Meaning: A digital certificate with a unique security code that allows anyone to confirm that the certificate is genuine and has not been faked or altered.
+System Context: Generates a unique verification code and public lookup page for each student upon completing their required OJT hours so that coordinators and employers can verify certificate authenticity.
 
 
-
-
-
-1.9 Definition of Terms
-Attendance Monitoring – Refers to the process of recording and tracking students’ time-in and time-out during OJT using the developed system.
-Camera-Based Selfie Verification – Refers to the system feature that captures a student’s image during attendance logging to verify identity and confirm actual presence.
-Cross-Platform System – Refers to the developed system that can operate across multiple environments including web browser and mobile platforms.
-Data Management System – Refers to the centralized digital system used to store, organize, and manage OJT-related records such as attendance, reports, and internship hours.
-Functional Suitability – Refers to the extent to which the system provides functions that meet the requirements of OJT monitoring and management.
-Internship Hours – Refers to the total number of hours rendered by students during their OJT as recorded and computed by the system.
-Monitoring and Management System – Refers to the developed system designed to track, manage, and evaluate students’ OJT activities.
-OJT Coordinator – Refers to the assigned school personnel responsible for supervising and managing students’ OJT activities.
-Performance Evaluation – Refers to the assessment of student performance during OJT as provided by company supervisors.
-Performance Efficiency – Refers to the system’s ability to perform tasks efficiently with minimal delay and optimal resource usage.
-Progress Tracking – Refers to the system’s function of monitoring students’ completion of required OJT hours and requirements.
-Reliability – Refers to the system’s ability to operate consistently and accurately without failure.
-Report Submission – Refers to the process where students upload OJT-related reports such as daily, weekly, or monthly submissions through the system.
- Supervisor – Refers to the company personnel responsible for evaluating and monitoring student performance during OJT deployment.
-System Evaluation – Refers to the assessment of the developed system based on ISO/IEC 25010 software quality standards.
-
- 
-
-
-
-
-
-
-
-
-
-
-
-CHAPTER 2: REVIEW OF RELATED LITERATURE
-
-Related studies (local and foreign)
+CHAPTER 2
+REVIEW OF RELATED LITERATURE AND STUDIES
 
 Digital and Automated Attendance Verification Systems
-Facial recognition technologies have become widely used in attendance monitoring systems because of their ability to improve accuracy, security, and efficiency in managing attendance records. Different from what was being used before, traditional attendance monitoring and recording systems commonly rely on manual checking. Paper-based attendance sheets, and simple digital input systems—which are vulnerable to fraudulent practices, human error, and record tampering. Because of these limitations, many studies used this gap to fulfill missing pieces and develop intelligent attendance systems that automate attendance verification through facial recognition, biometrical recording, unique eye-pattern registration and other means of record registration. These previously used technologies are important in improving internship and OJT monitoring as they provide more secure, reliable, and automated attendance management processes. 
-Abad et al. (2023) explained that the OJT AtTRACK system utilized face recognition technology to improve attendance verification and real-time trainee monitoring. The system helped reduce attendance fraud and improved the efficiency of validating students assigned to different internship locations. Similarly, Ramos et al. (2024) developed the SEAIT OJT Monitoring System which integrated facial recognition technologies to improve attendance monitoring accessibility, security, and transparency while minimizing manual checking processes.
-The use of deep learning and artificial intelligence has also strengthened attendance management systems. Ahmed et al. (2023) emphasizes the AI-based attendance systems, improves identity verification and monitoring accuracy through automated authentication processes. Sharma et al. (2023) stated that artificial intelligence improves operational efficiency and simplifies attendance management by reducing manual documentation tasks. In addition, Seelam et al. (2021) explained that computer vision and deep learning algorithms improve facial detection and identification even under different environmental conditions such as lighting variations and image quality issues.
-Nawaz et al. (2020) further explained that automated attendance systems reduce human intervention and improve record management efficiency. Their study highlighted that intelligent attendance systems help institutions maintain secure and organized attendance records while minimizing administrative workload. Likewise, Arsenovic et al. (2021) discussed that deep transfer learning techniques improve the accuracy and reliability of face recognition systems used in attendance verification.
-Modern attendance systems also integrate advanced algorithms to improve identity authentication. Kumar et al. (2025) developed an AI-driven attendance tracking system using Haar Cascade and ResNet algorithms to strengthen monitoring transparency and reduce opportunities for attendance fraud. Rao (2022) also introduced the AttenFace system, which automated attendance validation and improved identity authentication using real-time face recognition technologies.
-Smitha, Hegde, and Afshin (2020) emphasized that face recognition-based attendance systems improve the automation of attendance recording while reducing human error and manual intervention. These technologies improve reliability, monitoring efficiency, and attendance transparency in educational institutions. The integration of AI, deep learning, and face recognition technologies shows how automated attendance systems continue to improve monitoring processes, documentation accuracy, and real-time verification in internship and OJT environments. These concepts support the proposed Cross-Platform OJT Monitoring and Management System because the study also aims to integrate selfie-based attendance verification, automated attendance recording, and real-time monitoring features for students, coordinators, and partner companies.
-Web-Based Internship and OJT Monitoring Systems
-Web-based internship and OJT monitoring systems have become important tools in improving the management, supervision, and documentation of internship programs in educational institutions. Traditional internship monitoring commonly relies on manual attendance checking, physical submission of reports, paper-based records, and face-to-face communication, which may result in delayed updates, inaccurate information, poor coordination, and inefficient monitoring processes. Because of these challenges, researchers found and developed web-based systems that centralize internship records, improve accessibility, and strengthen communication between trainees, supervisors, and institutions.
-Dewi and Hanifah (2024) explained that the Web-Based Student Internship Monitoring Information System had improved attendance monitoring, documentation processes, and trainee activity management through an online platform. The system allowed institutions to monitor internship activities remotely and improved accessibility for both students and supervisors. Similarly, Pratama et al. (2022) developed a monitoring system using the CodeIgniter Framework to simplify trainee record management, attendance monitoring, and report handling processes.
-Barrocan et al. (2025), introduced a web-based internship monitoring platform designed for efficient internship time tracking and record management. Their findings revealed that centralized digital systems improved accountability and maintained updated internship information more effectively. Amelia et al. (2024) also emphasized that systematic software development improves the organization and functionality of internship monitoring systems, making them more reliable and user-friendly.
-Web technologies also improve communication and coordination within internship programs. Jalaludin and Abu Seman (2023) explained that web-based internship monitoring and assessment systems strengthen communication between trainees and supervisors while simplifying report generation and monitoring tasks. In addition, Zafirah et al. (2025) highlighted the importance of user-friendly interfaces and UML-based designs in improving usability and accessibility for students and administrators.
-Other studies focused on improving attendance validation and trainee activity documentation through online systems. The Web-based Student Internship Attendance Application System for Effective Student Attendance Monitoring (2023) explained that online attendance systems improve attendance validation and monitoring efficiency. Likewise, the Website-based Attendance Information System and Daily Activity Recording for Internship Students (2023) strengthened trainee activity recording and documentation management through centralized online platforms.
-GPS technologies were also integrated into web-based monitoring systems to strengthen attendance verification. The Web-based Internship Absence and Activity Information System Using GPS (2024) improved location verification and reduced opportunities for attendance manipulation through GPS-enabled monitoring technologies. The Web-based Internship Management System with Automated Attendance Tracking (2023) also emphasized the importance of automation in improving report generation, attendance management, and internship monitoring processes.
-These studies demonstrate that web-based internship and OJT monitoring systems improve accessibility, communication, organization, and attendance validation through centralized digital platforms. The use of web technologies allows institutions to monitor internship activities more efficiently while improving transparency and documentation processes. These ideas support the proposed Cross-Platform OJT Monitoring and Management System because the study also focuses on centralized data management, automated attendance monitoring, report submission, and real-time communication between students, coordinators, and partner companies.
-Mobile-Based and GPS-Enabled Monitoring Systems
-Mobile-based and GPS-enabled monitoring systems have become important technologies in improving internship and OJT management processes. Traditional internship monitoring systems commonly depend on manual attendance checking, physical logbooks, and paper-based report submissions, which often result in delayed updates, inaccurate records, and difficulties in tracking trainees assigned to different locations. The development of mobile technologies allowed researchers to create more accessible and flexible monitoring systems that support real-time communication and remote monitoring.
-Reyes et al. (2024) developed the Mobile-based Student Internship Monitoring System using a Progress Tracking Algorithm to improve internship monitoring through mobile technologies. The researchers explained that mobile platforms allow students, supervisors, and coordinators to access internship records and updates conveniently through smartphones and mobile devices. The study also highlighted that mobile systems improve monitoring accessibility and support faster communication between institutions and trainees.
-The RSPS Science Hub version of the Mobile-based Student Internship Monitoring System (2024) further emphasized the importance of automated progress tracking in improving monitoring accuracy and trainee supervision. Through mobile technologies, coordinators were able to monitor internship activities remotely and receive real-time updates regarding attendance, reports, and trainee performance. Mobile accessibility also allowed students to submit reports and internship requirements more efficiently.
-Location-based technologies were also introduced to strengthen attendance verification and monitoring transparency. The Android-based Internship Attendance and Logbook Application Using Geofence Technology (2024) integrated geofencing features to verify whether trainees were physically present within authorized internship locations before attendance could be recorded. This technology reduced opportunities for attendance fraud and improved attendance validation processes.
-Similarly, the Web-based Internship Absence and Activity Information System Using GPS (2024) utilized GPS technologies to improve location verification and ensure compliance with internship attendance requirements. GPS-enabled systems improved accountability and strengthened real-time monitoring capabilities for internship coordinators and supervisors.
-The integration of mobile platforms, GPS technologies, and geofence systems demonstrates how digital technologies improve accessibility, mobility, attendance validation, and real-time communication in internship monitoring systems. These technologies provide more flexible and efficient monitoring processes while improving coordination between students, supervisors, and educational institutions. These concepts support the proposed Cross-Platform OJT Monitoring and Management System because the study also aims to improve attendance tracking, communication, and internship monitoring through mobile accessibility and digital technologies.
-Internship Management Information Systems and Tracking Platforms
-Internship management information systems and tracking platforms have become essential tools in improving the organization, monitoring, and evaluation of internship and OJT programs. Traditional internship management methods commonly involve manual documentation, paper-based records, and fragmented communication processes, which may result in delayed monitoring, inaccurate information, and inefficient coordination between trainees, supervisors, and institutions. Because of these limitations, researchers developed centralized management systems to improve accessibility, data organization, and monitoring efficiency.
-Cruz et al. (2023) explained that the Management Information System for Tracking On-the-Job Trainees improved internship monitoring through a centralized information management platform. The system allowed coordinators to monitor trainee performance, attendance, and internship requirements more effectively. Centralized systems also improved record accessibility and minimized problems related to scattered internship documents and manual tracking processes.
-Alshammari et al. (2025) discussed the Designing, Implementation and Evaluation of Internship Comprehensive System, which integrated communication, monitoring, and evaluation tools into a single internship management platform. The study highlighted that centralized systems improve coordination between trainees, supervisors, and educational institutions while simplifying internship management tasks.
-Data organization and accessibility also play important roles in internship monitoring systems. Safdari and Ehtesham (2025) emphasized that accurate and organized data management improves monitoring efficiency and evaluation processes in internship systems. Proper data handling ensures that trainee information, attendance records, evaluations, and reports remain accessible, updated, and secure.
-The Internship Monitoring System at State Vocational High School 7 Kupang (2025) focused on improving real-time internship monitoring and activity tracking for vocational students. The study emphasized that centralized monitoring platforms improve transparency and help coordinators track student progress more efficiently. In addition, Hendrawan et al. (2025) highlighted the importance of cloud technologies in improving accessibility and centralized monitoring by allowing users to access internship records and monitoring tools anytime and anywhere.
-These studies show the importance of centralized and technology-based systems in improving internship management processes, communication, accessibility, and record organization. Centralized monitoring platforms improve efficiency by simplifying trainee supervision, documentation management, and evaluation procedures. These findings support the proposed Cross-Platform OJT Monitoring and Management System because the study also focuses on centralized data storage, progress tracking, communication management, and real-time internship monitoring across different platforms.
-Vocational Training and Field Work Monitoring Systems
-Vocational training and field work monitoring systems play an important role in improving the supervision, attendance monitoring, and evaluation of students undergoing practical training and internship programs. Traditional monitoring methods often rely on manual attendance checking, paper-based logbooks, and physical report submissions, which may lead to delayed updates, disorganized records, and difficulties in supervising trainees assigned to different training locations. Because of these challenges, digital monitoring systems were developed to improve supervision and monitoring efficiency.
-Suparyati et al. (2024) developed the Field Work Practice Monitoring System for Vocational Students to improve supervision and monitoring processes during field work training. The study highlighted that digital systems improve the ability of coordinators and supervisors to monitor trainee activities, attendance, and progress more efficiently. The use of technology-based monitoring systems also improved communication and documentation management during practical training.
-Similarly, the Internship Monitoring System at State Vocational High School 7 Kupang (2025) focused on improving real-time internship monitoring and trainee activity tracking for vocational students. The researchers emphasized that digital monitoring systems strengthen transparency and improve the monitoring of student performance and internship compliance.
-The Android-based Internship Attendance and Logbook Application Using Geofence Technology (2024) also contributed to improving field work monitoring through mobile and geofence technologies. The study explained that geofence systems improve attendance verification by confirming whether trainees are physically present within authorized internship locations before attendance can be recorded. This technology strengthened attendance validation and improved monitoring accuracy during practical training activities.
-Technology-based vocational and field work monitoring systems improve supervision, attendance verification, communication, and documentation management within internship and training environments. These systems help institutions manage trainee activities more effectively while improving transparency and monitoring accuracy. These concepts support the proposed Cross-Platform OJT Monitoring and Management System because the study also aims to improve attendance monitoring, activity tracking, documentation management, and supervision processes through digital technologies.
-IoT, Smart Technologies, and Advanced Monitoring Systems
-The development of IoT, artificial intelligence, and smart monitoring technologies has significantly improved modern attendance and internship monitoring systems. Traditional attendance systems commonly rely on manual recording and physical verification, which may result in inaccurate records, attendance fraud, delayed monitoring, and inefficient documentation processes. Modern smart technologies provide automated solutions that improve attendance validation, monitoring efficiency, security, and real-time accessibility.
-The study IoT Based Smart Attendance System Using RFID: A Systematic Literature Review Ishaq and Bibi (2023) explained that RFID technology, integrated with IoT and Google Sheets, was used to automate student attendance recording through RFID cards and RFID readers. The system allowed students to register their attendance by scanning their student cards, which helped reduce time consumption, attendance fraud, manual errors, and the risk of losing attendance records. The study further emphasized that automated RFID-based attendance systems improve monitoring accuracy, efficiency, reliability, and security compared to traditional manual attendance methods 
-Integrating Attendance Tracking and Emotion Detection for Enhanced Student Engagement in Smart Classrooms introduced SCASED, an IoT-based smart monitoring system that combined automated attendance tracking with facial emotion recognition technologies. The system utilized a Raspberry Pi camera, OpenCV, and a fine-tuned MobileNetV2 model to detect and classify students’ emotional states such as engagement, boredom, confusion, and frustration during classroom sessions. The study emphasized that integrating attendance tracking with emotion analytics improves engagement analysis, strengthens real-time monitoring capabilities, and provides instructors with valuable insights into classroom behavior through automated and cloud-based technologies (Ainebyona et al., 2026).
-Advanced AI algorithms were also integrated into attendance systems to improve identity verification processes. Kumar et al. (2025) developed an AI-Driven Attendance Tracking system using Haar Cascade and ResNet algorithms to strengthen facial authentication and attendance verification processes. Similarly, Rao (2022) introduced the AttenFace system, which automated attendance recording and identity authentication through real-time face recognition technologies.
-Cloud and IoT technologies also improved monitoring accessibility and centralized management. Alenezi et al. (2023) emphasized that integrating IoT and cloud technologies improves data accessibility, centralized storage, and real-time attendance management. Sharma et al. (2023) further explained that artificial intelligence strengthens operational efficiency and improves monitoring transparency by reducing manual documentation processes.
-The continuous development of IoT, AI, RFID, and smart monitoring technologies demonstrates how intelligent systems improve attendance management, security, transparency, and monitoring efficiency. These technologies provide more reliable and automated monitoring solutions for educational institutions and internship programs. These findings support the proposed Cross-Platform OJT Monitoring and Management System because the study also aims to integrate intelligent attendance verification, real-time monitoring, centralized data management, and automated tracking technologies into the proposed platform.
+Facial recognition and related biometric technologies have become increasingly common in attendance monitoring systems because of their potential to improve accuracy, reduce fraud, and minimize manual intervention. Traditional attendance methods that rely on paper logbooks or simple digital checklists remain vulnerable to buddy punching, record tampering, and human error.
 
-Related Systems
-Several existing systems related to internship and OJT monitoring were reviewed to identify technologies, features, and functionalities relevant to the proposed study. These systems focused on improving attendance validation, report management, communication, accessibility, and real-time monitoring through the use of digital technologies. The reviewed systems demonstrated how modern technologies such as face recognition, mobile applications, web-based platforms, cloud systems, and geolocation services can improve the efficiency and accuracy of internship monitoring processes.
-The OJT AtTRACK system developed by Abad et al. (2023) uses face recognition and cloud technologies to automate attendance recording and trainee monitoring. The system provides real-time attendance validation, rendered hour computation, and automated report generation for OJT coordinators. The researchers emphasized that the use of facial recognition technologies minimizes attendance fraud and strengthens monitoring transparency. The system also improves the efficiency of monitoring students assigned to different internship locations by allowing coordinators to access updated trainee information remotely.
-Similarly, the SEAIT OJT Monitoring System developed by Ramos et al. (2024) integrates face recognition technologies to improve attendance verification and accessibility. The system allows coordinators to manage attendance records digitally while improving monitoring transparency and reducing manual processes. The researchers highlighted that the integration of automated attendance verification helps reduce documentation workload and improve the reliability of attendance records. The study also emphasized that user-friendly systems improve usability for students, coordinators, and supervisors.
-The Mobile-based Student Internship Monitoring System developed by Reyes et al. (2024) focuses on mobile accessibility and progress tracking. The system enables students and supervisors to monitor internship activities, attendance, and reports through mobile devices. The researchers explained that mobile-based technologies improve convenience and allow faster communication between institutions and trainees. The study also highlighted that progress tracking algorithms strengthen monitoring efficiency by allowing supervisors to track trainee performance and internship completion in real time.
-The Web-Based Student Internship Monitoring Information System developed by Dewi and Hanifah (2024) improves internship attendance monitoring, report submission, and trainee documentation through a centralized online platform. The system allows institutions to monitor students remotely and improve communication between trainees and supervisors. The researchers explained that centralized web-based systems improve accessibility, strengthen documentation processes, and reduce the limitations commonly experienced in manual internship management systems.
-Furthermore, the Android-Based Internship Attendance and Logbook Application Using Geofence Technology (2024) integrates geofence technologies into attendance monitoring systems. The system validates trainee attendance by verifying whether students are physically present within authorized internship locations before attendance can be recorded. The study highlighted that geofence technologies strengthen attendance authenticity and reduce opportunities for fraudulent attendance practices. In addition, digital logbook management improves the organization and submission of internship activities and reports.
-The AttenFace system introduced by Rao (2022) uses real-time face recognition technologies to automate attendance verification and identity authentication. The study highlighted that intelligent attendance systems improve attendance reliability and strengthen monitoring security. The researchers also explained that real-time attendance monitoring systems reduce manual intervention and improve operational efficiency in managing attendance records.
-Moreover, the Web-Based Internship Management System with Automated Attendance Tracking (2023) emphasized the importance of automation in managing attendance, trainee reports, and internship records. The system highlighted how automated attendance tracking and centralized databases improve documentation accuracy, monitoring transparency, and report generation processes.
-The Cloud-Based Internship Monitoring System for Informatics Students (2025) also introduced the use of cloud technologies in improving internship monitoring and accessibility. The researchers explained that cloud-based systems allow users to access internship records and monitoring tools anytime and anywhere, making internship management more efficient and convenient for students, coordinators, and supervisors.
-The existing systems demonstrated that the use of face recognition, mobile applications, cloud technologies, GPS, location-based verification, and automated monitoring features helps improve internship and attendance management. The studies highlighted how digital systems make monitoring faster, more accurate, and easier to manage through real-time tracking, centralized records, and automated attendance checking. These systems served as useful references for the proposed Cross-Platform OJT Monitoring and Management System because the proposed study also focuses on improving attendance monitoring, report submission, communication, progress tracking, and record management within one accessible and centralized platform.
-Synthesis of Literature
-Traditional internship and OJT monitoring processes commonly rely on manual attendance checking, paper-based documentation, physical report submission, and disconnected communication methods. These traditional processes often lead to delayed updates, inaccurate attendance records, poor communication, inefficient monitoring, misplaced files, and difficulties in handling large amounts of student information. Because of these challenges, many researchers focused on developing digital monitoring systems to improve efficiency, accessibility, transparency, and monitoring accuracy.
-Many studies emphasized the importance of using technologies such as face recognition, artificial intelligence, deep learning, GPS, cloud systems, IoT, mobile applications, and web-based platforms in internship monitoring. Researchers explained that automated systems help improve attendance verification, support real-time monitoring, lessen manual tasks, and make monitoring processes more reliable. The studies also showed that centralized systems improve record management and make internship documentation easier to organize and access.
-Studies related to face recognition and AI-based attendance systems emphasized that automated identity verification improves attendance accuracy and reduces fraudulent attendance practices. Researchers explained that integrating face recognition, computer vision, and deep learning technologies into attendance systems improves reliability, security, and operational efficiency. These systems also minimize human intervention and reduce the risks of inaccurate attendance records and attendance manipulation.
-Meanwhile, web-based and mobile monitoring systems highlighted the importance of centralized databases, accessibility, and real-time communication in improving internship management processes. Researchers explained that web and mobile technologies allow students, coordinators, and supervisors to access monitoring systems conveniently regardless of location. The studies also emphasized that digital monitoring systems improve report submission, attendance recording, internship documentation, and trainee monitoring processes.
-In addition, studies involving IoT and location-tracking technologies emphasized the importance of automated attendance validation and real-time monitoring in improving accountability and internship compliance. These technologies help verify trainee attendance, reduce fraudulent practices, and improve monitoring efficiency. Furthermore, cloud-based systems improve accessibility, centralized data storage, and real-time record management. 
-Overall, the technology-based internship monitoring systems significantly improve efficiency, security, transparency, accessibility, communication, and monitoring accuracy. The studies consistently revealed that integrating intelligent technologies and centralized platforms strengthens internship monitoring processes while reducing the limitations commonly experienced in traditional manual systems. These findings strongly support the development of the proposed Cross-Platform OJT Monitoring and Management System for Colegio de Montalban because the proposed system also aims to automate attendance monitoring, improve communication, centralize trainee records, strengthen attendance verification, and improve overall internship management processes through digital and intelligent technologies.
+Abad et al. (2023) developed the OJT AtTRACK system, which utilized face recognition and cloud technology to automate attendance recording and compute rendered hours for OJT trainees. The system enabled coordinators to monitor trainees assigned to different locations in near real time and reduced opportunities for attendance fraud. Ramos et al. (2024) similarly integrated facial recognition into the SEAIT OJT Monitoring System to improve accessibility, security, and transparency while reducing reliance on manual checking.
+
+Other studies have demonstrated the value of deep learning and computer vision techniques. Ahmed et al. (2023), Sharma et al. (2023), Seelam et al. (2021), Arsenovic et al. (2021), and Kumar et al. (2025) reported that AI-driven face recognition systems improve identity verification accuracy under varying environmental conditions and reduce administrative workload. These findings support the inclusion of selfie-based attendance verification in the proposed system.
+
+Web-Based Internship and OJT Monitoring Systems
+Web-based platforms have been widely used to centralize internship records and improve coordination among stakeholders. Dewi and Hanifah (2024) developed a web-based student internship monitoring information system that improved attendance monitoring, documentation, and remote supervision. Pratama et al. (2022) utilized the CodeIgniter framework to simplify trainee record management and report handling. Barrocan et al. (2025) and Jalaludin and Abu Seman (2023) further demonstrated that centralized web systems enhance accountability, report generation, and communication between trainees and supervisors.
+
+Several web-based systems have also incorporated location-based verification. Systems that integrate GPS technologies help confirm that trainees are physically present at authorized internship sites before attendance is recorded, thereby strengthening the integrity of attendance data.
+
+Mobile-Based and GPS-Enabled Monitoring Systems
+Mobile technologies increase accessibility for students who may be deployed in different locations. Reyes et al. (2024) developed a mobile-based student internship monitoring system that incorporated a progress-tracking algorithm. The system allowed students, supervisors, and coordinators to access records and updates conveniently through smartphones. In earlier approaches, such as the Android-based Internship Attendance and Logbook Application (2024), geofencing technologies were used to verify trainee location before attendance could be recorded. However, while effective in fixed-location environments, such rigid geofencing models presented notable operational limitations when applied to dynamic corporate settings involving external client tasks, off-site errands, and indoor GPS satellite attenuation.
+
+Internship Management Information Systems
+Centralized management information systems improve the organization, accessibility, and evaluation of internship data. Cruz et al. (2023) developed a management information system for tracking on-the-job trainees that improved monitoring of performance, attendance, and requirements. Alshammari et al. (2025), Safdari and Ehtesham (2025), and Hendrawan et al. (2025) emphasized the value of integrated platforms that combine communication, monitoring, evaluation, and cloud-based access. These studies collectively support the development of a comprehensive, centralized system rather than fragmented single-function tools.
+
+Synthesis of Related Literature
+The reviewed literature confirms that manual, paper-based OJT monitoring is vulnerable to buddy-punching, lost records, and delayed communications. Previous research has explored biometric facial recognition, GPS tracking, and cloud-based management systems to address these problems (Abad et al., 2023; Ramos et al., 2024; Barrocan et al., 2025).
+
+However, commercial human-resource tools and existing academic prototypes fail to address the specific regulatory and operational realities of tertiary OJT in the Philippines:
+1. Lack of CHED Regulatory Enforcement: Standard attendance tools allow arbitrary overtime and night shifts. They lack automated compliance checks based on CHED CMO No. 104, s. 2017, which limits undergraduate internship hours to 8.0 hours per day, 40.0 hours per week, and prohibits night shifts between 9:00 PM and 6:00 AM.
+2. Single-Check Biometric Loopholes: Most biometric solutions capture a photo only during morning clock-in, allowing trainees to leave immediately afterward. A dual-biometric model (Time In and Time Out) is necessary to ensure trainees remain on duty throughout their shift.
+3. Invasive and Rigid Geofencing: Commercial tools and academic prototypes frequently employ continuous background location tracking and hard geofences that lock trainees out when satellite signals drift indoors or when assigned to legitimate off-site errands. This treats students like monitored inmates rather than young professionals. Modern internship management requires Point-in-Time GPS Geotagging with Supervisor Discretion, which respects student privacy outside the clock-in moment, eliminates false lockouts, and empowers supervisors to approve authorized fieldwork.
+4. Lack of Gateway Prerequisite Checks: Most systems allow immediate attendance logging without verifying whether the student has completed pre-deployment requirements (e.g., orientation and institutional endorsement).
 
 Research Gap
-Although existing studies and systems have improved internship and OJT monitoring through the use of face recognition, artificial intelligence, mobile technologies, web-based platforms, IoT, and cloud systems, several limitations remain in current monitoring and management platforms. Most existing systems focus only on specific functions such as attendance checking, report submission, or progress tracking, resulting in fragmented internship management processes.
-Several related systems are limited to a single platform, either web-based or mobile-based, which reduces accessibility and flexibility for users across different devices. Some studies also focus primarily on attendance monitoring, without fully integrating important functions such as report management, internship time calculation, evaluation processes, communication tools, progress tracking, and notification systems into a centralized platform. Because of these limitations, users may still rely on multiple applications or manual processes to manage internship activities.
-In addition, several systems implemented attendance verification using face recognition and location-tracking technologies but lacked comprehensive management features such as centralized data storage, automated report generation, real-time notifications, and cross-platform accessibility. Other systems focused mainly on student attendance and provided few communication and coordination tools for coordinators, supervisors, and partner companies.
-Some existing  studies also lacked real-time synchronization across multiple devices across multiple devices such as web browsers and mobile phones. This limitation affects accessibility and  convenience, especially for students and coordinators who need immediate access to attendance records, progress reports, evaluation forms, and internship updates. Furthermore, many existing systems were developed for specific institutions and may not fully address the workflow and operational needs of Colegio de Montalban, particularly for the ICS and IBE departments.
+Existing solutions remain fragmented, focusing on isolated functions or single operating systems. At Colegio de Montalban, no unified platform currently connects students, faculty coordinators, company supervisors, and administrators across web, mobile, and desktop environments.
 
-Another gap that has been identified is the limited integration of intelligent attendance verification with centralized internship management processes. Although some systems successfully implemented automated attendance technologies, these features were not fully integrated with communication, evaluation, documentation, and monitoring functions within a single unified platform. As a result, internship management processes may still become inefficient and difficult to manage.
-To address these gaps, the proposed Cross-Platform OJT Monitoring and Management System aims to integrate attendance monitoring, selfie-based verification, progress tracking, report submission, communication, internship hour computation, evaluation management, automated notifications, and centralized record management into one unified system accessible through web and mobile platforms. Unlike existing systems that focus only on selected functionalities, the proposed system aims to provide a more comprehensive and centralized internship management solution specifically designed for the operational needs of Colegio de Montalban.
-The proposed study aims to improve real-time monitoring, accessibility, transparency, usability, and efficiency in managing OJT processes for students, coordinators, supervisors, and partner companies. Through the integration of verified attendance mechanisms and centralized monitoring technologies, the proposed system seeks to reduce administrative workload across all user roles, improve documentation accuracy, strengthen multi-platform communication, and optimize overall internship management processes for Colegio de Montalban.
-REFERENCES
-Abad, A., et al. (2023). OJT AtTRACK – On-the-job trainee remote attendance monitoring system using face recognition system. IOER International Multidisciplinary Research Journal. https://www.ioer-imrj.com/ojt-attrack-on-the-job-trainee-remote-attendance-monitoring-system-using-face-recognition-system/
-Ahmed, S., et al. (2023). Advanced attendance monitoring and verification system using AI. AppliedSciences.https://www.researchgate.net/publication/373984941_Face_Recognition-Based_Automatic_Attendance_System_in_a_Smart_Classroom
-Ainebyona, K., Oguti, A. M., Walusimbi, J., & Kobusingye, R. (2026). Integrating attendance tracking and emotion detection for enhanced student engagement in smart classrooms. ResearchGate. https://www.researchgate.net/publication/399753999_Integrating_Attendance_Tracking_and_Emotion_Detection_for_Enhanced_Student_Engagement_in_Smart_Classrooms
-Alenezi, M., et al. (2023). Smart attendance systems using IoT and cloud technologies. Sensors.https://www.researchgate.net/publication/339168800_IoT_based_Smart_Attendance_Monitoring_System_using_RFID
+The proposed Cross-Platform OJT Monitoring and Management System fills this gap by combining student identity verification at registration, a two-document pre-deployment gateway, CHED CMO 104 schedule validation, dual-biometric mobile attendance logging with modality-aware point-in-time GPS geotagging, offline SQLite synchronization, supervisor-endorsed weekly reporting, and desktop administrative oversight into a unified system tailored specifically for the ICS and IBE departments.
 
-Alshammari, H., et al. (2025). Designing, implementation and evaluation of internship comprehensive system. PMC. https://pmc.ncbi.nlm.nih.gov/articles/PMC11846379/
-Amelia, R., et al. (2024). Website-based monitoring system for internship students using waterfall method. JINTEKS. https://jurnal.uts.ac.id/JINTEKS/article/view/4672
-Arsenovic, M., et al. (2021). Face recognition smart attendance system using deep transfer learning. Procedia Computer Science. https://www.sciencedirect.com/science/article/pii/S1877050921019232
-Barrocan, R. A., et al. (2025). An architectural approach of a web-based monitoring system for efficient internship time tracking. International Journal of Research and Innovation in Applied Science. https://rsisinternational.org/journals/ijrias/articles/an-architectural-approach-of-a-web-based-monitoring-system-for-efficient-internship-time-tracking/
-Cruz, P., et al. (2023). Management information system for tracking on-the-job trainees. International Journal of Advances in Science and Engineering. https://ijase.org/index.php/ijase/article/view/352
-Dewi, F. K., & Hanifah, R. N. (2024). Web-based student internship monitoring information system. IC-ITECHS Proceedings. https://jurnal.ubhinus.ac.id/IC-ITECHS/article/view/1705
-Dewi, F. K., & Hanifah, R. N. (2024). Web-based student internship monitoring information system: Case study SMK Ma'arif NU 2 Boyolali. ResearchGate. https://www.researchgate.net/publication/388736843_Web-Based_Student_Internship_Monitoring_Information_System_Case_Study_SMK_Ma'arif_NU_2_Boyolali
-Hendrawan, N., et al. (2025). Cloud-based internship monitoring system for informatics engineering students. Jurnal Informatika. 
-Ishaq, K., & Bibi, S. (2023). IoT based smart attendance system using RFID: A systematic literature review. ResearchGate. https://www.researchgate.net/publication/372962352_IoT_Based_Smart_Attendance_System_Using_Rfid_A_Systematic_Literature_Review
-
-https://ejournal.unidayan.ac.id/index.php/JIU/article/view/2548
-Jalaludin, E. L., & Abu Seman, A. (2023). Internship monitoring and assessment system. UiTM Institutional Repository. https://ir.uitm.edu.my/id/eprint/100102/
-Khan, M., et al. (2023). Artificial intelligence-based smart monitoring systems. SN Computer Science. https://www.mdpi.com/3153084
-Koro Hege, H. J., & Igon, S. S. (2025). Internship monitoring system at State Vocational High School 7 Kupang. Journal of Artificial Intelligence and Engineering Applications. https://ioinformatic.org/index.php/JAIEA/article/view/974
-Kumar, R., et al. (2025). AI-driven attendance tracking with Haar Cascade and ResNet. Procedia Computer Science. https://www.sciencedirect.com/science/article/pii/S1877050925017144
-Smitha, P., Hegde, S., & Afshin. (2020). Face recognition based attendance management system. International Research Journal of Engineering and Technology (IRJET). https://www.researchgate.net/publication/341876647_Face_Recognition_based_Attendance_Management_System
-Nawaz, T., et al. (2020). Deep learning based automated attendance system. Procedia Computer Science. https://www.sciencedirect.com/science/article/pii/S1877050920300533
-Pratama, R., et al. (2022). Monitoring on the job training using CodeIgniter framework. International Journal of Computer Science Research. https://subset.id/index.php/IJCSR/article/view/5
-Ramos, J., et al. (2024). SEAIT OJT monitoring system using face recognition technology: Improving usability and accessibility. International Journal of Innovative Science and Research Technology. https://ijisrt.com/seait-ojt-monitoring-system-using-face-recognition-technology-improving-usability-and-accessibility/
-Rao, A. (2022). AttenFace: A real time attendance system using face recognition. arXiv. https://arxiv.org/abs/2211.07582
-Reyes, M., et al. (2024). Mobile-based student internship monitoring system using progress tracking algorithm. ResearchGate. https://www.researchgate.net/publication/384412886_Mobile-based_Student_Internship_Monitoring_System_using_Progress_Tracking_Algorithm
-Safdari, R., & Ehtesham, H. (2025). The essential data elements for developing an internship monitoring system in Health Information Technology. BMC Medical Education. https://bmcmededuc.biomedcentral.com/articles/10.1186/s12909-024-06607-4
-Seelam, S., et al. (2021). Smart attendance using deep learning and computer vision. Materials Today: Proceedings. https://www.sciencedirect.com/science/article/pii/S2214785321017764
-Sharma, P., et al. (2023). Automated attendance monitoring using artificial intelligence. IEEE Xplore. https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10059445
-Suparyati, A., Widiastuti, I., & Saputro, I. N. (2024). Field work practice monitoring system for vocational students. Jurnal Teknologi Pendidikan. https://journal.unj.ac.id/unj/index.php/jtp/article/view/47774
-Zafirah, N., Pratama, I., & Samsudin. (2025). User interface design and UML-based modeling for an internship monitoring and evaluation information system. Journal of Information Systems and Technology Research. https://journal.aira.or.id/jistr/article/view/1432
-Android-based internship attendance and logbook application using geofence technology. (2024). Scientist Journal. https://journal.lontaradigitech.com/index.php/SCIENTIST/article/view/1382
-Cloud-based internship monitoring system for informatics students. (2025). Jurnal Informatika. https://ejournal.unidayan.ac.id/index.php/JIU/article/view/2548
-Integrating attendance tracking and emotion detection for enhanced student engagement in smart classrooms. (2026). arXiv. https://arxiv.org/abs/2601.08049
-IoT based smart attendance system using RFID: A systematic literature review. (2023). arXiv. https://arxiv.org/abs/2308.02591
-Mobile-based student internship monitoring system using progress tracking algorithm. (2024). RSPS Science Hub. https://rspsciencehub.com/index.php/journal/article/view/840/
-Web-based internship absence and activity information system using GPS. (2024). Journal of Artificial Intelligence and Engineering Applications. https://www.ioinformatic.org/index.php/JAIEA/article/view/2189
-Web-based internship management system with automated attendance tracking. (2023). International Journal of Scientific and Innovative Research. https://ijsci.com/ijscipaperm/uploads/849642566835.pdf
-Web-based student internship attendance application system for effective student attendance monitoring. (2023). International Journal of Science, Engineering and Computer Science. https://journal.lembagakita.com/ijsecs/article/view/1760
-Website-based attendance information system and daily activity recording for internship students. (2023). Journal of Information Systems and Business Technology. https://journal.jci.co.id/jisbt/article/view/302
+References
+Abad, A., et al. (2023). OJT AtTRACK – On-the-job trainee remote attendance monitoring system using face recognition system. IOER International Multidisciplinary Research Journal.
+Ahmed, S., et al. (2023). Advanced attendance monitoring and verification system using AI. Applied Sciences.
+Alenezi, M., et al. (2023). Smart attendance systems using IoT and cloud technologies. Sensors.
+Alshammari, H., et al. (2025). Designing, implementation and evaluation of internship comprehensive system. PMC.
+Arsenovic, M., et al. (2021). Face recognition smart attendance system using deep transfer learning. Procedia Computer Science.
+Barrocan, R. A., et al. (2025). An architectural approach of a web-based monitoring system for efficient internship time tracking. International Journal of Research and Innovation in Applied Science.
+Cabalbag, & Ontiveros. (2024). Management information system for OJT record tracking.
+Cruz, P., et al. (2023). Management information system for tracking on-the-job trainees. International Journal of Advances in Science and Engineering.
+Dewi, F. K., & Hanifah, R. N. (2024). Web-based student internship monitoring information system. IC-ITECHS Proceedings.
+Hendrawan, N., et al. (2025). Cloud-based internship monitoring system for informatics engineering students. Jurnal Informatika.
+Ishaq, K., & Bibi, S. (2023). IoT based smart attendance system using RFID: A systematic literature review.
+Jalaludin, E. L., & Abu Seman, A. (2023). Internship monitoring and assessment system. UiTM Institutional Repository.
+Kadenic, M. (2023). Agile software development practices and continuous improvement.
+Kumar, R., et al. (2025). AI-driven attendance tracking with Haar Cascade and ResNet. Procedia Computer Science.
+Nawaz, T., et al. (2020). Deep learning based automated attendance system. Procedia Computer Science.
+Pratama, R., et al. (2022). Monitoring on the job training using CodeIgniter framework. International Journal of Computer Science Research.
+Ramos, J., et al. (2024). SEAIT OJT monitoring system using face recognition technology: Improving usability and accessibility. International Journal of Innovative Science and Research Technology.
+Rao, A. (2022). AttenFace: A real-time attendance system using face recognition. arXiv.
+Ravitch, S. M., & Riggan, M. (2016). Reason and rigor: How conceptual frameworks guide research.
+Reyes, M., et al. (2024). Mobile-based student internship monitoring system using progress tracking algorithm.
+Reyes & Dela Cruz. (2020). Internship information system for reduced paperwork and improved accuracy.
+Safdari, R., & Ehtesham, H. (2025). The essential data elements for developing an internship monitoring system in Health Information Technology. BMC Medical Education.
+Scientist Journal. (2024). Android-based internship attendance and logbook application using geofence technology. Scientist Journal, 2(1). https://journal.lontaradigitech.com/index.php/SCIENTIST/article/view/1382
+Seelam, S., et al. (2021). Smart attendance using deep learning and computer vision. Materials Today: Proceedings.
+Sharma, P., et al. (2023). Automated attendance monitoring using artificial intelligence. IEEE Xplore.
+Smitha, P., Hegde, S., & Afshin. (2020). Face recognition based attendance management system. International Research Journal of Engineering and Technology.
+Suparyati, A., Widiastuti, I., & Saputro, I. N. (2024). Field work practice monitoring system for vocational students. Jurnal Teknologi Pendidikan.
+Zafirah, N., Pratama, I., & Samsudin. (2025). User interface design and UML-based modeling for an internship monitoring and evaluation information system. Journal of Information Systems and Technology Research.
 
 
+CHAPTER 3
+METHODOLOGY
 
+3.1 Research Design
+This study employs a developmental-descriptive research design with a mixed-methods approach. The developmental component focuses on the systematic planning, design, development, testing, and evaluation of the Cross-Platform OJT Monitoring and Management System. The descriptive component is used to document and analyze the existing manual OJT monitoring processes, including attendance recording, rendered-hour computation, report submission, document verification, progress monitoring, communication, and performance evaluation.
 
+Quantitative data are gathered through structured survey questionnaires and system evaluation forms. Qualitative data are obtained through semi-structured interviews and direct observation. The combination of quantitative and qualitative methods allows the researchers to obtain both measurable evaluations and in-depth insights into user needs and system performance.
 
+The system is developed following the Agile Software Development Life Cycle, which supports iterative development, continuous user feedback, and progressive refinement of features.
 
+3.2 Research Locale
+The study is conducted at Colegio de Montalban, located in Rodriguez, Rizal. The research focuses on the On-the-Job Training programs implemented by the Institute of Computing Studies (ICS) and the Institute of Business and Entrepreneurship (IBE). The institution was selected because it currently manages OJT processes through manual methods and therefore provides a suitable context for identifying requirements and evaluating a digital solution.
 
+3.3 System Overview
+The Cross-Platform OJT Monitoring and Management System is a centralized application designed to operate across web browsers, mobile devices, and desktop environments. It provides role-based access for five distinct user groups: Students, OJT Coordinators, Company Supervisors, Program Heads, and System Administrators.
 
+The core operational modules of the system include:
+1. Student Identity Proofing: During mobile registration, students submit their institutional details along with a scanned image or photograph of their front-and-back Validated Student ID Card. Student accounts remain in a restricted pending state until verified by the OJT Coordinator, preventing unauthorized access.
+2. Pre-Deployment Documentary Gateway: Before internship deployment, students must submit two mandatory institutional credentials: (a) the Pre-OJT Orientation Certificate and (b) the Official Endorsement Letter. The system blocks schedule proposal submission and attendance logging until both documents are approved by the coordinator.
+3. Practicum Work Schedule Commitment (CHED CMO 104 Engine): Following gateway clearance, students submit their work schedule proposal, specifying their work modality (On-site, Hybrid, or Remote), weekly workdays (Monday through Saturday; Sundays prohibited), and daily shift times. The system enforces CHED CMO No. 104, s. 2017 rules (capping shifts at 8.0 hours/day and 40.0 hours/week between 6:00 AM and 9:00 PM). Upon approval, the coordinator assigns the student to an accredited company supervisor.
+4. Dual-Biometric Attendance & Point-in-Time GPS Verification: Trainees log attendance using their smartphones with live camera selfie capture and point-in-time GPS coordinate recording at both Time In and Time Out. Proximity to the company office is evaluated without lockout: in-bounds entries are tagged as clean logs, while off-site entries allow students to submit an activity note for supervisor verification. Approved remote trainees are automatically exempted and tagged with a 'Remote Work' status.
+5. Offline SQLite Store-and-Forward Engine: If a trainee logs attendance in an area without internet coverage, the record and encrypted selfie data are saved locally in SQLite and automatically synchronized once an internet connection is re-established.
+6. Supervisor Endorsement and Progress Monitoring: Company supervisors review attendance records with side-by-side Time In and Time Out selfies, endorse weekly accomplishment reports, and submit midterm and final evaluations based on a 5-dimension Likert rubric.
+7. Administrative Desktop Runtime: System administrators utilize a dedicated Electron desktop application that provides native window controls, system tray minimization, user management, and read-only archival reporting.
 
+The system architecture utilizes Next.js (App Router) for the web portal, React Native with Expo for the mobile application, Electron for the desktop client, and Supabase (PostgreSQL, Supabase Auth, Storage, and Row-Level Security) for cloud backend services.
 
+3.4 Respondents of the Study
+The respondents of the study consist of individuals who are directly involved in or knowledgeable about the OJT process at Colegio de Montalban. The distribution of respondents is presented in Table 1.
 
+Table 1
+Distribution of Respondents
+Respondent Group | Target Number | Purpose
+Fourth-year OJT students (ICS and IBE) | 30 | Evaluate student-facing functions and usability
+OJT Coordinators | 2–3 | Evaluate administrative workflows and monitoring functions
+Company Supervisors | 5–8 | Evaluate supervisor functions and evaluation tools
+Program Heads / Administrators | 2 | Evaluate oversight and summary reporting functions
+IT Experts / Technical Evaluators | 3–5 | Evaluate technical quality based on ISO/IEC 25010
 
+3.5 Sampling Technique
+The study utilizes purposive sampling. This technique is appropriate because the researchers specifically require participants who possess direct experience with or knowledge of the current OJT monitoring and management processes at Colegio de Montalban (Etikan et al., 2016). Students are selected based on their enrollment in the OJT program. Coordinators, program heads, and company supervisors are selected based on their official responsibilities related to internship supervision and evaluation. IT experts are selected based on their technical background and ability to assess software quality.
 
+3.6 Research Instruments
+The following instruments are used to gather the necessary data:
 
+3.6.1 Survey Questionnaire
+A structured survey questionnaire is administered to gather information about the current OJT process, problems encountered by users, and desired system features. The questionnaire contains sections on respondent profile, current practices, problems in attendance and hour computation, report submission, communication and evaluation, and recommended features.
 
+3.6.2 Interview Guide
+A semi-structured interview guide is used to obtain qualitative insights from OJT coordinators, selected students, and company supervisors. The guide covers existing workflows, attendance validation procedures, report verification, communication practices, performance evaluation methods, and recommendations for system improvement.
 
+3.6.3 Observation Checklist
+An observation checklist is used to document actual practices related to attendance handling, report submission, record management, and communication methods under the existing manual system.
 
-CHAPTER 3: METHODOLOGY 
-Research Design
- This study will use a developmental-descriptive research design with a mixed-methods approach to develop and evaluate the Cross-Platform On-the-Job Training Monitoring and Management System for Colegio de Montalban.
-The developmental aspect of the study will focus on the planning, designing, developing, testing, implementing, and evaluating of the proposed system. The researchers will use the identified problems and requirements of the current manual OJT process as the basis for designing the system’s features, user interfaces, database, and workflows.
-The descriptive aspect will be used to document and analyze the existing OJT monitoring process, including attendance recording, rendered-hour computation, report submission, document verification, progress monitoring, communication, and performance evaluation. This will allow the researchers to identify the limitations of the existing process and determine the requirements of the proposed system.
-A mixed-methods approach will also be used. Quantitative data will be gathered through survey questionnaires and system-evaluation forms. Qualitative data will be obtained through interviews and observations involving students, OJT coordinators, company supervisors, and other qualified participants. The quantitative results will be summarized statistically, while the qualitative responses will be organized according to recurring issues, suggestions, and system requirements.
-The researchers will use the Agile Software Development Life Cycle as the development methodology. Agile will allow the researchers to develop the system incrementally, test each feature, obtain feedback from intended users, and apply revisions throughout the development process.
-ResearchLocale                                                       
+3.6.4 System Evaluation Questionnaire
+A system evaluation questionnaire based on selected characteristics of the ISO/IEC 25010 Software Product Quality Model is administered after the system prototype or completed version is demonstrated. The questionnaire measures Functional Suitability, Performance Efficiency, Usability, and Security. Each characteristic contains specific statements rated on a five-point Likert scale.
 
-The study will be conducted at Colegio de Montalban, Rodriguez, Rizal, particularly among the personnel, students, and partner-company representatives involved in the OJT implementation of the Institute of Computing Studies and Institute of Business and Entrepreneurship.
-The institution was selected as the research locale because it currently manages OJT-related processes involving student applications, attendance monitoring, report submission, progress tracking, evaluation, and completion documentation. The existing processes and the experiences of the intended users will serve as the basis for identifying system requirements and evaluating the proposed solution
+Sample Evaluation Statements:
+Functional Suitability
+• The system provides complete functions needed for OJT attendance monitoring and report management.
+• The system correctly computes rendered internship hours in compliance with approved schedules.
+• The system appropriately supports the roles of students, coordinators, and supervisors.
 
-System / Project Overview 
-The proposed Cross-Platform On-the-Job Training Monitoring and Management System is a centralized web and mobile application designed for the management and monitoring of OJT activities of fourth-year students under the ICS and IBE departments of Colegio de Montalban.
-The system is intended to address problems related to manual attendance records, delayed report submission, scattered documents, difficulty in computing rendered hours, delayed communication, and limited visibility of student progress.
-The system will provide role-based access for the following users:
-Students, who will record attendance, submit reports and requirements, view rendered hours, and monitor their OJT progress.
-OJT coordinators, who will review student records, validate attendance, check reports, monitor completion, and manage OJT-related activities.
-Company supervisors, who will verify trainee attendance, provide feedback, and submit performance evaluations.
-Program heads, who will monitor overall OJT implementation and review summarized student records.
-System administrators, who will manage user accounts, system records, announcements, and configuration settings.
-IT experts or qualified evaluators, who will assess the technical quality of the developed system.
-The system will include attendance monitoring, selfie-based attendance verification, rendered-hour computation, report and document submission, progress monitoring, performance evaluation, notifications, announcements, and centralized record management.
+Performance Efficiency
+• The system responds to user actions within an acceptable time.
+• Data are synchronized properly across web and mobile platforms upon network reconnection.
 
-According to Ramos et al. (2024), integrating face recognition and automated monitoring technologies improves attendance accuracy, usability, and accessibility in internship monitoring systems. The system was designed to operate across mobile and web platforms to ensure accessibility and convenience for students, coordinators, supervisors, and administrators. The main users of the system include: OJT Students OJT Coordinators Company Supervisors Program Heads Partner Companies The proposed system utilizes a centralized database architecture to ensure real-time synchronization and organized management of internship-related records. 
-
-Respondents
- The respondents of the study consisted of selected fourth-year students under the Institute of Computing Studies (ICS) and Institute of Business and Entrepreneurship (IBE) of Colegio de Montalban, together with OJT coordinators and selected company supervisors who are directly involved in internship management and monitoring. The respondents were selected because they possess direct knowledge and experience regarding the current OJT process implemented by the institution. 
-The following respondents participated in the study: 
-Respondents Estimated Number   
-
-
-
-The student respondents provided information regarding internship experiences, attendance concerns, report submission problems, and desired system features. Coordinators provided insights regarding attendance validation, evaluation management, and monitoring procedures. 
-Sampling Technique
-The study will use purposive sampling. This technique is appropriate because the researchers need respondents who possess direct knowledge and experience regarding OJT monitoring and management.
-Students will be selected based on their participation in the OJT program. Coordinators, program heads, and company supervisors will be selected based on their responsibilities in monitoring, evaluating, or administering OJT activities. IT experts will be selected based on their technical background and ability to evaluate the developed system.
-The researchers will coordinate with the concerned department and OJT office to identify qualified participants. Participation will be voluntary, and only respondents who provide informed consent will be included in the study.
-
-According to Etikan et al. (2016), purposive sampling allows researchers to select participants based on their relevance and ability to provide valuable information regarding the study. The researchers considered purposive sampling appropriate because not all students and personnel are directly involved in internship management. Selecting respondents with actual OJT experience ensured accurate and reliable data collection.
- Instruments and Methods for Data Collection
- The researchers utilized surveys, interviews, and observation methods to gather the necessary data for the study.
- Survey Questionnaire 
-Survey questionnaires were distributed using Google Forms to gather quantitative data from respondents. The questionnaires contained multiple-choice, checklist, and paragraph-type questions regarding attendance monitoring, report submission, communication effectiveness, and internship tracking concerns. According to Dewi and Hanifah (2024), web-based internship monitoring systems benefit from structured data gathering methods to identify user needs and improve system functionality.
-
-
-
-
-
-
-
-
-The survey questionnaire will gather information about the current OJT process, problems experienced by users, and features needed in the proposed system. It will contain the following sections:
-Respondent profile.
-Current OJT monitoring practices.
-Problems in attendance recording and rendered-hour computation.
-Problems in report and document submission.
-Problems in communication and performance evaluation.
-Desired system features.
-General comments and recommendations.
-
-
- Interview 
-The researchers conducted semi-structured interviews with OJT coordinators and  selected students to gather qualitative data regarding the current internship monitoring procedures.
-
-  Existing OJT workflows.
-  Attendance validation and hour computation.
-  Report and document verification.
-  Communication between students, coordinators, and supervisors.
-  Performance evaluation procedures.
-  Problems in the current process.
-  Recommended system features.
-  Possible implementation concerns.
-
-
-The interview questions focused on:
- Attendance monitoring challenges Report submission procedures Evaluation management Communication issues Desired system improvements The interview method allowed respondents to provide detailed explanations and recommendations regarding the proposed system.
- Observation
- The researchers also conducted observations regarding the existing OJT procedures implemented by the institution. The observation focused on: Attendance handling Internship monitoring procedures Report submission workflow Communication methods Record management processes.
-Observation helped the researchers identify workflow limitations and areas requiring system improvement.
-
-System evaluation questionnaire
-A system evaluation questionnaire will be used after the prototype or completed system has been demonstrated to the evaluators. It will measure the following criteria:
-Functional suitability.
-Performance efficiency.
-Usability.
-Security.
-The questionnaire must contain specific statements under each criterion. For example, functional suitability should include items about whether the system performs the required OJT functions correctly and completely. Usability should include ease of learning, clarity of navigation, and ease of completing tasks.
-Validation of Instruments
-Before data collection, the survey questionnaire, interview guide, observation checklist, and system evaluation questionnaire will be submitted to qualified validators for review.
-The validators may include:
-An OJT coordinator or program representative.
-A research instructor or methodology adviser.
-An IT instructor or software-development expert.
-The validators will review the instruments for clarity, relevance, completeness, organization, and alignment with the research objectives. Their comments and recommendations will be incorporated into the revised instruments before they are administered to the respondents.
-Data-Gathering Procedure
-The researchers will follow these steps:
-The researchers will request permission from the appropriate school authority, department head, or OJT coordinator to conduct the study.
-The researchers will prepare and submit the survey questionnaire, interview guide, observation checklist, and system-evaluation instrument for validation.
-After incorporating the validators’ recommendations, the researchers will identify qualified respondents according to the inclusion criteria.
-The researchers will explain the purpose of the study and provide an informed-consent form to the participants.
-Surveys will be distributed through printed questionnaires or Google Forms.
-Interviews will be conducted with selected students, coordinators, program heads, and company supervisors.
-Observations will be conducted during the existing OJT monitoring process, subject to institutional permission.
-The researchers will organize and securely store the collected responses.
-The system prototype will be demonstrated to the intended users and evaluators.
-The evaluators will complete the system-evaluation questionnaire after performing or observing representative system tasks.
-The researchers will analyze the quantitative results and organize the qualitative responses.
-The findings will be used to identify final revisions and improvements to the system.
-
-Data-Analysis Procedure
-The following methods will be used to analyze the data:
-Frequency and percentage will be used to summarize respondent profiles and checklist responses.
-Weighted mean will be used to determine the average rating for each system-evaluation criterion.
-Standard deviation may be used to describe the variation of evaluator responses, if required by your adviser.
-Thematic analysis will be used to organize interview and observation responses according to recurring problems, requirements, suggestions, and implementation concerns.
-The weighted mean may be computed using:
-
-where:
-is the weighted mean;
-is the frequency of each rating;
-is the numerical value of the rating; and
-is the total number of responses.
-The overall evaluation score will be obtained by averaging the results under each software-quality criterion. The interpretation will follow the approved rating scale.
-
-System Development Methodology
-
-The system will be developed using Agile methodology. The development process will be organized into iterative stages:
-Planning and requirements analysis
-The researchers will examine the existing OJT process through surveys, interviews, and observations. User roles, problems, required features, system limitations, and technical requirements will be identified.
-System and interface design
-The researchers will prepare the system architecture, database structure, user interfaces, navigation flow, use-case diagrams, flowcharts, and prototypes. The design will cover the mobile and web versions of the system.
-Iterative development
-The researchers will develop the system in smaller functional increments or sprints. Possible increments include:
-User authentication and role management.
-Student profile and OJT application management.
-Attendance logging and selfie submission.
-Rendered-hour computation.
-Document and report submission.
-Progress monitoring.
-Performance evaluation.
-Notifications and announcements.
-Administrative reports.
-Each completed increment will be reviewed and tested before the researchers proceed to the next increment.
-Testing
-The researchers will conduct functional, usability, compatibility, and security-related checks. Errors and user concerns will be recorded and corrected.
-User feedback and revision
-Selected users will test the system and provide feedback regarding its clarity, accessibility, completeness, and usefulness. The researchers will use the feedback to revise the system.
-Deployment and final review
-The completed version will be prepared for demonstration or pilot implementation. The researchers will review whether the system addresses the problems identified in the current manual OJT process.
-System Testing and Evaluation
-The system will undergo the following tests:
-Functional testing
-Functional testing will determine whether each feature performs according to its intended requirement. The researchers will test login, attendance recording, selfie uploading, hour computation, document submission, report checking, evaluation submission, notifications, and user management.
-Usability testing
-Usability testing will determine whether intended users can understand the interface, navigate the system, complete assigned tasks, and interpret system results without unnecessary difficulty.
-Compatibility testing
-Compatibility testing will determine whether the web application works on the selected browsers and whether the mobile application operates properly on the supported devices and operating systems.
-Security-related testing
-Security-related checks will include authentication, role-based access, protection of restricted pages, validation of uploaded files, and prevention of unauthorized access to student records.
-Avoid claiming that the system is fully secure or fully compliant with data-protection law unless you actually perform a formal security audit. Use more careful wording such as “security-related features were evaluated.”
-3.13 ISO/IEC 25010 Evaluation
-The developed system will be evaluated using selected software-quality criteria based on the ISO/IEC 25010 model. The evaluation will focus on the criteria identified in Chapter 1:
-Functional suitability
-This will measure whether the system provides the required functions for OJT application processing, attendance monitoring, report submission, progress tracking, performance evaluation, and record management.
-Performance efficiency
-This will measure whether the system responds within an acceptable time and synchronizes data properly between supported web and mobile platforms.
 Usability
-This will measure the clarity of the interface, ease of navigation, ease of learning, accessibility, and user satisfaction.
-Security
-This will measure the presence and effectiveness of authentication, role-based access, protection of records, and data-integrity mechanisms.
-The evaluators will be grouped according to their role. IT experts will focus on technical quality, while students, coordinators, supervisors, and program heads will evaluate the system based on their actual user roles and experiences.
+• The user interface is clear and easy to understand.
+• Users can complete common tasks without difficulty.
+• The system is easy to learn for first-time users.
 
+Security (Security-related features were evaluated)
+In accordance with the ISO/IEC 25010:2023 product quality standard, security-related features were evaluated across the following operational areas:
+• The system enforces secure role-based access control (RBAC) via Next.js middleware, preventing unauthorized URL access prior to page rendering.
+• The system implements an automatic 30-minute inactivity timeout across administrative and coordinator web portals to secure unattended workstations in shared university computer laboratories.
+• Sensitive student documents and attendance photos are stored in private storage buckets, accessible only through time-limited signed URLs.
+• Database operations are protected by PostgreSQL Row-Level Security (RLS) policies, ensuring users can access only tenancy-authorized records.
+• Critical authentication events—including failed logins, access attempts on pending accounts, and successful authentications—are recorded in an immutable security audit log.
 
+3.7 Validation of Instruments
+Prior to data collection, the survey questionnaire, interview guide, observation checklist, and system evaluation questionnaire are submitted to qualified validators. The validators include an OJT coordinator or program representative, a research methodology adviser, and an IT instructor or software development expert. The validators examine the instruments for clarity, relevance, completeness, and alignment with the research objectives. Their recommendations are incorporated into the final versions of the instruments.
 
- Hardware Requirements 
-The development and testing of the proposed system required the following hardware components: Hardware Description 
+3.8 Data Gathering Procedure
+The researchers follow these steps:
+1. Secure necessary permission from the appropriate school authorities and department heads.
+2. Validate all research instruments with qualified experts.
+3. Identify and invite qualified respondents according to the inclusion criteria.
+4. Obtain informed consent from all participants.
+5. Administer the survey questionnaire through Google Forms or printed forms.
+6. Conduct semi-structured interviews with selected participants.
+7. Perform observations of existing OJT processes, subject to institutional permission.
+8. Demonstrate the system prototype or completed version to evaluators.
+9. Administer the system evaluation questionnaire.
+10. Organize, store, and analyze the collected data.
 
+3.9 Data Analysis Procedure
+Quantitative data from the survey and system evaluation questionnaires are analyzed using descriptive statistics. Frequency and percentage are used to summarize respondent profiles and checklist responses. The weighted mean is used to determine the average rating for each evaluation criterion.
+
+The weighted mean is computed using the formula:
+WM = Σ(fx) / N
+where:
+• WM = weighted mean
+• f = frequency of each rating
+• x = numerical value of the rating
+• N = total number of responses
+
+Qualitative data from interviews and observations are analyzed through thematic analysis. Responses are organized according to recurring problems, requirements, suggestions, and implementation concerns.
+
+Table 2
+Likert Scale Interpretation for System Evaluation
+Scale | Range | Interpretation
+5 | 4.20 – 5.00 | Excellent / Highly Acceptable
+4 | 3.40 – 4.19 | Very Good / Acceptable
+3 | 2.60 – 3.39 | Good / Moderately Acceptable
+2 | 1.80 – 2.59 | Fair / Needs Improvement
+1 | 1.00 – 1.79 | Poor / Not Acceptable
+
+3.10 System Development Methodology
+The system is developed using the Agile Software Development Life Cycle. The process is organized into the following iterative stages:
+
+Stage 1: Planning and Requirements Analysis – Examination of the existing OJT process through surveys, interviews, and observations to identify user roles, problems, required features, and technical constraints.
+Stage 2: System and Interface Design – Preparation of system architecture, database design, user interface mockups, navigation flows, use-case diagrams, and prototypes for web, mobile, and desktop versions.
+Stage 3: Iterative Development – Implementation of features across 9 distinct Agile sprints:
+• Sprint 1: Authentication, Role Management, and Identity Proofing. Implementation of role-based registration, front-and-back student ID card upload, coordinator verification queue, route middleware access controls, and 30-minute laboratory session inactivity monitoring.
+• Sprint 2: Pre-Deployment Gateway and Practicum Schedule Engine. Implementation of the two-document prerequisite gateway (Pre-OJT Orientation Certificate and Endorsement Letter), Practicum Work Schedule Commitment submission, and automated CHED CMO No. 104, s. 2017 compliance checks.
+• Sprint 3: Dual-Biometric Attendance and Offline Synchronization. Development of mobile attendance tracking featuring mandatory live selfie capture on both Time In and Time Out, modality-aware point-in-time GPS geotagging (with 150-meter proximity baseline, off-site errand exception notes, and remote work exemption), and local SQLite offline queueing.
+• Sprint 4: Rendered-Hour Computation. Development of the automated hour calculation engine, which deducts scheduled lunch breaks and caps credit hours to the approved daily maximum to prevent unapproved overtime.
+• Sprint 5: Document and Weekly Report Submission. Implementation of weekly narrative accomplishment report submissions, supporting PDF attachments, and company supervisor review and endorsement.
+• Sprint 6: Progress Monitoring. Implementation of real-time hour progress tracking, requirement completion indicators, and department-level dashboard overviews for OJT Coordinators and Program Heads.
+• Sprint 7: Performance Evaluation. Creation of structured midterm and final evaluation forms using a 5-dimension Likert rubric (Technical Competence, Work Quality, Professionalism, Punctuality, Communication) with automatic percentage grade computation.
+• Sprint 8: Notifications and Announcements. Integration of centralized in-app notifications and administrative bulletin announcements.
+• Sprint 9: Administrative Desktop Client and Certificate Archival. Development of the Electron desktop administrative wrapper, system tray integration, read-only completed record archival, and tamper-proof digital completion certificate generation.
+Stage 4: Testing – Conduct of functional testing, usability testing, compatibility testing across supported browsers and devices, and security-related checks (authentication, role-based access, and protection of uploaded files).
+Stage 5: User Feedback and Revision – Collection of feedback from selected users and incorporation of necessary improvements.
+Stage 6: Deployment and Final Review – Preparation of the completed system for demonstration or pilot use and assessment of whether the system addresses the problems identified in the current manual process.
+
+3.11 Hardware and Software Requirements
+
+Hardware Requirements
+1. Development & Evaluation Computer: Intel Core i5 or AMD Ryzen 5 processor, 8 GB RAM, and 256 GB SSD (verified to compile Next.js web components, build React Native mobile bundles, and execute the Electron desktop runtime smoothly).
+2. Mobile Test Devices: Android (version 10.0 or higher) and iOS smartphones equipped with functional GPS satellite receivers and front-facing cameras for selfie verification and location proximity testing.
+3. Network Environment: Minimum 5 Mbps internet connection for cloud synchronization; cellular data or offline simulation environments for offline queue validation.
 
 Software Requirements
-The researchers utilized the following software tools, platforms, and programming technologies during
-system development:
+1. Visual Studio Code – Source code development and debugging.
+2. Next.js (Version 14, App Router) – React-based web framework for coordinator, supervisor, program head, and admin portals.
+3. React Native & Expo (Expo Go) – Cross-platform framework for the student mobile application.
+4. Electron.js (Version 28+) – Desktop application runtime for the administrative management console.
+5. TypeScript – Strongly typed language for web, mobile, and shared modules.
+6. Tailwind CSS & NativeWind – Utility-first interface styling for web and mobile components.
+7. Supabase – Cloud platform providing PostgreSQL database, Supabase Auth, private file storage, and Row-Level Security (RLS).
+8. SQLite – Embedded client-side relational database for offline mobile attendance caching.
+9. Git & GitHub – Source code version control and collaborative development repository.
 
+3.12 System Architecture and Process Flowcharts
 
+The cross-platform system architecture is structured into a presentation layer (Next.js web, React Native Expo mobile, Electron desktop), a business logic and security layer with Next.js route middleware and Supabase Row-Level Security (RLS), and a persistent PostgreSQL cloud database layer.
 
-System Architecture and Database Design
+The operational flow and structural models of the system are documented in the following architectural and process diagrams:
 
-ERD
+Figure 3: Main Cross-Platform System Architecture and Synchronization Flowchart
+Illustrates the 4-tier interaction between the cross-platform client presentation layer (Web, Mobile, Desktop), the Next.js reverse-proxy security middleware with laboratory session timeout enforcement, the cloud backend layer (Supabase PostgreSQL, Auth, and private Storage buckets), and the mobile offline SQLite store-and-forward engine.
 
-Flowchart
-The researchers developed separate flowcharts to clearly illustrate the workflows and processes of the
-proposed Cross-Platform OJT Monitoring and Management System.
+Figure 4: Entity-Relationship Diagram (ERD) & Database Schema
+Depicts the relational schema across all 11 core database tables (users, students, supervisors, companies, student_assignments, practicum_schedules, attendance, reports, evaluations, internship_progress, and audit_logs). The diagram illustrates the primary and foreign key constraints and implements the Single-Table Inheritance role-discriminator pattern for institutional staff while maintaining auxiliary extension tables for trainees and supervisors.
 
-The flowcharts include:
+Figure 5: Student Mobile Attendance Process Flowchart
+Details the sequential mobile attendance procedure: device GPS coordinate acquisition, point-in-time proximity evaluation against the company baseline, off-site errand explanation modal, live un-cached front camera selfie capture with anti-spoofing watermark HUD, network connectivity branching, and SQLite offline queue fallback with automatic background synchronization.
 
-Main Cross-Platform System Flowchart
+Figure 6: Pre-Deployment Gateway and Practicum Work Schedule Workflow Flowchart
+Maps the two-stage pre-deployment gateway: (Stage 1) institutional identity proofing via front-and-back student ID card verification; (Stage 2) verification of the Pre-OJT Orientation Certificate and Endorsement Letter; and (Stage 3) automated schedule validation against CHED CMO No. 104, s. 2017 regulatory parameters (daily 8-hour cap, weekly 40-hour limit, 6:00 AM to 9:00 PM operating window, and Sunday prohibition).
 
-The main system flowchart illustrates the general process of accessing the system, authenticating the user, identifying the user role, and directing the user to the appropriate dashboard and functions.
+Figure 7: OJT Coordinator Verification, Schedule Approval, and Grading Process Flowchart
+Illustrates the coordinator workflow on the web portal: inspecting pending student registrations, approving pre-deployment credentials, reviewing practicum schedule proposals, matching students to host companies and supervisors, grading weekly narrative reports, and monitoring cohort hour progression.
 
-Student Mobile Application Flowchart
+Figure 8: Company Supervisor Attendance Verification and Evaluation Flowchart
+Details the supervisor workflow on the web application: side-by-side Time In and Time Out selfie inspection, Smart Compliance Triage (categorizing clean logs, off-site field errands, and indoor exceptions), 1-click batch verification, weekly report endorsement, and two-tier midterm and final performance evaluations using a 5-dimension Likert rubric.
 
-The student flowchart shows the process of logging in, recording attendance, submitting reports and requirements, viewing rendered hours, monitoring progress, and receiving notifications.
-Web Application Flowchart
+Figure 9: Program Head Departmental Progress Summary Flowchart
+Documents the high-level administrative oversight workflow: accessing real-time department analytics, monitoring cohort completion milestones across the Institute of Computing Studies (ICS) and Institute of Business and Entrepreneurship (IBE), reviewing supervisor evaluation distributions, and exporting compliance summaries.
 
-OJT Coordinator Process Flowchart
-
-The coordinator flowchart shows the process of reviewing student records, validating attendance, checking submissions, monitoring progress, managing evaluations, and generating reports.
-Company Supervisor Process Flowchart
-
-The company-supervisor flowchart shows the process of accessing assigned trainees, verifying attendance, reviewing activities, submitting feedback, and completing performance evaluations.
- Program Head Process Flowchart
-
-
-The program-head flowchart shows the process of monitoring department-level OJT records, reviewing summaries, and checking student completion status.
-Admin process Flowchart
-
-The administrator flowchart shows the process of managing users, roles, announcements, system settings, and records.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-SYSTEM FLOWCHART
-
-
-
-
-MOBILE FLOWCHART
-
-Ethical Considerations
-The researchers will observe ethical practices throughout the study. Participation will be voluntary, and respondents will be informed about the purpose, procedure, and expected use of the collected information before answering the instruments.
-The researchers will request permission from the appropriate school authority before conducting surveys, interviews, observations, and system evaluations. Respondents may decline to participate or withdraw from the study without penalty.
-The researchers will keep respondent information confidential and will use the collected data only for academic and system-development purposes. Names and other identifying information will not be included in the research results unless permission is provided.
-Because the proposed system uses attendance selfies and student records, access to these data will be limited to authorized users. Test data should be used whenever possible during demonstrations. The researchers should also define how uploaded images, reports, and evaluation records will be stored, protected, retained, and deleted after the study.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Figure 10: System Administrator User Management and Document Archival Flowchart
+Details administrative operations via the Electron desktop runtime: staff account creation, institutional announcement broadcasting, real-time security audit log monitoring, tamper-proof SHA-256 batch document archival to local drives, and issuance of verifiable digital completion certificates with public lookup codes.

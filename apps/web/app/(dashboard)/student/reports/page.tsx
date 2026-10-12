@@ -130,7 +130,7 @@ export default function StudentReportsPage() {
         </div>
         <Button
           onClick={() => { setFormError(''); setSelectedFile(null); setRemarks(''); setModalOpen(true); }}
-          className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+          className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold"
         >
           + Upload Requirement
         </Button>
@@ -150,7 +150,7 @@ export default function StudentReportsPage() {
         </div>
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Required Checklist</p>
-          <h3 className="text-2xl font-bold text-[#0A3D24] mt-1">6 Items</h3>
+          <h3 className="text-2xl font-bold text-[#0A3824] mt-1">6 Items</h3>
           <p className="text-xs text-slate-400 mt-0.5">Standard CDM practicum checklist</p>
         </div>
       </div>
@@ -226,7 +226,7 @@ export default function StudentReportsPage() {
             <select
               value={reportType}
               onChange={e => setReportType(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824]"
             >
               {STANDARD_REPORT_TYPES.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
@@ -237,7 +237,7 @@ export default function StudentReportsPage() {
           {/* Secure File Picker with Format and Size Checks */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-700">Document File (Max 10 MB)</label>
-            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-[#0A3D24] transition-colors bg-slate-50/50">
+            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-[#0A3824] transition-colors bg-slate-50/50">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -248,7 +248,7 @@ export default function StudentReportsPage() {
               />
               <label htmlFor="doc-file-upload" className="cursor-pointer block space-y-1">
                 <span className="text-2xl block">📁</span>
-                <span className="text-xs font-bold text-[#0A3D24] hover:underline block">
+                <span className="text-xs font-bold text-[#0A3824] hover:underline block">
                   {selectedFile ? 'Change Selected File' : 'Click to Browse File'}
                 </span>
                 <span className="text-[11px] text-slate-400 block">
@@ -268,7 +268,7 @@ export default function StudentReportsPage() {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-slate-700">Submission Notes / Remarks (Optional)</label>
             <textarea
-              className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] min-h-[70px]"
+              className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] min-h-[70px]"
               placeholder="Add any notes for your OJT Coordinator regarding this submission..."
               value={remarks}
               onChange={e => setRemarks(e.target.value)}
@@ -279,7 +279,7 @@ export default function StudentReportsPage() {
 
           <div className="flex gap-3 pt-2">
             <Button variant="ghost" onClick={() => setModalOpen(false)} className="flex-1">Cancel</Button>
-            <Button onClick={handleSave} loading={saving} disabled={!selectedFile} className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold">
+            <Button onClick={handleSave} loading={saving} disabled={!selectedFile} className="flex-1 bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold">
               Upload & Submit
             </Button>
           </div>

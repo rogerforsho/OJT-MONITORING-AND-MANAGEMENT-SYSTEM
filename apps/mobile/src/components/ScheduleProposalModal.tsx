@@ -160,14 +160,14 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
               <Text style={s.headerSubtitle}>Propose your weekly commitment (Option A)</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-              <Ionicons name="close" size={22} color="#64748b" />
+              <Ionicons name="close" size={22} color="#526257" />
             </TouchableOpacity>
           </View>
 
           {loading ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#0A3D24" />
-              <Text style={{ marginTop: 12, fontSize: 13, color: '#64748b' }}>Loading schedule details...</Text>
+              <ActivityIndicator size="large" color="#0A3824" />
+              <Text style={{ marginTop: 12, fontSize: 13, color: '#526257' }}>Loading schedule details...</Text>
             </View>
           ) : (
             <ScrollView style={s.body} contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
@@ -216,7 +216,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                   placeholder="e.g., Tech Innovations Inc. - Montalban Branch"
                   value={customCompany}
                   onChangeText={v => { setCustomCompany(v); if (v) setCompanyId(''); }}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                 />
               </View>
 
@@ -234,7 +234,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                       <Ionicons
                         name={m.icon}
                         size={18}
-                        color={modality === m.key ? '#FFCC00' : '#475569'}
+                        color={modality === m.key ? '#E4DBC4' : '#37483C'}
                       />
                       <Text style={[s.modalityText, modality === m.key && s.modalityTextActive]}>
                         {m.label}
@@ -248,7 +248,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
               <View style={s.section}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text style={s.sectionTitle}>3. Weekly Work Days</Text>
-                  <Text style={{ fontSize: 11, color: '#0A3D24', fontWeight: '700' }}>
+                  <Text style={{ fontSize: 11, color: '#0A3824', fontWeight: '700' }}>
                     {selectedDays.length} Days Selected
                   </Text>
                 </View>
@@ -281,11 +281,11 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                       value={timeIn}
                       onChangeText={setTimeIn}
                       placeholder="08:00"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#879687"
                       keyboardType="numbers-and-punctuation"
                     />
                   </View>
-                  <Text style={{ alignSelf: 'center', marginTop: 16, fontSize: 16, color: '#94a3b8' }}>➔</Text>
+                  <Text style={{ alignSelf: 'center', marginTop: 16, fontSize: 16, color: '#879687' }}>➔</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={s.label}>Time Out</Text>
                     <TextInput
@@ -293,7 +293,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                       value={timeOut}
                       onChangeText={setTimeOut}
                       placeholder="17:00"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#879687"
                       keyboardType="numbers-and-punctuation"
                     />
                   </View>
@@ -304,7 +304,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                       value={lunchMinutes.toString()}
                       onChangeText={v => setLunchMinutes(parseInt(v) || 0)}
                       placeholder="60 mins"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#879687"
                       keyboardType="numeric"
                     />
                   </View>
@@ -317,7 +317,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                     value={lunchBreakStart}
                     onChangeText={setLunchBreakStart}
                     placeholder={lunchMinutes > 0 ? 'e.g. 12:00' : 'Not required when break is 0'}
-                    placeholderTextColor="#94a3b8"
+                    placeholderTextColor="#879687"
                     keyboardType="numbers-and-punctuation"
                   />
                   <Text style={s.helperText}>Only the lunch minutes that overlap your recorded shift are deducted.</Text>
@@ -332,9 +332,9 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                     <Ionicons
                       name={isChedCompliant ? "shield-checkmark" : "warning"}
                       size={20}
-                      color={isChedCompliant ? "#0A3D24" : "#b91c1c"}
+                      color={isChedCompliant ? "#0A3824" : "#b91c1c"}
                     />
-                    <Text style={[s.complianceTitle, { color: isChedCompliant ? '#0A3D24' : '#b91c1c' }]}>
+                    <Text style={[s.complianceTitle, { color: isChedCompliant ? '#0A3824' : '#b91c1c' }]}>
                       {isChedCompliant ? 'CHED CMO 104 Compliant' : 'Guidelines Non-Compliant'}
                     </Text>
                   </View>
@@ -388,7 +388,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                       value={startDate}
                       onChangeText={setStartDate}
                       placeholder="2026-10-01"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#879687"
                     />
                   </View>
                   <View style={{ flex: 1 }}>
@@ -398,7 +398,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                       value={endDate}
                       onChangeText={setEndDate}
                       placeholder="2026-12-15"
-                      placeholderTextColor="#94a3b8"
+                      placeholderTextColor="#879687"
                     />
                   </View>
                 </View>
@@ -413,7 +413,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                   placeholder="e.g., Assigned to IT Department, special shift request, or orientation date."
                   value={notes}
                   onChangeText={setNotes}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                 />
               </View>
 
@@ -430,7 +430,7 @@ export default function ScheduleProposalModal({ visible, onClose, onSubmitted }:
                 activeOpacity={0.85}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#FFCC00" />
+                  <ActivityIndicator color="#E4DBC4" />
                 ) : (
                   <Text style={s.submitBtnText}>
                     {existingProposal ? 'Update Practicum Schedule' : 'Submit Schedule Proposal'}
@@ -465,11 +465,11 @@ const s = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#F4F6F2',
   },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#0A3D24' },
-  headerSubtitle: { fontSize: 11, color: '#64748b', marginTop: 1 },
-  closeBtn: { padding: 6, borderRadius: 20, backgroundColor: '#f1f5f9' },
+  headerTitle: { fontSize: 17, fontWeight: '800', color: '#0A3824' },
+  headerSubtitle: { fontSize: 11, color: '#526257', marginTop: 1 },
+  closeBtn: { padding: 6, borderRadius: 20, backgroundColor: '#F4F6F2' },
   body: { paddingHorizontal: 20, paddingTop: 14 },
   statusBanner: {
     padding: 12,
@@ -489,35 +489,35 @@ const s = StyleSheet.create({
     backgroundColor: '#fef2f2',
     borderColor: '#fecaca',
   },
-  statusBannerTitle: { fontSize: 12, fontWeight: '700', color: '#0f172a' },
-  statusBannerText: { fontSize: 11, color: '#475569', marginTop: 2 },
+  statusBannerTitle: { fontSize: 12, fontWeight: '700', color: '#18271D' },
+  statusBannerText: { fontSize: 11, color: '#37483C', marginTop: 2 },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 13, fontWeight: '800', color: '#1e293b', marginBottom: 8 },
-  label: { fontSize: 11, fontWeight: '600', color: '#475569', marginBottom: 4 },
+  sectionTitle: { fontSize: 13, fontWeight: '800', color: '#26372D', marginBottom: 8 },
+  label: { fontSize: 11, fontWeight: '600', color: '#37483C', marginBottom: 4 },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#C7D2C7',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 9,
     fontSize: 13,
-    color: '#0f172a',
-    backgroundColor: '#f8fafc',
+    color: '#18271D',
+    backgroundColor: '#F7F9F5',
   },
   compPill: {
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#f8fafc',
+    borderColor: '#C7D2C7',
+    backgroundColor: '#F7F9F5',
   },
   compPillActive: {
-    borderColor: '#0A3D24',
-    backgroundColor: '#0A3D24',
+    borderColor: '#0A3824',
+    backgroundColor: '#0A3824',
   },
-  compPillText: { fontSize: 12, fontWeight: '600', color: '#475569' },
-  compPillTextActive: { color: '#FFCC00' },
+  compPillText: { fontSize: 12, fontWeight: '600', color: '#37483C' },
+  compPillTextActive: { color: '#E4DBC4' },
   modalityRow: { flexDirection: 'row', gap: 8 },
   modalityBtn: {
     flex: 1,
@@ -528,15 +528,15 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#f8fafc',
+    borderColor: '#C7D2C7',
+    backgroundColor: '#F7F9F5',
   },
   modalityBtnActive: {
-    borderColor: '#0A3D24',
-    backgroundColor: '#0A3D24',
+    borderColor: '#0A3824',
+    backgroundColor: '#0A3824',
   },
-  modalityText: { fontSize: 11, fontWeight: '700', color: '#475569' },
-  modalityTextActive: { color: '#FFCC00' },
+  modalityText: { fontSize: 11, fontWeight: '700', color: '#37483C' },
+  modalityTextActive: { color: '#E4DBC4' },
   daysRow: { flexDirection: 'row', gap: 6, marginBottom: 4 },
   dayBtn: {
     flex: 1,
@@ -544,27 +544,27 @@ const s = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#f8fafc',
+    borderColor: '#C7D2C7',
+    backgroundColor: '#F7F9F5',
   },
   dayBtnActive: {
-    borderColor: '#0A3D24',
-    backgroundColor: '#0A3D24',
+    borderColor: '#0A3824',
+    backgroundColor: '#0A3824',
   },
-  dayBtnText: { fontSize: 12, fontWeight: '700', color: '#475569' },
-  dayBtnTextActive: { color: '#FFCC00' },
-  helperText: { fontSize: 10, color: '#94a3b8', fontStyle: 'italic', marginTop: 2 },
+  dayBtnText: { fontSize: 12, fontWeight: '700', color: '#37483C' },
+  dayBtnTextActive: { color: '#E4DBC4' },
+  helperText: { fontSize: 10, color: '#879687', fontStyle: 'italic', marginTop: 2 },
   timeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   timeInput: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#C7D2C7',
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 13,
     fontWeight: '700',
-    color: '#0f172a',
-    backgroundColor: '#f8fafc',
+    color: '#18271D',
+    backgroundColor: '#F7F9F5',
     textAlign: 'center',
   },
   complianceCard: {
@@ -589,9 +589,9 @@ const s = StyleSheet.create({
     borderTopColor: 'rgba(0,0,0,0.06)',
   },
   metricItem: { flex: 1, alignItems: 'center' },
-  metricLabel: { fontSize: 10, color: '#64748b', fontWeight: '600' },
-  metricValue: { fontSize: 14, fontWeight: '800', color: '#0A3D24', marginTop: 2 },
-  metricSub: { fontSize: 9, color: '#94a3b8' },
+  metricLabel: { fontSize: 10, color: '#526257', fontWeight: '600' },
+  metricValue: { fontSize: 14, fontWeight: '800', color: '#0A3824', marginTop: 2 },
+  metricSub: { fontSize: 9, color: '#879687' },
   metricDivider: { width: 1, backgroundColor: 'rgba(0,0,0,0.08)', marginHorizontal: 8 },
   complianceWarning: { fontSize: 11, color: '#b91c1c', marginTop: 4, fontWeight: '600' },
   errorBox: {
@@ -604,7 +604,7 @@ const s = StyleSheet.create({
   },
   errorText: { fontSize: 11, color: '#b91c1c', textAlign: 'center', fontWeight: '600' },
   submitBtn: {
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -616,5 +616,5 @@ const s = StyleSheet.create({
     elevation: 3,
   },
   submitBtnDisabled: { opacity: 0.5 },
-  submitBtnText: { color: '#FFCC00', fontSize: 14, fontWeight: '800' },
+  submitBtnText: { color: '#E4DBC4', fontSize: 14, fontWeight: '800' },
 });

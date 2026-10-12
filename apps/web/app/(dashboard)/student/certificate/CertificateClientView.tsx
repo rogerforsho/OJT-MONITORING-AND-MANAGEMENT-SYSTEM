@@ -31,7 +31,7 @@ export default function CertificateClientView({ clearance }: Props) {
         {hasCertificate && (
           <Button
             onClick={() => window.print()}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md"
+            className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md"
           >
             🖨️ Print / Save as PDF
           </Button>
@@ -43,7 +43,7 @@ export default function CertificateClientView({ clearance }: Props) {
         <CardContent className="p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Shield className="w-4 h-4 text-[#0A3D24]" /> 3-Pillar Institutional Clearance Gate
+              <Shield className="w-4 h-4 text-[#0A3824]" /> 3-Pillar Institutional Clearance Gate
             </h3>
             <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
               hasCertificate ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
@@ -109,7 +109,7 @@ export default function CertificateClientView({ clearance }: Props) {
                 </p>
                 <Link
                   href="/student/evaluation-summary"
-                  className="text-[11px] font-bold text-[#0A3D24] hover:underline inline-flex items-center gap-1 mt-1.5"
+                  className="text-[11px] font-bold text-[#0A3824] hover:underline inline-flex items-center gap-1 mt-1.5"
                 >
                   View Evaluation Summary Sheet →
                 </Link>
@@ -121,16 +121,16 @@ export default function CertificateClientView({ clearance }: Props) {
 
       {/* Official Certificate Canvas */}
       {hasCertificate ? (
-        <div className="bg-[#FAF8F5] border-8 border-[#0A3D24] p-8 sm:p-12 rounded-3xl shadow-2xl relative text-center space-y-6 overflow-hidden">
+        <div className="bg-[#FAF8F5] border-8 border-[#0A3824] p-8 sm:p-12 rounded-3xl shadow-2xl relative text-center space-y-6 overflow-hidden">
           {/* Top Decorative Border */}
           <div className="flex items-center justify-center gap-3">
-            <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-[#FFCC00] to-transparent" />
-            <span className="text-xs font-bold tracking-widest text-[#0A3D24] uppercase">Republic of the Philippines</span>
-            <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-[#FFCC00] to-transparent" />
+            <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-[var(--cdm-sand)] to-transparent" />
+            <span className="text-xs font-bold tracking-widest text-[#0A3824] uppercase">Republic of the Philippines</span>
+            <div className="h-0.5 flex-1 bg-gradient-to-r from-transparent via-[var(--cdm-sand)] to-transparent" />
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#062415] tracking-tight font-serif">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#092E1D] tracking-tight font-serif">
               COLEGIO DE MONTALBAN
             </h2>
             <p className="text-xs text-slate-600 uppercase tracking-widest">
@@ -142,7 +142,7 @@ export default function CertificateClientView({ clearance }: Props) {
             <span className="inline-block text-base sm:text-lg font-serif italic text-slate-700">
               This is to officially certify that
             </span>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-[#0A3D24] tracking-tight mt-2 font-serif underline decoration-[#FFCC00] decoration-4 underline-offset-8">
+            <h3 className="text-3xl sm:text-4xl font-extrabold text-[#0A3824] tracking-tight mt-2 font-serif underline decoration-[var(--cdm-sand)] decoration-4 underline-offset-8">
               {clearance.student_name}
             </h3>
             <p className="text-xs text-slate-500 font-mono mt-3">
@@ -177,7 +177,7 @@ export default function CertificateClientView({ clearance }: Props) {
             <Link
               href={`/verify-certificate/${clearance.certificate?.verification_code}`}
               target="_blank"
-              className="text-[#0A3D24] font-bold hover:underline"
+              className="text-[#0A3824] font-bold hover:underline"
             >
               🔗 Public Verification Portal →
             </Link>

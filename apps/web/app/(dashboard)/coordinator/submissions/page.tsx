@@ -177,7 +177,7 @@ export default function CoordinatorSubmissionsPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Requirement & Document Submissions</h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-[#0A3D24]">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-[#0A3824]">
               CdM Practicum
             </span>
           </div>
@@ -192,14 +192,14 @@ export default function CoordinatorSubmissionsPage() {
             onClick={() => setActiveTab('compliance')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'compliance'
-                ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <span>📋 Pre-Deployment Tracker</span>
             {complianceData && complianceData.needs_requirements > 0 && (
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === 'compliance' ? 'bg-[#FFCC00] text-[#0A3D24]' : 'bg-rose-500 text-white'
+                activeTab === 'compliance' ? 'bg-[var(--cdm-sand)] text-[#0A3824]' : 'bg-rose-500 text-white'
               }`}>
                 {complianceData.needs_requirements}
               </span>
@@ -209,14 +209,14 @@ export default function CoordinatorSubmissionsPage() {
             onClick={() => setActiveTab('feed')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'feed'
-                ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <span>📑 Document Review Feed</span>
             {totalReports > 0 && (
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                activeTab === 'feed' ? 'bg-[#FFCC00] text-[#0A3D24]' : 'bg-slate-300 text-slate-700'
+                activeTab === 'feed' ? 'bg-[var(--cdm-sand)] text-[#0A3824]' : 'bg-slate-300 text-slate-700'
               }`}>
                 {totalReports}
               </span>
@@ -304,15 +304,15 @@ export default function CoordinatorSubmissionsPage() {
               onClick={() => setComplianceFilter('deployed')}
               className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                 complianceFilter === 'deployed'
-                  ? 'bg-[#0A3D24]/10 border-[#0A3D24]/30 ring-2 ring-[#0A3D24]/30 shadow-sm'
-                  : 'bg-white border-slate-200/80 hover:border-[#0A3D24]/20 hover:bg-[#0A3D24]/5'
+                  ? 'bg-[#0A3824]/10 border-[#0A3824]/30 ring-2 ring-[#0A3824]/30 shadow-sm'
+                  : 'bg-white border-slate-200/80 hover:border-[#0A3824]/20 hover:bg-[#0A3824]/5'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#0A3D24] uppercase tracking-wider">Active Deployed</span>
+                <span className="text-xs font-bold text-[#0A3824] uppercase tracking-wider">Active Deployed</span>
                 <span className="text-lg">🏢</span>
               </div>
-              <p className="text-3xl font-black text-[#0A3D24] mt-2">
+              <p className="text-3xl font-black text-[#0A3824] mt-2">
                 {complianceData?.deployed ?? 0}
               </p>
               <p className="text-xs text-slate-600 mt-1 font-medium">
@@ -330,7 +330,7 @@ export default function CoordinatorSubmissionsPage() {
                 value={complianceSearch}
                 onChange={e => setComplianceSearch(e.target.value)}
                 placeholder="Search trainee name or student number..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3D24]"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0A3824]"
               />
               <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
               {complianceSearch && (
@@ -348,7 +348,7 @@ export default function CoordinatorSubmissionsPage() {
               <select
                 value={courseFilter}
                 onChange={e => setCourseFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0A3D24] cursor-pointer"
+                className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0A3824] cursor-pointer"
               >
                 <option value="all">All Departments / Courses</option>
                 <option value="BSIT">ICS: BS Information Technology</option>
@@ -491,7 +491,7 @@ export default function CoordinatorSubmissionsPage() {
                           <td className="px-5 py-4">
                             {student.compliance_state === 'deployed' && (
                               <div>
-                                <Badge className="bg-[#0A3D24]/10 text-[#0A3D24] border-[#0A3D24]/20 text-xs font-bold">
+                                <Badge className="bg-[#0A3824]/10 text-[#0A3824] border-[#0A3824]/20 text-xs font-bold">
                                   🏢 DEPLOYED
                                 </Badge>
                                 <p className="text-[11px] text-slate-500 font-medium mt-0.5 truncate max-w-[150px]">
@@ -537,7 +537,7 @@ export default function CoordinatorSubmissionsPage() {
                               <Button
                                 variant="ghost"
                                 onClick={() => setInspectingStudent(student)}
-                                className="text-xs font-bold text-[#0A3D24] hover:bg-emerald-50 cursor-pointer"
+                                className="text-xs font-bold text-[#0A3824] hover:bg-emerald-50 cursor-pointer"
                               >
                                 Inspect →
                               </Button>
@@ -571,7 +571,7 @@ export default function CoordinatorSubmissionsPage() {
                   onClick={() => setFeedStatusFilter(tab)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
                     feedStatusFilter === tab
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-sm'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-sm'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -631,7 +631,7 @@ export default function CoordinatorSubmissionsPage() {
                           <button
                             onClick={() => handleOpenDocument(r.file_path, r.report_id)}
                             disabled={openingDocId === r.report_id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-[#0A3D24] border border-emerald-200 hover:bg-emerald-100 text-xs font-bold transition-all cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-[#0A3824] border border-emerald-200 hover:bg-emerald-100 text-xs font-bold transition-all cursor-pointer"
                           >
                             {openingDocId === r.report_id ? 'Opening...' : '📄 View Document'}
                           </button>
@@ -664,7 +664,7 @@ export default function CoordinatorSubmissionsPage() {
                               setReviewingReport(r);
                               setReviewRemarks(r.remarks || '');
                             }}
-                            className="text-xs font-bold text-[#0A3D24] hover:bg-emerald-50 cursor-pointer"
+                            className="text-xs font-bold text-[#0A3824] hover:bg-emerald-50 cursor-pointer"
                           >
                             Review / Sign Off →
                           </Button>
@@ -738,7 +738,7 @@ export default function CoordinatorSubmissionsPage() {
                 Email Address: <span className="font-mono text-slate-700">{inspectingStudent.email}</span>
               </p>
               {inspectingStudent.assigned_company ? (
-                <p className="text-[#0A3D24] font-semibold pt-1 border-t border-slate-200">
+                <p className="text-[#0A3824] font-semibold pt-1 border-t border-slate-200">
                   Assigned Host Training Establishment: {inspectingStudent.assigned_company}
                 </p>
               ) : (
@@ -800,7 +800,7 @@ export default function CoordinatorSubmissionsPage() {
                         <button
                           onClick={() => handleOpenDocument(doc.file_path!, doc.report_id!)}
                           disabled={openingDocId === doc.report_id}
-                          className="px-2.5 py-1 rounded text-xs font-bold bg-white text-[#0A3D24] border border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs"
+                          className="px-2.5 py-1 rounded text-xs font-bold bg-white text-[#0A3824] border border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs"
                         >
                           {openingDocId === doc.report_id ? '...' : 'View PDF'}
                         </button>
@@ -841,7 +841,7 @@ export default function CoordinatorSubmissionsPage() {
               <Button
                 onClick={() => submitDecision('approved')}
                 loading={submittingAction}
-                className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+                className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold"
               >
                 Approve & Sign Off
               </Button>
@@ -873,7 +873,7 @@ export default function CoordinatorSubmissionsPage() {
               onChange={e => setReviewRemarks(e.target.value)}
               placeholder="Add feedback, reasons for revision, or clearance acknowledgement..."
               rows={3}
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+              className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824]"
             />
           </div>
         </div>

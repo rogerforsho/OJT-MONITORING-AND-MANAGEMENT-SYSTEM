@@ -16,6 +16,7 @@ import ThemeToggle from '@/src/components/theme/ThemeToggle';
 
 interface NavbarProps {
   user: AuthUser;
+  isMenuOpen?: boolean;
   onMenuToggle: () => void;
 }
 
@@ -44,7 +45,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings': 'Account & Security Settings',
 };
 
-export default function Navbar({ user, onMenuToggle }: NavbarProps) {
+export default function Navbar({ user, isMenuOpen = false, onMenuToggle }: NavbarProps) {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -76,23 +77,24 @@ export default function Navbar({ user, onMenuToggle }: NavbarProps) {
     pathname.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Dashboard';
 
   const roleColor: Record<string, string> = {
-    Student: 'text-amber-800 bg-amber-50 dark:text-amber-300 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-700/50',
-    Coordinator: 'text-emerald-800 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-700/50',
-    Supervisor: 'text-purple-800 bg-purple-50 dark:text-purple-300 dark:bg-purple-950/40 border-purple-200/80 dark:border-purple-700/50',
-    ProgramHead: 'text-sky-800 bg-sky-50 dark:text-sky-300 dark:bg-sky-950/40 border-sky-200/80 dark:border-sky-700/50',
-    Admin: 'text-rose-800 bg-rose-50 dark:text-rose-300 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-700/50',
+    Student: 'text-emerald-800 bg-emerald-50 dark:text-emerald-200 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-700/50',
+    Coordinator: 'text-emerald-800 bg-emerald-50 dark:text-emerald-200 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-700/50',
+    Supervisor: 'text-emerald-800 bg-emerald-50 dark:text-emerald-200 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-700/50',
+    ProgramHead: 'text-emerald-800 bg-emerald-50 dark:text-emerald-200 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-700/50',
+    Admin: 'text-emerald-800 bg-emerald-50 dark:text-emerald-200 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-700/50',
   };
   const roleBadgeStyle = roleColor[user.role] || 'text-slate-700 bg-slate-100 dark:text-slate-300 dark:bg-slate-800 border-slate-200 dark:border-slate-700';
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors select-none">
+    <header className="sticky top-0 z-30 w-full bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--line)] h-[68px] px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors select-none">
       {/* Left: Mobile Menu Toggle & Simplified Page Title (No breadcrumbs) */}
       <div className="flex items-center gap-3.5 min-w-0">
         <button
           type="button"
           onClick={onMenuToggle}
+          aria-expanded={isMenuOpen}
           className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          aria-label="Toggle mobile menu"
+          aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -143,13 +145,13 @@ export default function Navbar({ user, onMenuToggle }: NavbarProps) {
             onClick={() => setDropdownOpen((prev) => !prev)}
             aria-expanded={dropdownOpen}
             aria-haspopup="true"
-            className="flex items-center gap-2.5 p-1 sm:pr-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-[#0A3D24]/20 dark:focus:ring-emerald-500/20"
+            className="flex items-center gap-2.5 p-1 sm:pr-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-[#0A3824]/20 dark:focus:ring-emerald-500/20"
           >
-            <div className="w-8 h-8 rounded-full bg-[#0A3D24] text-[#FFCC00] font-bold text-xs flex items-center justify-center border border-emerald-900/30 shadow-2xs">
+            <div className="w-8 h-8 rounded-full bg-[#0A3824] text-[#E4DBC4] font-bold text-xs flex items-center justify-center border border-emerald-900/30">
               {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
             </div>
             <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400 transition-colors truncate max-w-[130px] leading-tight">
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400 transition-colors truncate max-w-[130px] leading-tight">
                 {user.full_name}
               </span>
               <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md border inline-block mt-0.5 w-fit ${roleBadgeStyle}`}>
@@ -165,7 +167,7 @@ export default function Navbar({ user, onMenuToggle }: NavbarProps) {
               {/* Profile Card Summary Header */}
               <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#0A3D24] text-[#FFCC00] font-bold text-sm flex items-center justify-center shrink-0 border border-emerald-900/30 shadow-2xs">
+                  <div className="w-10 h-10 rounded-full bg-[#0A3824] text-[#E4DBC4] font-bold text-sm flex items-center justify-center shrink-0 border border-emerald-900/30">
                     {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
                   </div>
                   <div className="min-w-0 flex-1">

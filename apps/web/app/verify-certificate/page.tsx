@@ -34,7 +34,7 @@ export default function CertificateSearchPage() {
       <div className="w-full max-w-lg space-y-6">
         {/* Institutional Branding */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#062415] border border-amber-400/30 p-2 shadow-lg shadow-emerald-950/10 mx-auto">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#092E1D] border border-amber-400/30 p-2 shadow-lg shadow-emerald-950/10 mx-auto">
             <Image
               src="/logo.png"
               alt="Colegio de Montalban"
@@ -46,7 +46,7 @@ export default function CertificateSearchPage() {
           </div>
 
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A3D24]/10 text-[#0A3D24] text-[11px] font-bold tracking-wider uppercase mb-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A3824]/10 text-[#0A3824] text-[11px] font-bold tracking-wider uppercase mb-1">
               <Shield className="w-3.5 h-3.5 text-emerald-800" />
               Public Credential Verification
             </div>
@@ -82,7 +82,7 @@ export default function CertificateSearchPage() {
             <Button
               type="submit"
               loading={loading}
-              className="w-full bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 py-3"
+              className="w-full bg-[#0A3824] hover:bg-[#092E1D] text-[#D5B254] font-bold shadow-md shadow-[#0A3824]/20 py-3"
             >
               <Search className="w-4 h-4 mr-1.5" />
               Verify Authenticity
@@ -101,7 +101,7 @@ export default function CertificateSearchPage() {
 
             <Link
               href="/auth/sign-in"
-              className="text-[#0A3D24] hover:underline font-bold"
+              className="text-[#0A3824] hover:underline font-bold"
             >
               Staff Sign In &rarr;
             </Link>

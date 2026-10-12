@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { verifyCertificatePublic } from '@/src/services/certificates';
 import { Shield, Check, AlertCircle, Building, Clock, Award, FileText } from '@/src/components/ui/Icons';
 
@@ -16,7 +16,7 @@ export default async function PublicCertificateVerificationPage({ params }: Prop
       <div className="w-full max-w-xl space-y-6">
         {/* Header Branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0A3D24]/10 text-[#0A3D24] text-xs font-bold tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0A3824]/10 text-[#0A3824] text-xs font-bold tracking-wider uppercase">
             <Shield className="w-4 h-4" />
             Official Credential Verification Portal
           </div>
@@ -127,7 +127,7 @@ export default async function PublicCertificateVerificationPage({ params }: Prop
         <div className="text-center pt-2">
           <Link
             href="/auth/sign-in"
-            className="text-xs font-semibold text-[#0A3D24] hover:underline"
+            className="text-xs font-semibold text-[#0A3824] hover:underline"
           >
             ← Return to Colegio de Montalban OJT Portal
           </Link>

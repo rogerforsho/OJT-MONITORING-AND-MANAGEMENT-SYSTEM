@@ -23,7 +23,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
         <div>
           <Link
             href="/student/certificate"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0A3D24] hover:underline mb-2"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0A3824] hover:underline mb-2"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Graduation Clearance
           </Link>
@@ -37,7 +37,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => window.print()}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md cursor-pointer flex items-center gap-2"
+            className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md cursor-pointer flex items-center gap-2"
           >
             <Printer className="w-4 h-4" /> Print / Save as PDF
           </Button>
@@ -49,7 +49,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
         {/* Institutional Header */}
         <div className="text-center border-b border-slate-200 pb-6 space-y-1">
           <div className="flex items-center justify-center gap-2 mb-1">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#0A3D24] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-[#0A3824] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               Colegio de Montalban • Practicum Portfolio
             </span>
           </div>
@@ -59,7 +59,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
           <p className="text-xs text-slate-500 uppercase tracking-wider">
             Kasiglahan Village, Rodriguez, Rizal • Office of Student Practicum & Placement
           </p>
-          <h3 className="text-base font-extrabold text-[#0A3D24] uppercase tracking-wide pt-2">
+          <h3 className="text-base font-extrabold text-[#0A3824] uppercase tracking-wide pt-2">
             Trainee Competency Evaluation Summary Sheet
           </h3>
         </div>
@@ -105,7 +105,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
                   <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
                     {midtermScores?.technical_competence ?? (midterm ? '—' : 'Pending')}
                   </td>
-                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3D24]">
+                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3824]">
                     {finalScores?.technical_competence ?? (final ? '—' : 'Pending')}
                   </td>
                 </tr>
@@ -115,7 +115,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
                   <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
                     {midtermScores?.productivity_dependability ?? (midterm ? '—' : 'Pending')}
                   </td>
-                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3D24]">
+                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3824]">
                     {finalScores?.productivity_dependability ?? (final ? '—' : 'Pending')}
                   </td>
                 </tr>
@@ -125,7 +125,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
                   <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
                     {midtermScores?.attendance_punctuality ?? (midterm ? '—' : 'Pending')}
                   </td>
-                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3D24]">
+                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3824]">
                     {finalScores?.attendance_punctuality ?? (final ? '—' : 'Pending')}
                   </td>
                 </tr>
@@ -135,7 +135,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
                   <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
                     {midtermScores?.communication_skills ?? (midterm ? '—' : 'Pending')}
                   </td>
-                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3D24]">
+                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3824]">
                     {finalScores?.communication_skills ?? (final ? '—' : 'Pending')}
                   </td>
                 </tr>
@@ -145,7 +145,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
                   <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
                     {midtermScores?.work_ethics_professionalism ?? (midterm ? '—' : 'Pending')}
                   </td>
-                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3D24]">
+                  <td className="py-2.5 px-3 text-center font-mono font-bold text-[#0A3824]">
                     {finalScores?.work_ethics_professionalism ?? (final ? '—' : 'Pending')}
                   </td>
                 </tr>
@@ -157,7 +157,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
                       ? `${midterm.performance_score}%`
                       : 'Not Rated'}
                   </td>
-                  <td className="py-3 px-3 text-center font-mono text-base text-[#0A3D24]">
+                  <td className="py-3 px-3 text-center font-mono text-base text-[#0A3824]">
                     {final?.performance_score !== null && final?.performance_score !== undefined
                       ? `${final.performance_score}%`
                       : 'Not Rated'}
@@ -200,9 +200,9 @@ export default function EvaluationSummaryClient({ summary }: Props) {
         </div>
 
         {/* Overall Weighted Grade Summary Banner */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#062415] text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#092E1D] text-white flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-xs uppercase font-extrabold text-[#FFCC00] tracking-wider">
+            <span className="text-xs uppercase font-extrabold text-[var(--cdm-sand)] tracking-wider">
               Practicum Final Evaluation Grade
             </span>
             <p className="text-xs text-slate-300">
@@ -210,7 +210,7 @@ export default function EvaluationSummaryClient({ summary }: Props) {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-black font-mono text-[#FFCC00]">
+            <span className="text-3xl font-black font-mono text-[var(--cdm-sand)]">
               {summary.overall_rating !== null ? `${summary.overall_rating}%` : 'Pending'}
             </span>
             <Badge className={`text-xs font-bold px-3 py-1 ${

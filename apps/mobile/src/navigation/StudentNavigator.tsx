@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import type { StudentTabParamList } from './types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AttendanceScreen from '../screens/attendance/AttendanceScreen';
 import ProgressScreen from '../screens/progress/ProgressScreen';
 import ReportsScreen from '../screens/reports/ReportsScreen';
@@ -10,20 +11,21 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 const Tab = createBottomTabNavigator<StudentTabParamList>();
 
 export default function StudentNavigator() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#062415',
-          borderTopColor: 'rgba(255,204,0,0.2)',
+          backgroundColor: '#FFFEFB',
+          borderTopColor: '#DCE5DB',
           borderTopWidth: 1,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 64,
+          paddingBottom: Math.max(insets.bottom, 8),
+          paddingTop: 7,
+          height: 62 + insets.bottom,
         },
-        tabBarActiveTintColor: '#FFCC00',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: '#0A3824',
+        tabBarInactiveTintColor: '#7A887D',
         tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 2 },
       }}
     >

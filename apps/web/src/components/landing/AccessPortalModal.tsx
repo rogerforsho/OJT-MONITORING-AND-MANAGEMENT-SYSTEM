@@ -46,9 +46,9 @@ export default function AccessPortalModal({ isOpen, onClose }: AccessPortalModal
       description: 'Centralized trainee deployment rosters, attendance validation, 40/60 grade rubrics, and progress analytics.',
       href: '/auth/sign-in?role=coordinator',
       icon: Users,
-      color: 'border-blue-500/40 hover:border-blue-500 bg-blue-50/40',
-      badgeColor: 'bg-blue-100 text-blue-800',
-      btnColor: 'bg-blue-900 hover:bg-blue-950 text-white',
+      color: 'border-emerald-500/40 hover:border-emerald-500 bg-emerald-50/40',
+      badgeColor: 'bg-emerald-100 text-emerald-800',
+      btnColor: 'bg-emerald-800 hover:bg-emerald-900 text-white',
     },
     {
       role: 'Company Supervisor',
@@ -56,9 +56,9 @@ export default function AccessPortalModal({ isOpen, onClose }: AccessPortalModal
       description: 'Shift timesheet verification, biometric selfie audits, CHED competency evaluations, and completion certificates.',
       href: '/auth/sign-in?role=supervisor',
       icon: Building2,
-      color: 'border-amber-500/40 hover:border-amber-500 bg-amber-50/40',
-      badgeColor: 'bg-amber-100 text-amber-800',
-      btnColor: 'bg-amber-700 hover:bg-amber-800 text-white',
+      color: 'border-emerald-500/40 hover:border-emerald-500 bg-emerald-50/40',
+      badgeColor: 'bg-emerald-100 text-emerald-800',
+      btnColor: 'bg-emerald-800 hover:bg-emerald-900 text-white',
     },
   ];
 
@@ -69,14 +69,14 @@ export default function AccessPortalModal({ isOpen, onClose }: AccessPortalModal
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header */}
-        <div className="bg-[#062415] px-6 py-5 text-white flex items-center justify-between border-b border-emerald-950">
+        <div className="bg-[#092E1D] px-6 py-5 text-white flex items-center justify-between border-b border-emerald-950">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/10 p-1.5 border border-amber-400/30 flex items-center justify-center">
               <Image src="/logo.png" alt="CdM" width={36} height={36} className="object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Institutional Access</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E4DBC4]">Institutional Access</span>
                 <span className="text-[10px] text-emerald-300 font-mono flex items-center gap-1">
                   <Shield className="w-3 h-3" /> Secure Gateway
                 </span>

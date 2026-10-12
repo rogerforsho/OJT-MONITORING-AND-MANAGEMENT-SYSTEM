@@ -9,4 +9,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimizeToTray: () => ipcRenderer.send('minimize-to-tray'),
   toggleMiniWidget: (enable) => ipcRenderer.send('toggle-mini-widget', enable),
   retryConnection: () => ipcRenderer.send('retry-connection'),
+  onPortalConnectionState: (callback) => {
+    if (typeof callback !== 'function') return () => {};
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on('portal-connection-state', listener);
+    return () => ipcRenderer.removeListener('portal-connection-state', listener);
+  },
 });

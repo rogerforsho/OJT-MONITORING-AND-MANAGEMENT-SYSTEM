@@ -12,11 +12,11 @@ export default function PublicResourcesDepot() {
         {/* Section Heading */}
         <div className="text-center max-w-3xl mx-auto space-y-3 mb-14">
           <div className="flex items-center justify-center gap-2">
-            <span className="w-6 h-1 bg-[#0A3D24] rounded-full" />
-            <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3D24]">
+            <span className="w-6 h-1 bg-[#0A3824] rounded-full" />
+            <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3824]">
               OFFICIAL TOOLS &amp; VERIFICATION
             </span>
-            <span className="w-6 h-1 bg-[#0A3D24] rounded-full" />
+            <span className="w-6 h-1 bg-[#0A3824] rounded-full" />
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight font-serif">
             System Applications &amp; Credential Verification
@@ -41,7 +41,7 @@ export default function PublicResourcesDepot() {
                 </span>
               </div>
 
-              <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center">
                 <Monitor className="w-5 h-5" />
               </div>
 
@@ -63,7 +63,7 @@ export default function PublicResourcesDepot() {
               <a
                 href="/downloads/CdM-OJT-Portal-Setup-1.0.0.exe"
                 download
-                className="w-full py-2.5 px-3.5 rounded-xl bg-[#062415] hover:bg-[#0A3D24] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                className="w-full py-2.5 px-3.5 rounded-xl bg-[#092E1D] hover:bg-[#0A3824] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
               >
                 <Download className="w-3.5 h-3.5 text-amber-400" />
                 <span>Download Desktop Client (.exe)</span>
@@ -142,7 +142,7 @@ export default function PublicResourcesDepot() {
             <div className="pt-5 mt-4 border-t border-slate-200/60">
               <Link
                 href="/verify-certificate/search"
-                className="w-full py-2.5 px-3.5 rounded-xl bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                className="w-full py-2.5 px-3.5 rounded-xl bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
               >
                 <span>Open Verification Search</span>
                 <ExternalLink className="w-3.5 h-3.5" />

@@ -25,7 +25,10 @@ function loader(mocks, globals = {}) {
       process: { env: {} },
       require(name) {
         if (mocks[name]) return mocks[name];
-        if (name === '@ojt/shared') return load('shared/attendanceDate.ts');
+        if (name === '@ojt/shared') return {
+          ...load('shared/attendanceDate.ts'),
+          ...load('shared/schedulePolicy.ts'),
+        };
         if (name.startsWith('.')) return load(path.resolve(path.dirname(filename), name));
         return require(name);
       },
@@ -42,7 +45,7 @@ function mobileFixture() {
   const state = {
     online: true,
     userId: 'user-a', studentId: 'student-a',
-    record: null, updateResult: null,
+    record: null, updateResult: null, insertFailCount: 0,
     now: '2026-10-05T07:30:00+08:00',
   };
   const secureStore = {
@@ -64,15 +67,18 @@ function mobileFixture() {
       if (!state.online) throw new Error('Network unavailable');
       let operation = 'select';
       const query = {
-        select() { return this; }, eq() { return this; }, is() { return this; },
+        select() { return this; }, eq() { return this; }, is() { return this; }, order() { return this; }, limit() { return this; },
         update(values) { operation = 'update'; calls.push({ update: values }); return this; },
-        insert(values) { operation = 'insert'; calls.push({ insert: values });
-          state.record = { ...values, attendance_id: 'server-record', time_out: null }; return this; },
+        insert(values) { operation = 'insert'; calls.push({ insert: values }); state.insertValues = values; return this; },
         async single() { return this.maybeSingle(); },
         async maybeSingle() {
           if (table === 'students' && state.studentLookup) return state.studentLookup();
           if (operation === 'update') return { data: state.updateResult, error: null };
-          if (operation === 'insert') return { data: { attendance_id: 'server-record' }, error: null };
+          if (operation === 'insert') {
+            if (state.insertFailCount > 0) { state.insertFailCount--; return { data: null, error: { message: 'temporary write failure' } }; }
+            state.record = { ...state.insertValues, attendance_id: 'server-record', time_out: null };
+            return { data: { attendance_id: 'server-record' }, error: null };
+          }
           const data = table === 'users' ? {
             user_id: state.userId, role: 'Student', account_status: 'active',
             full_name: 'Test Student', email: 'student@example.test',
@@ -86,8 +92,8 @@ function mobileFixture() {
       };
       return query;
     },
-    storage: { from() { return { async upload(filename) {
-      calls.push({ upload: filename }); return { data: { path: filename }, error: null };
+    storage: { from() { return { async upload(filename, _bytes, options) {
+      calls.push({ upload: filename, options }); return { data: { path: filename }, error: null };
     } }; } },
   };
   const FixedDate = class extends Date {
@@ -123,6 +129,40 @@ function mobileFixture() {
     },
   };
 }
+
+test('shared schedule policy normalizes lunch input and enforces the same-day campus rules', () => {
+  const validateSchedulePolicy = loader({})('shared/schedulePolicy.ts').validateSchedulePolicy;
+  const base = {
+    work_days: [1, 2, 3, 4, 5], time_in: '08:00', time_out: '17:00',
+    lunch_break_minutes: 60, lunch_break_start: '12:00', start_date: '2026-10-12',
+  };
+  assert.deepEqual(JSON.parse(JSON.stringify(validateSchedulePolicy(base))), {
+    ok: true,
+    value: { lunch_break_minutes: 60, lunch_break_start: '12:00', daily_hours: 8, weekly_hours: 40 },
+  });
+  const defaultLunch = validateSchedulePolicy({ ...base, lunch_break_minutes: undefined, lunch_break_start: '12:00' });
+  assert.equal(defaultLunch.ok, true);
+  if (defaultLunch.ok) assert.equal(defaultLunch.value.lunch_break_minutes, 60);
+  assert.equal(validateSchedulePolicy({ ...base, lunch_break_start: null }).ok, false);
+  assert.equal(validateSchedulePolicy({ ...base, work_days: [1, 1] }).ok, false);
+  assert.equal(validateSchedulePolicy({ ...base, time_out: '07:59' }).ok, false);
+  assert.equal(validateSchedulePolicy({ ...base, time_out: '16:00', work_days: [1, 2, 3, 4], lunch_break_minutes: 0, lunch_break_start: '' }).ok, true);
+});
+
+test('mobile schedule insert persists the policy-normalized lunch interval', async () => {
+  const f = mobileFixture();
+  const schedule = f.load('apps/mobile/src/services/schedule.ts');
+  const result = await schedule.submitScheduleProposal({
+    work_days: [1, 2, 3, 4, 5], time_in: '08:00', time_out: '17:00',
+    lunch_break_minutes: undefined, lunch_break_start: '12:00', start_date: '2026-10-12',
+    work_modality: 'onsite',
+  });
+  assert.equal(result.error, null);
+  const inserted = f.calls.find(call => call.insert)?.insert;
+  assert.equal(inserted.lunch_break_minutes, 60);
+  assert.equal(inserted.lunch_break_start, '12:00');
+  assert.equal(inserted.daily_hours, 8);
+});
 
 test('offline time-in uses the cached identity without any auth/database call', async () => {
   const f = mobileFixture();
@@ -233,6 +273,37 @@ test('sync retries an already saved time-in without uploading a duplicate', asyn
   assert.equal(result.syncedCount, 1);
   assert.equal((await f.queue.getOfflineQueue()).length, 0);
   assert.equal(f.calls.some(c => c.upload || c.insert), false);
+});
+
+test('a conflicting offline time-in stays local and is never uploaded or written over', async () => {
+  const f = mobileFixture();
+  await f.prepareOffline();
+  await f.attendance.recordTimeIn('file:///selfie.jpg');
+  f.state.online = true;
+  f.state.record = { attendance_id: 'server-record', time_in: '2026-10-05T08:00:00+08:00' };
+  const result = await f.sync.syncPendingOfflineAttendance();
+  assert.equal(result.syncedCount, 0);
+  assert.match(result.errors[0], /contact your OJT Coordinator/i);
+  assert.equal((await f.queue.getOfflineQueue()).length, 1);
+  assert.equal(f.calls.some(call => call.upload || call.insert), false);
+});
+
+test('offline selfie retries reuse one stable storage path after a failed attendance write', async () => {
+  const f = mobileFixture();
+  await f.prepareOffline();
+  await f.attendance.recordTimeIn('file:///selfie.jpg');
+  f.state.online = true;
+  f.state.insertFailCount = 1;
+  const first = await f.sync.syncPendingOfflineAttendance();
+  assert.equal(first.syncedCount, 0);
+  assert.equal((await f.queue.getOfflineQueue()).length, 1);
+  const second = await f.sync.syncPendingOfflineAttendance();
+  assert.equal(second.syncedCount, 1);
+  assert.equal((await f.queue.getOfflineQueue()).length, 0);
+  const uploads = f.calls.filter(call => call.upload);
+  assert.equal(uploads.length, 2);
+  assert.equal(uploads[0].upload, uploads[1].upload);
+  assert.equal(uploads[0].options.upsert, true);
 });
 
 test('signing out during a profile lookup cannot restore the old offline identity', async () => {
@@ -395,8 +466,8 @@ test('desktop IPC hides to tray and transitions between valid widget/window size
     unmaximize: () => calls.push('unmaximize'),
     setMinimumSize: (w, h) => calls.push(['minimum', w, h]),
     setSize: (w, h) => calls.push(['size', w, h]),
-    setAlwaysOnTop() {}, setMenuBarVisibility() {}, loadFile() {}, on() {},
-    webContents: { on() {}, setWindowOpenHandler() {}, mainFrame: { url: 'https://ojt-monitoring-and-management-syste.vercel.app/dashboard' } },
+    setAlwaysOnTop() {}, setMenuBarVisibility() {}, loadFile: () => Promise.resolve(), loadURL: () => Promise.resolve(), on() {},
+    webContents: { on() {}, send() {}, setWindowOpenHandler() {}, mainFrame: { url: 'https://ojt-monitoring-and-management-syste.vercel.app/dashboard' } },
   };
   const electron = {
     app: { isPackaged: true, requestSingleInstanceLock: () => true, on() {},
@@ -409,10 +480,11 @@ test('desktop IPC hides to tray and transitions between valid widget/window size
     require(name) { if (name === 'electron') return electron;
       if (name === './tray') return { createTray() {} };
       if (name === './security') return require(path.join(root, 'apps/desktop/src/security.js'));
+      if (name === './portal-connection') return { checkServerReady: async () => ({ ready: true, statusCode: 200 }) };
       if (name === 'fs') return { existsSync: () => false };
       return require(name); },
     __dirname: path.join(root, 'apps/desktop/src'), process: { env: {} }, console,
-    URL, setInterval() {}, clearInterval() {},
+    URL, setInterval() {}, clearInterval() {}, setTimeout: () => 1, clearTimeout() {},
   });
   await Promise.resolve();
   const ipcEvent = { sender: window.webContents, senderFrame: window.webContents.mainFrame };

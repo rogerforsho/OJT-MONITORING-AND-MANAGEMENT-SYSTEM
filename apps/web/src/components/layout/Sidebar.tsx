@@ -99,7 +99,7 @@ export default function Sidebar({ user, isOpen = false, onClose }: Props) {
 
       {/* Main Sidebar Shell */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#062415] border-r border-emerald-950/40 flex flex-col h-full shrink-0 select-none transition-transform duration-200 ease-out shadow-2xl lg:shadow-none ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#092E1D] border-r border-emerald-950/40 flex flex-col h-full shrink-0 select-none transition-transform duration-200 ease-out shadow-2xl lg:shadow-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -120,7 +120,7 @@ export default function Sidebar({ user, isOpen = false, onClose }: Props) {
               <h2 className="text-xs font-black text-white leading-tight font-serif tracking-tight truncate">
                 Colegio de Montalban
               </h2>
-              <p className="text-[9px] font-bold text-amber-400 tracking-wider uppercase mt-0.5">
+              <p className="text-[9px] font-bold text-[#E4DBC4] tracking-wider uppercase mt-0.5">
                 OJT Practicum Portal
               </p>
             </div>
@@ -140,7 +140,7 @@ export default function Sidebar({ user, isOpen = false, onClose }: Props) {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+        <nav aria-label="Main navigation" className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
           {items.map((item) => {
             const IconComponent = item.icon;
             const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
@@ -149,13 +149,14 @@ export default function Sidebar({ user, isOpen = false, onClose }: Props) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
+                aria-current={active ? 'page' : undefined}
                 className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                   active
-                    ? 'bg-[#0A3D24] text-white shadow-2xs border border-amber-400/25 font-bold'
+                    ? 'bg-white/10 text-white shadow-2xs border border-white/15 font-bold'
                     : 'text-slate-400 hover:text-white hover:bg-white/5 active:scale-[0.99]'
                 }`}
               >
-                <IconComponent className={`w-4 h-4 shrink-0 transition-colors ${active ? 'text-amber-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                <IconComponent className={`w-4 h-4 shrink-0 transition-colors ${active ? 'text-[#E4DBC4]' : 'text-slate-400 group-hover:text-slate-200'}`} />
                 <span className="truncate">{item.label}</span>
               </Link>
             );
@@ -187,13 +188,14 @@ export default function Sidebar({ user, isOpen = false, onClose }: Props) {
           <Link
             href="/settings"
             onClick={onClose}
+            aria-current={pathname === '/settings' ? 'page' : undefined}
             className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
               pathname === '/settings'
-                ? 'bg-[#0A3D24] text-white shadow-2xs border border-amber-400/25 font-bold'
+                ? 'bg-white/10 text-white shadow-2xs border border-white/15 font-bold'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Settings className={`w-4 h-4 shrink-0 transition-colors ${pathname === '/settings' ? 'text-amber-400' : 'text-slate-500'}`} />
+            <Settings className={`w-4 h-4 shrink-0 transition-colors ${pathname === '/settings' ? 'text-[#E4DBC4]' : 'text-slate-400'}`} />
             <span className="truncate">Account Settings</span>
           </Link>
         </div>

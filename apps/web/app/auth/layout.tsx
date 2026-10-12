@@ -14,10 +14,10 @@ export const metadata: Metadata = {
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-[#F8FAFC]">
+    <div className="min-h-screen flex flex-col justify-between bg-[var(--background)]">
       <div className="flex-1 flex flex-col lg:flex-row w-full">
         {/* LEFT SIDE: Institutional Identity & Atmosphere */}
-        <div className="lg:w-[54%] xl:w-[58%] relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-[#062415] text-white min-h-[340px] lg:min-h-screen overflow-hidden select-none border-r border-emerald-950/40">
+        <div className="lg:w-[54%] xl:w-[58%] relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-[#092E1D] text-white min-h-[340px] lg:min-h-screen overflow-hidden select-none border-r border-emerald-950/40">
           {/* Subtle radial ambient glow */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-700/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />

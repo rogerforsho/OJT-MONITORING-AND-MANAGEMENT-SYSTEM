@@ -204,7 +204,7 @@ function ResetPasswordForm() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-xl font-black text-[#0A3D24] font-serif">
+          <h1 className="text-xl font-black text-[#0A3824] font-serif">
             {step === 1 ? 'Account Recovery' : 'Enter Verification Code'}
           </h1>
         </div>
@@ -219,12 +219,12 @@ function ResetPasswordForm() {
       <div className="flex items-center gap-2 py-1">
         <div
           className={`flex-1 h-1.5 rounded-full transition-colors ${
-            step >= 1 ? 'bg-[#0A3D24]' : 'bg-slate-200'
+            step >= 1 ? 'bg-[#0A3824]' : 'bg-slate-200'
           }`}
         />
         <div
           className={`flex-1 h-1.5 rounded-full transition-colors ${
-            step >= 2 ? 'bg-[#0A3D24]' : 'bg-slate-200'
+            step >= 2 ? 'bg-[#0A3824]' : 'bg-slate-200'
           }`}
         />
       </div>
@@ -262,7 +262,7 @@ function ResetPasswordForm() {
           <Button
             type="submit"
             loading={loading}
-            className="w-full mt-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer"
+            className="w-full mt-1 bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md shadow-[#0A3824]/20 cursor-pointer"
           >
             <Mail className="w-4 h-4 mr-1.5" />
             Send 6-Digit Code
@@ -281,7 +281,7 @@ function ResetPasswordForm() {
           <div className="text-center pt-1">
             <Link
               href="/auth/sign-in"
-              className="text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline inline-flex items-center gap-1"
+              className="text-xs font-bold text-[#0A3824] hover:text-[#092E1D] hover:underline inline-flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Sign In
@@ -318,7 +318,7 @@ function ResetPasswordForm() {
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
                 required
-                className="w-full text-center text-2xl font-extrabold tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-[#0A3D24]/40 focus:border-[#0A3D24] focus:bg-white rounded-xl text-[#0A3D24] outline-none transition-all"
+                className="w-full text-center text-2xl font-extrabold tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-[#0A3824]/40 focus:border-[#0A3824] focus:bg-white rounded-xl text-[#0A3824] outline-none transition-all"
               />
             </div>
 
@@ -341,7 +341,7 @@ function ResetPasswordForm() {
                 disabled={!canResend || resendLoading}
                 className={`font-bold transition-colors cursor-pointer ${
                   canResend
-                    ? 'text-[#0A3D24] hover:underline'
+                    ? 'text-[#0A3824] hover:underline'
                     : 'text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -449,7 +449,7 @@ function ResetPasswordForm() {
           <Button
             type="submit"
             loading={loading}
-            className="w-full mt-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer"
+            className="w-full mt-1 bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md shadow-[#0A3824]/20 cursor-pointer"
           >
             <Key className="w-4 h-4 mr-1.5" />
             {loadingStage === 'verifying'
@@ -462,7 +462,7 @@ function ResetPasswordForm() {
           <div className="text-center pt-1">
             <Link
               href="/auth/sign-in"
-              className="text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline inline-flex items-center gap-1"
+              className="text-xs font-bold text-[#0A3824] hover:text-[#092E1D] hover:underline inline-flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Cancel and Return to Sign In

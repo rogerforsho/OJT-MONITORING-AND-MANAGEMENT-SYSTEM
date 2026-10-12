@@ -25,7 +25,7 @@ const LeafletDeploymentMap = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full h-full min-h-[520px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl flex flex-col items-center justify-center text-slate-400 gap-3 border border-slate-200 dark:border-slate-700">
-        <div className="w-8 h-8 border-3 border-[#0A3D24] dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[#0A3824] dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
           Loading Regional Deployment &amp; Workplace Radar...
         </span>
@@ -91,7 +91,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center shadow-xs">
               <MapPin className="w-4 h-4" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -107,7 +107,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
         {['Coordinator', 'Admin'].includes(userRole) && (
           <Link
             href="/coordinator/companies"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] text-xs font-bold transition-all shadow-xs active:scale-95 self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] text-xs font-bold transition-all shadow-xs active:scale-95 self-start sm:self-auto"
           >
             <Building2 className="w-3.5 h-3.5" />
             <span>Manage Establishments</span>
@@ -175,7 +175,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
             placeholder="Search by company name, address, or focal person..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-[#0A3D24] dark:focus:border-emerald-500 transition-all"
+            className="w-full pl-9 pr-8 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-[#0A3824] dark:focus:border-emerald-500 transition-all"
           />
           {searchQuery && (
             <button
@@ -193,7 +193,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
               statusFilter === 'all'
-                ? 'bg-[#0A3D24] text-[#FFCC00] font-semibold'
+                ? 'bg-[#0A3824] text-[var(--cdm-sand)] font-semibold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
             }`}
           >
@@ -204,7 +204,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
             onClick={() => setStatusFilter('geofenced')}
             className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
               statusFilter === 'geofenced'
-                ? 'bg-[#0A3D24] text-[#FFCC00] font-semibold'
+                ? 'bg-[#0A3824] text-[var(--cdm-sand)] font-semibold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
             }`}
           >
@@ -215,7 +215,7 @@ export default function DeploymentMapClient({ initialCompanies, userRole }: Prop
             onClick={() => setStatusFilter('pending')}
             className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
               statusFilter === 'pending'
-                ? 'bg-[#0A3D24] text-[#FFCC00] font-semibold'
+                ? 'bg-[#0A3824] text-[var(--cdm-sand)] font-semibold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
             }`}
           >

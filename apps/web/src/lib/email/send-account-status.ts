@@ -35,11 +35,11 @@ export async function sendAccountStatusEmail({
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px;">
         <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
           <!-- Institutional Header -->
-          <div style="background-color: #0A3D24; padding: 28px 24px; text-align: center;">
+          <div style="background-color: #0A3824; padding: 28px 24px; text-align: center;">
             <h1 style="color: #ffffff; font-size: 20px; font-weight: 800; margin: 0; letter-spacing: 0.5px;">
               COLEGIO DE MONTALBAN
             </h1>
-            <p style="color: #FFCC00; font-size: 12px; font-weight: 700; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">
+            <p style="color: #D5B254; font-size: 12px; font-weight: 700; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">
               Cross-Platform OJT Practicum System
             </p>
           </div>
@@ -56,14 +56,14 @@ export async function sendAccountStatusEmail({
                 Welcome, Trainee!
               </h2>
               <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
-                Dear <strong style="color: #0A3D24;">${escapeHtml(fullName)}</strong>,
+                Dear <strong style="color: #0A3824;">${escapeHtml(fullName)}</strong>,
               </p>
               <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
                 Your registration for the Colegio de Montalban OJT Practicum System has been officially reviewed and <strong>APPROVED</strong> by your Institute OJT Coordinator.
               </p>
 
               <!-- Mobile Login Guide -->
-              <div style="background-color: #f8fafc; border-left: 4px solid #0A3D24; padding: 14px 18px; border-radius: 6px; margin: 0 0 24px 0;">
+              <div style="background-color: #f8fafc; border-left: 4px solid #0A3824; padding: 14px 18px; border-radius: 6px; margin: 0 0 24px 0;">
                 <p style="color: #0f172a; font-size: 13px; font-weight: 700; margin: 0 0 4px 0;">
                   📱 Sign In Via Mobile App
                 </p>
@@ -101,7 +101,7 @@ export async function sendAccountStatusEmail({
                 Account Status Update
               </h2>
               <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
-                Dear <strong style="color: #0A3D24;">${escapeHtml(fullName)}</strong>,
+                Dear <strong style="color: #0A3824;">${escapeHtml(fullName)}</strong>,
               </p>
               <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
                 We regret to inform you that your registration for the Colegio de Montalban OJT Practicum System could not be approved at this time.
@@ -214,9 +214,9 @@ export async function sendSupervisorWelcomeEmail({
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px;">
         <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-          <div style="background-color: #0A3D24; padding: 28px 24px; text-align: center;">
+          <div style="background-color: #0A3824; padding: 28px 24px; text-align: center;">
             <h1 style="color: #ffffff; font-size: 20px; font-weight: 800; margin: 0;">COLEGIO DE MONTALBAN</h1>
-            <p style="color: #FFCC00; font-size: 12px; font-weight: 700; margin: 4px 0 0 0; text-transform: uppercase;">Industry Practicum Portal</p>
+            <p style="color: #D5B254; font-size: 12px; font-weight: 700; margin: 4px 0 0 0; text-transform: uppercase;">Industry Practicum Portal</p>
           </div>
           <div style="padding: 32px 28px;">
             <div style="display: inline-block; background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 4px 12px; margin-bottom: 16px;">
@@ -224,19 +224,19 @@ export async function sendSupervisorWelcomeEmail({
             </div>
             <h2 style="color: #0f172a; font-size: 20px; font-weight: 800; margin: 0 0 14px 0;">Welcome, Industry Mentor!</h2>
             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
-              Dear <strong style="color: #0A3D24;">${escapeHtml(fullName)}</strong>,
+              Dear <strong style="color: #0A3824;">${escapeHtml(fullName)}</strong>,
             </p>
             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
               An Industry Supervisor profile has been established for you representing <strong>${escapeHtml(companyName)}</strong> (${escapeHtml(position)}) in the Colegio de Montalban OJT Practicum System.
             </p>
             <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 0 0 24px 0;">
               <h3 style="color: #0f172a; font-size: 13px; font-weight: 700; margin: 0 0 12px 0;">Your Account Details</h3>
-              <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;"><strong>Web Portal:</strong> <a href="${portalUrl}/auth/sign-in" style="color: #0A3D24; font-weight: 600;">${portalUrl}/auth/sign-in</a></p>
+              <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;"><strong>Web Portal:</strong> <a href="${portalUrl}/auth/sign-in" style="color: #0A3824; font-weight: 600;">${portalUrl}/auth/sign-in</a></p>
               <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;"><strong>Login Email:</strong> <span style="font-family: monospace; color: #0f172a;">${escapeHtml(to)}</span></p>
               <p style="font-size: 13px; color: #475569; margin: 0;"><strong>Employee ID:</strong> <span style="font-family: monospace; color: #0f172a;">${escapeHtml(employeeNumber)}</span></p>
             </div>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${setupUrl}" style="display: inline-block; background-color: #0A3D24; color: #FFCC00; font-size: 14px; font-weight: 800; padding: 12px 28px; border-radius: 8px; text-decoration: none;">
+              <a href="${setupUrl}" style="display: inline-block; background-color: #0A3824; color: #D5B254; font-size: 14px; font-weight: 800; padding: 12px 28px; border-radius: 8px; text-decoration: none;">
                 Set Your Password →
               </a>
             </div>

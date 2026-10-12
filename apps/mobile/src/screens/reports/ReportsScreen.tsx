@@ -142,7 +142,7 @@ export default function ReportsScreen() {
   if (loading) {
     return (
       <View style={s.center}>
-        <ActivityIndicator size="large" color="#0A3D24" />
+        <ActivityIndicator size="large" color="#0A3824" />
       </View>
     );
   }
@@ -162,7 +162,7 @@ export default function ReportsScreen() {
           activeOpacity={0.85}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Ionicons name="add-circle" size={16} color="#FFCC00" />
+            <Ionicons name="add-circle" size={16} color="#E4DBC4" />
             <Text style={s.btnSubmitHeaderText}>Submit</Text>
           </View>
         </TouchableOpacity>
@@ -171,7 +171,7 @@ export default function ReportsScreen() {
       {/* Alerts */}
       {!!success && (
         <View style={s.alertSuccess}>
-          <Ionicons name="checkmark-circle" size={18} color="#0A3D24" />
+          <Ionicons name="checkmark-circle" size={18} color="#0A3824" />
           <Text style={s.alertSuccessText}>{success}</Text>
         </View>
       )}
@@ -195,10 +195,10 @@ export default function ReportsScreen() {
         data={reports}
         keyExtractor={(item) => item.report_id}
         contentContainerStyle={s.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3824']} />}
         ListEmptyComponent={
           <View style={s.emptyBox}>
-            <Ionicons name="document-text-outline" size={44} color="#94a3b8" style={{ marginBottom: 8 }} />
+            <Ionicons name="document-text-outline" size={44} color="#879687" style={{ marginBottom: 8 }} />
             <Text style={s.emptyTitle}>No reports submitted yet</Text>
             <Text style={s.emptySub}>
               Tap the Submit button at the top to upload your daily or weekly practicum journal.
@@ -209,7 +209,7 @@ export default function ReportsScreen() {
           <View style={s.reportCard}>
             <View style={s.cardTopRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                <Ionicons name="document-attach-outline" size={18} color="#0A3D24" />
+                <Ionicons name="document-attach-outline" size={18} color="#0A3824" />
                 <Text style={s.reportType}>
                   {item.report_type}
                 </Text>
@@ -273,7 +273,7 @@ export default function ReportsScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Close modal"
               >
-                <Ionicons name="close-circle" size={26} color="#94a3b8" />
+                <Ionicons name="close-circle" size={26} color="#879687" />
               </TouchableOpacity>
             </View>
 
@@ -314,7 +314,7 @@ export default function ReportsScreen() {
                     <Ionicons
                       name={attachedFile.mimeType?.includes('image') ? 'image' : 'document-text'}
                       size={22}
-                      color="#0A3D24"
+                      color="#0A3824"
                     />
                   </View>
                   <View style={{ flex: 1, marginRight: 8 }}>
@@ -339,7 +339,7 @@ export default function ReportsScreen() {
                   style={s.btnAttachFile}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="cloud-upload-outline" size={20} color="#0A3D24" />
+                  <Ionicons name="cloud-upload-outline" size={20} color="#0A3824" />
                   <Text style={s.btnAttachFileText}>Choose PDF, DOCX, or Image</Text>
                 </TouchableOpacity>
               )}
@@ -355,7 +355,7 @@ export default function ReportsScreen() {
                 value={filePath}
                 onChangeText={setFilePath}
                 placeholder="drive.google.com/... (optional if file attached)"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#879687"
                 style={s.input}
                 autoCapitalize="none"
               />
@@ -365,7 +365,7 @@ export default function ReportsScreen() {
                 value={remarks}
                 onChangeText={setRemarks}
                 placeholder="Add any notes for your coordinator..."
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#879687"
                 style={[s.input, { height: 68, textAlignVertical: 'top' }]}
                 multiline
               />
@@ -389,7 +389,7 @@ export default function ReportsScreen() {
                   activeOpacity={0.85}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#062415" />
+                    <ActivityIndicator color="#092E1D" />
                   ) : (
                     <Text style={s.btnSubmitModalText}>Submit Report</Text>
                   )}
@@ -406,47 +406,47 @@ export default function ReportsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f8fafc' },
+  root: { flex: 1, backgroundColor: '#F7F9F5' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#FFFEFB',
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: 14,
+    paddingBottom: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 3,
-    borderBottomColor: '#FFCC00',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DCE5DB',
   },
   headerKicker: {
-    color: '#FFCC00',
+    color: '#A8792B',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  title: { color: '#ffffff', fontSize: 20, fontWeight: '900', marginTop: 2 },
-  subtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 },
+  title: { color: '#092E1D', fontSize: 20, fontWeight: '800', marginTop: 2 },
+  subtitle: { color: '#68776B', fontSize: 11, marginTop: 2 },
   btnSubmitHeader: {
-    backgroundColor: '#062415',
+    backgroundColor: '#0A3824',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.4)',
+    borderColor: '#0A3824',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 3,
   },
-  btnSubmitHeaderText: { color: '#FFCC00', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
+  btnSubmitHeaderText: { color: '#FFFEFB', fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
   listContent: { padding: 20, gap: 14 },
   alertSuccess: {
-    backgroundColor: 'rgba(10,61,36,0.08)',
+    backgroundColor: 'rgba(10,56,36,0.08)',
     borderWidth: 1,
-    borderColor: '#0A3D24',
+    borderColor: '#0A3824',
     borderRadius: 14,
     padding: 14,
     marginHorizontal: 20,
@@ -455,7 +455,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  alertSuccessText: { color: '#0A3D24', fontSize: 13, fontWeight: '700', flex: 1 },
+  alertSuccessText: { color: '#0A3824', fontSize: 13, fontWeight: '700', flex: 1 },
   alertError: {
     backgroundColor: '#fbf2f2',
     borderWidth: 1,
@@ -473,7 +473,7 @@ const s = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -482,22 +482,22 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  reportType: { fontSize: 14, fontWeight: '800', color: '#0f172a' },
+  reportType: { fontSize: 14, fontWeight: '800', color: '#18271D' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  badgeGreen: { backgroundColor: 'rgba(10,61,36,0.1)' },
-  textGreen: { color: '#0A3D24', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
+  badgeGreen: { backgroundColor: 'rgba(10,56,36,0.1)' },
+  textGreen: { color: '#0A3824', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
   badgeAmber: { backgroundColor: '#fef3c7' },
   textAmber: { color: '#d97706', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
-  dateText: { fontSize: 11, color: '#94a3b8', marginBottom: 10 },
-  fileBox: { backgroundColor: '#f8fafc', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9' },
-  fileText: { fontSize: 12, color: '#475569', fontWeight: '500' },
-  remarksBox: { marginTop: 10, borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 8 },
-  remarksLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', marginBottom: 2 },
-  remarksText: { fontSize: 12, color: '#1e293b' },
+  dateText: { fontSize: 11, color: '#879687', marginBottom: 10 },
+  fileBox: { backgroundColor: '#F7F9F5', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#F4F6F2' },
+  fileText: { fontSize: 12, color: '#37483C', fontWeight: '500' },
+  remarksBox: { marginTop: 10, borderTopWidth: 1, borderTopColor: '#F4F6F2', paddingTop: 8 },
+  remarksLabel: { fontSize: 11, fontWeight: '700', color: '#526257', marginBottom: 2 },
+  remarksText: { fontSize: 12, color: '#26372D' },
   emptyBox: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 20 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0f172a', marginBottom: 4 },
-  emptySub: { fontSize: 12, color: '#94a3b8', textAlign: 'center', maxWidth: 260 },
+  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#18271D', marginBottom: 4 },
+  emptySub: { fontSize: 12, color: '#879687', textAlign: 'center', maxWidth: 260 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalContent: {
     backgroundColor: '#ffffff',
@@ -516,33 +516,33 @@ const s = StyleSheet.create({
     marginBottom: 8,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#F4F6F2',
   },
-  modalTitle: { fontSize: 18, fontWeight: '900', color: '#0A3D24' },
-  modalSubtitle: { fontSize: 11, color: '#64748b', fontWeight: '500', marginTop: 1 },
+  modalTitle: { fontSize: 18, fontWeight: '900', color: '#0A3824' },
+  modalSubtitle: { fontSize: 11, color: '#526257', fontWeight: '500', marginTop: 1 },
   modalScroll: { flexShrink: 1 },
   modalScrollContent: { paddingBottom: 14 },
   modalFooter: {
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: '#F4F6F2',
     backgroundColor: '#ffffff',
   },
-  fieldLabel: { fontSize: 12, fontWeight: '700', color: '#334155', marginBottom: 6, marginTop: 10 },
+  fieldLabel: { fontSize: 12, fontWeight: '700', color: '#37483C', marginBottom: 6, marginTop: 10 },
   typeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
-  typePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },
-  typePillActive: { backgroundColor: '#0A3D24', borderColor: '#0A3D24' },
-  typePillText: { fontSize: 11, fontWeight: '600', color: '#475569' },
-  typePillTextActive: { color: '#FFCC00', fontWeight: '800' },
+  typePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#F4F6F2', borderWidth: 1, borderColor: '#DCE5DB' },
+  typePillActive: { backgroundColor: '#0A3824', borderColor: '#0A3824' },
+  typePillText: { fontSize: 11, fontWeight: '600', color: '#37483C' },
+  typePillTextActive: { color: '#E4DBC4', fontWeight: '800' },
   btnAttachFile: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(10,61,36,0.06)',
+    backgroundColor: 'rgba(10,56,36,0.06)',
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#0A3D24',
+    borderColor: '#0A3824',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -550,7 +550,7 @@ const s = StyleSheet.create({
   btnAttachFileText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0A3D24',
+    color: '#0A3824',
   },
   attachedCard: {
     flexDirection: 'row',
@@ -565,7 +565,7 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: 'rgba(10,61,36,0.1)',
+    backgroundColor: 'rgba(10,56,36,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -573,7 +573,7 @@ const s = StyleSheet.create({
   attachedFileName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0f172a',
+    color: '#18271D',
   },
   attachedFileSize: {
     fontSize: 11,
@@ -595,18 +595,18 @@ const s = StyleSheet.create({
   orLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#DCE5DB',
   },
   orText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#94a3b8',
+    color: '#879687',
     letterSpacing: 0.5,
   },
-  input: { borderWidth: 1.5, borderColor: '#e2e8f0', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#0f172a', backgroundColor: '#f8fafc' },
+  input: { borderWidth: 1.5, borderColor: '#DCE5DB', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#18271D', backgroundColor: '#F7F9F5' },
   modalBtnRow: { flexDirection: 'row', gap: 10 },
-  btnCancelModal: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: '#cbd5e1' },
-  btnCancelModalText: { color: '#475569', fontSize: 13, fontWeight: '800' },
-  btnSubmitModal: { flex: 2, backgroundColor: '#0A3D24', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,204,0,0.3)' },
-  btnSubmitModalText: { color: '#FFCC00', fontSize: 13, fontWeight: '800' },
+  btnCancelModal: { flex: 1, backgroundColor: '#F4F6F2', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: '#C7D2C7' },
+  btnCancelModalText: { color: '#37483C', fontSize: 13, fontWeight: '800' },
+  btnSubmitModal: { flex: 2, backgroundColor: '#0A3824', borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(228,219,196,0.3)' },
+  btnSubmitModalText: { color: '#E4DBC4', fontSize: 13, fontWeight: '800' },
 });

@@ -1,8 +1,9 @@
 'use server';
 
+import { getTrustedActor } from '@/src/lib/trusted-actor';
+
 import { isICSCourse } from '@/src/lib/departments';
 import { departmentScope, restrictDepartment } from '@/src/lib/department-scope';
-import { createClient } from '@/src/lib/supabase/server';
 import { getServiceClient } from '@/src/lib/supabase/service';
 import type { AppResult, ProgressStatus } from '@ojt/shared';
 
@@ -10,17 +11,7 @@ function serviceClient() {
   return getServiceClient();
 }
 
-async function getAuthUserWithRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null };
-  const { data: profile } = await supabase
-    .from('users')
-    .select('full_name, role, account_status')
-    .eq('user_id', user.id)
-    .single();
-  return { supabase, user, profile };
-}
+
 
 export interface StudentProgressDetail {
   student_id: string;
@@ -73,7 +64,7 @@ export async function listCohortProgress(
   courseFilter?: string,
   statusFilter?: ProgressStatus
 ): Promise<AppResult<{ students: StudentProgressDetail[]; total: number }>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -153,7 +144,7 @@ export async function listCohortProgress(
 }
 
 export async function getDepartmentSummary(): Promise<AppResult<DepartmentSummaryData>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || !profile || !['ProgramHead', 'Coordinator', 'Admin'].includes(profile.role) || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -257,7 +248,7 @@ export async function getDepartmentSummary(): Promise<AppResult<DepartmentSummar
   return { data: summary, error: null };
 }
 export async function getOwnStudentProgress(): Promise<AppResult<StudentProgressDetail>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Student' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 

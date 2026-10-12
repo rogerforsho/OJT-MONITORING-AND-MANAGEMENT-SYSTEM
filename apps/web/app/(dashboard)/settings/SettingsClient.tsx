@@ -129,7 +129,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
         {/* Left Column: User Profile Details Card */}
         <div className="lg:col-span-1 space-y-4">
           <Card className="border-slate-200/80 shadow-2xs overflow-hidden">
-            <div className="h-16 bg-[#062415] p-4 flex items-center justify-end">
+            <div className="h-16 bg-[#092E1D] p-4 flex items-center justify-end">
               <div className="w-7 h-7 rounded-lg bg-white/10 p-1 border border-amber-400/30 flex items-center justify-center">
                 <Image
                   src="/logo.png"
@@ -143,10 +143,10 @@ export default function SettingsClient({ user, extraDetails }: Props) {
 
             <CardContent className="p-5 pt-0 relative">
               <div className="-mt-8 mb-3 flex items-end justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-[#0A3D24] text-amber-300 border-4 border-white dark:border-slate-900 shadow-2xs flex items-center justify-center font-bold text-lg">
+                <div className="w-14 h-14 rounded-2xl bg-[#0A3824] text-amber-300 border-4 border-white dark:border-slate-900 shadow-2xs flex items-center justify-center font-bold text-lg">
                   {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
                 </div>
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#0A3D24] text-amber-300 uppercase tracking-wider border border-amber-400/30 shadow-2xs">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#0A3824] text-amber-300 uppercase tracking-wider border border-amber-400/30 shadow-2xs">
                   {user.role}
                 </span>
               </div>
@@ -208,7 +208,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
             <CardContent className="p-5 space-y-3">
               <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24]/10 dark:bg-emerald-950/60 border border-[#0A3D24]/20 dark:border-emerald-800/60 flex items-center justify-center text-[#0A3D24] dark:text-emerald-400">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3824]/10 dark:bg-emerald-950/60 border border-[#0A3824]/20 dark:border-emerald-800/60 flex items-center justify-center text-[#0A3824] dark:text-emerald-400">
                     <Monitor className="w-4 h-4" />
                   </div>
                   <div>
@@ -229,7 +229,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                 <a
                   href="/downloads/CdM-OJT-Portal-Setup-1.0.0.exe"
                   download="CdM-OJT-Portal-Setup-1.0.0.exe"
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Download Windows Setup (.exe)
@@ -258,8 +258,8 @@ export default function SettingsClient({ user, extraDetails }: Props) {
           <Card className="border-slate-200/80 dark:border-slate-800 shadow-xs">
             <CardContent className="p-6 sm:p-7 space-y-6">
               <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
-                  <Key className="w-5 h-5 text-[#0A3D24] dark:text-emerald-400" />
+                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Key className="w-5 h-5 text-[#0A3824] dark:text-emerald-400" />
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-slate-900 dark:text-white">Change Account Password</h2>
@@ -391,7 +391,7 @@ export default function SettingsClient({ user, extraDetails }: Props) {
                   <Button
                     type="submit"
                     loading={loading}
-                    className="w-full bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold py-2.5 rounded-xl cursor-pointer shadow-sm transition-all flex items-center justify-center gap-2"
                   >
                     <Key className="w-4 h-4" />
                     <span>Save & Update Password</span>

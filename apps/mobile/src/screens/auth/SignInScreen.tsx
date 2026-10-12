@@ -125,7 +125,7 @@ export default function SignInScreen({ navigation }: Props) {
         <Text style={s.subtitle}>Continue to secure account recovery in your browser. Enter your student email and ID, then use the emailed code to set a new password. Return here to sign in afterwards.</Text>
         {!!resetMsg && <Text style={s.alertErrorText}>{resetMsg}</Text>}
         <TouchableOpacity style={s.btn} onPress={handleReset} disabled={resetLoading}>
-          {resetLoading ? <ActivityIndicator color="#FFCC00" /> : <Text style={s.btnText}>Open Secure Recovery</Text>}
+          {resetLoading ? <ActivityIndicator color="#E4DBC4" /> : <Text style={s.btnText}>Open Secure Recovery</Text>}
         </TouchableOpacity>
         <TouchableOpacity style={s.linkContainer} onPress={() => { setShowForgot(false); setResetMsg(''); }}>
           <Text style={s.link}>Return to Sign In</Text>
@@ -175,7 +175,7 @@ export default function SignInScreen({ navigation }: Props) {
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Enter password..."
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                   secureTextEntry={!showPassword}
                   autoFocus={true}
                 />
@@ -184,7 +184,7 @@ export default function SignInScreen({ navigation }: Props) {
                   style={s.eyeButton}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#64748b" />
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#526257" />
                 </TouchableOpacity>
               </View>
 
@@ -195,7 +195,7 @@ export default function SignInScreen({ navigation }: Props) {
               <TouchableOpacity style={s.btn} onPress={handleSignIn} disabled={loading} activeOpacity={0.85}>
                 {loading ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <ActivityIndicator size="small" color="#FFCC00" />
+                    <ActivityIndicator size="small" color="#E4DBC4" />
                     <Text style={s.btnText}>
                       {isSlow ? 'Connecting to CdM servers...' : 'Authenticating...'}
                     </Text>
@@ -251,7 +251,7 @@ export default function SignInScreen({ navigation }: Props) {
               value={email}
               onChangeText={setEmail}
               placeholder="username@cdm.edu.ph"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor="#879687"
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -263,7 +263,7 @@ export default function SignInScreen({ navigation }: Props) {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="••••••••"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#879687"
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
@@ -271,7 +271,7 @@ export default function SignInScreen({ navigation }: Props) {
                 style={s.eyeButton}
                 activeOpacity={0.7}
               >
-                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#64748b" />
+                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#526257" />
               </TouchableOpacity>
             </View>
 
@@ -282,7 +282,7 @@ export default function SignInScreen({ navigation }: Props) {
             <TouchableOpacity style={s.btn} onPress={handleSignIn} disabled={loading} activeOpacity={0.85}>
               {loading ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <ActivityIndicator size="small" color="#FFCC00" />
+                  <ActivityIndicator size="small" color="#E4DBC4" />
                   <Text style={s.btnText}>
                     {isSlow ? 'Connecting to CdM servers...' : 'Authenticating...'}
                   </Text>
@@ -306,7 +306,7 @@ export default function SignInScreen({ navigation }: Props) {
                 onPress={() => setUseAnotherAccount(false)}
                 style={{ marginTop: 14, alignItems: 'center' }}
               >
-                <Text style={{ fontSize: 12, color: '#0A3D24', fontWeight: '700' }}>
+                <Text style={{ fontSize: 12, color: '#0A3824', fontWeight: '700' }}>
                   ← Back to {rememberedProfile.full_name.split(' ')[0]}'s Account
                 </Text>
               </TouchableOpacity>
@@ -323,7 +323,7 @@ export default function SignInScreen({ navigation }: Props) {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#062415' },
+  root: { flex: 1, backgroundColor: '#092E1D' },
   inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 40 },
   brand: { alignItems: 'center', marginBottom: 24 },
   logoContainer: {
@@ -333,7 +333,7 @@ const s = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 3,
     borderWidth: 2.5,
-    borderColor: '#FFCC00',
+    borderColor: '#E4DBC4',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -344,7 +344,7 @@ const s = StyleSheet.create({
     elevation: 8,
   },
   logo: { width: '100%', height: '100%', borderRadius: 32 },
-  brandTitle: { fontSize: 20, fontWeight: '900', color: '#FFCC00', letterSpacing: 0.5 },
+  brandTitle: { fontSize: 20, fontWeight: '900', color: '#E4DBC4', letterSpacing: 0.5 },
   brandSub: { fontSize: 13, fontWeight: '700', color: '#ffffff', marginTop: 2 },
   badge: {
     marginTop: 8,
@@ -353,9 +353,9 @@ const s = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(6,36,21,0.8)',
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.4)',
+    borderColor: 'rgba(228,219,196,0.4)',
   },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#FFCC00' },
+  badgeText: { fontSize: 11, fontWeight: '700', color: '#E4DBC4' },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
@@ -366,27 +366,27 @@ const s = StyleSheet.create({
     shadowRadius: 10,
     elevation: 10,
   },
-  title: { fontSize: 22, fontWeight: '800', color: '#0A3D24', marginBottom: 2 },
-  subtitle: { fontSize: 12, color: '#64748b', marginBottom: 18 },
-  label: { fontSize: 12, fontWeight: '700', color: '#1e293b', marginBottom: 4 },
+  title: { fontSize: 22, fontWeight: '800', color: '#0A3824', marginBottom: 2 },
+  subtitle: { fontSize: 12, color: '#526257', marginBottom: 18 },
+  label: { fontSize: 12, fontWeight: '700', color: '#26372D', marginBottom: 4 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#0f172a',
+    color: '#18271D',
     marginBottom: 14,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F7F9F5',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     borderRadius: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F7F9F5',
     marginBottom: 14,
     paddingRight: 10,
   },
@@ -395,31 +395,31 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#0f172a',
+    color: '#18271D',
   },
   eyeButton: { padding: 4 },
   btn: {
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.3)',
-    shadowColor: '#0A3D24',
+    borderColor: 'rgba(228,219,196,0.3)',
+    shadowColor: '#0A3824',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
   },
-  btnText: { color: '#FFCC00', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },
+  btnText: { color: '#E4DBC4', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  link: { fontSize: 12, color: '#0A3D24', fontWeight: '700' },
-  linkMuted: { fontSize: 12, color: '#64748b', fontWeight: '600' },
+  link: { fontSize: 12, color: '#0A3824', fontWeight: '700' },
+  linkMuted: { fontSize: 12, color: '#526257', fontWeight: '600' },
   linkContainer: { alignItems: 'center', marginTop: 8 },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#F4F6F2',
     borderRadius: 10,
     padding: 3,
     marginBottom: 14,
@@ -438,8 +438,8 @@ const s = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  tabText: { fontSize: 12, fontWeight: '600', color: '#64748b' },
-  tabTextActive: { color: '#0A3D24', fontWeight: '800' },
+  tabText: { fontSize: 12, fontWeight: '600', color: '#526257' },
+  tabTextActive: { color: '#0A3824', fontWeight: '800' },
   infoNotice: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -457,22 +457,22 @@ const s = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#F4F6F2',
   },
   quickAvatar: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     borderWidth: 2,
-    borderColor: '#FFCC00',
+    borderColor: '#E4DBC4',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
-  quickAvatarText: { color: '#FFCC00', fontSize: 22, fontWeight: '900' },
-  quickName: { fontSize: 17, fontWeight: '800', color: '#0f172a' },
-  quickEmail: { fontSize: 12, color: '#64748b', marginTop: 1 },
+  quickAvatarText: { color: '#E4DBC4', fontSize: 22, fontWeight: '900' },
+  quickName: { fontSize: 17, fontWeight: '800', color: '#18271D' },
+  quickEmail: { fontSize: 12, color: '#526257', marginTop: 1 },
   quickBadge: {
     marginTop: 6,
     backgroundColor: '#ecfdf5',
@@ -494,15 +494,15 @@ const s = StyleSheet.create({
   },
   alertErrorText: { fontSize: 12, color: '#dc2626', fontWeight: '600' },
   alertSuccess: {
-    backgroundColor: 'rgba(10,61,36,0.1)',
+    backgroundColor: 'rgba(10,56,36,0.1)',
     borderWidth: 1,
-    borderColor: '#0A3D24',
+    borderColor: '#0A3824',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     marginBottom: 12,
   },
-  alertSuccessText: { fontSize: 12, color: '#0A3D24', fontWeight: '700' },
+  alertSuccessText: { fontSize: 12, color: '#0A3824', fontWeight: '700' },
   footnote: {
     textAlign: 'center',
     marginTop: 20,

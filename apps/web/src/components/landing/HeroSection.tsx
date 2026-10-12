@@ -32,8 +32,8 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
             
             {/* Kicker bar */}
             <div className="flex items-center gap-2">
-              <span className="w-8 h-1 bg-[#FFCC00] rounded-full" />
-              <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3D24]">
+              <span className="w-8 h-1 bg-[var(--cdm-sand)] rounded-full" />
+              <span className="text-xs uppercase font-extrabold tracking-widest text-[#0A3824]">
                 SHAPE YOUR PRACTICUM PATHWAY
               </span>
             </div>
@@ -41,7 +41,7 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
             {/* Authoritative Main Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 font-serif leading-[1.12] tracking-tight">
               Better Training.<br />
-              <span className="text-[#0A3D24]">Brighter Future.</span>
+              <span className="text-[#0A3824]">Brighter Future.</span>
             </h1>
 
             {/* Sub-headline */}
@@ -53,7 +53,7 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
               <button
                 onClick={onOpenAccessPortal}
-                className="px-7 py-3.5 rounded-xl bg-[#062415] hover:bg-[#0A3D24] active:scale-98 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                className="px-7 py-3.5 rounded-xl bg-[#092E1D] hover:bg-[#0A3824] active:scale-98 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
                 <span>Launch Portal</span>
                 <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
@@ -100,7 +100,7 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
                     onClick={() => setHeroView('campus')}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                       heroView === 'campus'
-                        ? 'bg-[#0A3D24] text-[#FFCC00] shadow-xs'
+                        ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                     }`}
                   >
@@ -112,7 +112,7 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
                     onClick={() => setHeroView('student')}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                       heroView === 'student'
-                        ? 'bg-[#0A3D24] text-[#FFCC00] shadow-xs'
+                        ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                     }`}
                   >
@@ -148,7 +148,7 @@ export default function HeroSection({ onOpenAccessPortal }: HeroSectionProps) {
                 )}
                 
                 {/* Subtle gradient overlay at base */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#062415]/85 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#092E1D]/85 via-transparent to-transparent pointer-events-none" />
 
                 {/* Bottom caption overlay */}
                 <div className="absolute bottom-4 left-4 right-4 text-white">

@@ -20,9 +20,9 @@ interface SavedProfile {
 
 const ROLE_BADGES: Record<string, { label: string; bg: string; text: string }> = {
   Coordinator: { label: 'OJT Coordinator', bg: 'bg-emerald-100', text: 'text-emerald-800' },
-  ProgramHead: { label: 'Program Head', bg: 'bg-blue-100', text: 'text-blue-800' },
-  Supervisor: { label: 'Company Supervisor', bg: 'bg-purple-100', text: 'text-purple-800' },
-  Admin: { label: 'System Admin', bg: 'bg-red-100', text: 'text-red-800' },
+  ProgramHead: { label: 'Program Head', bg: 'bg-emerald-100', text: 'text-emerald-800' },
+  Supervisor: { label: 'Company Supervisor', bg: 'bg-emerald-100', text: 'text-emerald-800' },
+  Admin: { label: 'System Admin', bg: 'bg-emerald-100', text: 'text-emerald-800' },
   Student: { label: 'Student Intern', bg: 'bg-amber-100', text: 'text-amber-800' },
 };
 
@@ -158,7 +158,7 @@ function SignInContent() {
       <div className="page-fade-in space-y-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-black text-[#0A3D24] font-serif">Staff Account Recovery</h1>
+            <h1 className="text-xl font-black text-[#0A3824] font-serif">Staff Account Recovery</h1>
           </div>
           <p className="text-xs text-slate-500">
             Verify your institutional identity to securely receive a 6-digit verification code.
@@ -200,7 +200,7 @@ function SignInContent() {
             />
           )}
 
-          <Button type="submit" loading={resetLoading} className="w-full mt-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-md shadow-[#0A3D24]/20 cursor-pointer">
+          <Button type="submit" loading={resetLoading} className="w-full mt-1 bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-md shadow-[#0A3824]/20 cursor-pointer">
             Verify Employee ID &amp; Send 6-Digit Code
           </Button>
 
@@ -217,7 +217,7 @@ function SignInContent() {
           <button
             type="button"
             onClick={() => { setShowForgot(false); setResetMessage(''); }}
-            className="text-xs font-bold text-[#0A3D24] hover:text-[#062415] hover:underline text-center mt-1 cursor-pointer"
+            className="text-xs font-bold text-[#0A3824] hover:text-[#092E1D] hover:underline text-center mt-1 cursor-pointer"
           >
             ← Back to Sign In
           </button>
@@ -249,7 +249,7 @@ function SignInContent() {
 
         <div className="p-4 rounded-2xl bg-slate-50/75 border border-slate-200/80 shadow-2xs mb-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-full bg-[#0A3D24] border border-amber-400/30 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-11 h-11 rounded-full bg-[#0A3824] border border-amber-400/30 flex items-center justify-center shrink-0 shadow-2xs">
               <span className="font-bold text-amber-300 text-sm">
                 {firstName.charAt(0).toUpperCase()}
               </span>
@@ -291,7 +291,7 @@ function SignInContent() {
               <button
                 type="button"
                 onClick={() => { setUseAnotherAccount(true); setEmail(''); setPassword(''); }}
-                className="font-bold text-[#0A3D24] hover:text-[#062415] hover:underline cursor-pointer"
+                className="font-bold text-[#0A3824] hover:text-[#092E1D] hover:underline cursor-pointer"
               >
                 Sign In with Staff Account
               </button>
@@ -338,7 +338,7 @@ function SignInContent() {
               <button
                 type="button"
                 onClick={() => { setUseAnotherAccount(true); setEmail(''); setPassword(''); }}
-                className="font-bold text-[#0A3D24] hover:text-[#062415] hover:underline cursor-pointer"
+                className="font-bold text-[#0A3824] hover:text-[#092E1D] hover:underline cursor-pointer"
               >
                 Use Another Account
               </button>
@@ -456,7 +456,7 @@ function SignInContent() {
         </Button>
 
         <div className="flex items-center justify-between text-xs pt-1">
-          <Link href="/auth/register" className="font-bold text-[#0A3D24] hover:text-[#062415] hover:underline">
+          <Link href="/auth/register" className="font-bold text-[#0A3824] hover:text-[#092E1D] hover:underline">
             Student Registration
           </Link>
           <button
@@ -476,7 +476,7 @@ function SignInContent() {
           <button
             type="button"
             onClick={() => setUseAnotherAccount(false)}
-            className="text-xs font-bold text-[#0A3D24] hover:underline text-center mt-2 cursor-pointer"
+            className="text-xs font-bold text-[#0A3824] hover:underline text-center mt-2 cursor-pointer"
           >
             ← Back to Saved Profiles
           </button>
@@ -487,7 +487,7 @@ function SignInContent() {
           <a
             href="/downloads/CdM-OJT-Portal-Setup-1.0.0.exe"
             download="CdM-OJT-Portal-Setup-1.0.0.exe"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-[#0A3D24] font-medium transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-[#0A3824] font-medium transition-colors"
           >
             <Monitor className="w-3.5 h-3.5 text-slate-400" />
             <span>Download Desktop Client for Windows</span>
@@ -503,7 +503,7 @@ export default function SignInPage() {
     <Suspense
       fallback={
         <div className="w-full max-w-sm mx-auto my-auto py-12 flex flex-col items-center justify-center space-y-3">
-          <div className="w-8 h-8 rounded-full border-2 border-[#0A3D24] border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-[#0A3824] border-t-transparent animate-spin" />
           <p className="text-xs text-slate-500 font-medium">Loading sign-in portal...</p>
         </div>
       }

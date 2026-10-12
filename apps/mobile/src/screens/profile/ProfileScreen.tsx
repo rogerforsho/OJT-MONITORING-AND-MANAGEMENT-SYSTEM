@@ -129,8 +129,8 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={[s.center, { backgroundColor: '#062415' }]}>
-        <ActivityIndicator color="#FFCC00" size="large" />
+      <View style={[s.center, { backgroundColor: '#092E1D' }]}>
+        <ActivityIndicator color="#E4DBC4" size="large" />
       </View>
     );
   }
@@ -209,10 +209,10 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Ionicons name="key-outline" size={16} color="#0A3D24" />
+              <Ionicons name="key-outline" size={16} color="#0A3824" />
               <Text style={s.cardTitleNoMargin}>Account Security & Password</Text>
             </View>
-            <Ionicons name={showSecurity ? 'chevron-up' : 'chevron-down'} size={18} color="#64748b" />
+            <Ionicons name={showSecurity ? 'chevron-up' : 'chevron-down'} size={18} color="#526257" />
           </TouchableOpacity>
 
           {showSecurity && (
@@ -224,11 +224,11 @@ export default function ProfileScreen() {
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
                   placeholder="Enter current password..."
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                   secureTextEntry={!showCurrent}
                 />
                 <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)} style={s.eyeButton}>
-                  <Ionicons name={showCurrent ? 'eye-off-outline' : 'eye-outline'} size={16} color="#64748b" />
+                  <Ionicons name={showCurrent ? 'eye-off-outline' : 'eye-outline'} size={16} color="#526257" />
                 </TouchableOpacity>
               </View>
 
@@ -239,23 +239,23 @@ export default function ProfileScreen() {
                   value={newPassword}
                   onChangeText={setNewPassword}
                   placeholder="Min. 8 characters..."
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                   secureTextEntry={!showNew}
                 />
                 <TouchableOpacity onPress={() => setShowNew(!showNew)} style={s.eyeButton}>
-                  <Ionicons name={showNew ? 'eye-off-outline' : 'eye-outline'} size={16} color="#64748b" />
+                  <Ionicons name={showNew ? 'eye-off-outline' : 'eye-outline'} size={16} color="#526257" />
                 </TouchableOpacity>
               </View>
 
               {newPassword.length > 0 && (
                 <View style={{ marginBottom: 12 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 10, color: '#64748b' }}>Strength:</Text>
+                    <Text style={{ fontSize: 10, color: '#526257' }}>Strength:</Text>
                     <Text style={{ fontSize: 10, fontWeight: '700', color: strength <= 25 ? '#e11d48' : strength <= 50 ? '#d97706' : strength <= 75 ? '#2563eb' : '#059669' }}>
                       {strength <= 25 ? 'Weak' : strength <= 50 ? 'Fair' : strength <= 75 ? 'Good' : 'Strong'}
                     </Text>
                   </View>
-                  <View style={{ height: 4, backgroundColor: '#f1f5f9', borderRadius: 2, overflow: 'hidden' }}>
+                  <View style={{ height: 4, backgroundColor: '#F4F6F2', borderRadius: 2, overflow: 'hidden' }}>
                     <View
                       style={{
                         height: '100%',
@@ -274,11 +274,11 @@ export default function ProfileScreen() {
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   placeholder="Confirm new password..."
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor="#879687"
                   secureTextEntry={!showConfirm}
                 />
                 <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={s.eyeButton}>
-                  <Ionicons name={showConfirm ? 'eye-off-outline' : 'eye-outline'} size={16} color="#64748b" />
+                  <Ionicons name={showConfirm ? 'eye-off-outline' : 'eye-outline'} size={16} color="#526257" />
                 </TouchableOpacity>
               </View>
 
@@ -297,7 +297,7 @@ export default function ProfileScreen() {
                 activeOpacity={0.85}
               >
                 {pwdLoading ? (
-                  <ActivityIndicator color="#FFCC00" size="small" />
+                  <ActivityIndicator color="#E4DBC4" size="small" />
                 ) : (
                   <Text style={s.savePwdBtnText}>Update Password</Text>
                 )}
@@ -308,7 +308,7 @@ export default function ProfileScreen() {
 
         {/* System Status Notice */}
         <View style={s.infoCard}>
-          <Ionicons name="shield-checkmark-outline" size={16} color="#0A3D24" />
+          <Ionicons name="shield-checkmark-outline" size={16} color="#0A3824" />
           <Text style={s.infoText}>Colegio de Montalban OJT Practicum Platform</Text>
         </View>
 
@@ -329,17 +329,17 @@ export default function ProfileScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f4f6f9' },
+  root: { flex: 1, backgroundColor: '#F4F6F2' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: 20, paddingBottom: 40 },
   header: {
-    backgroundColor: '#062415',
+    backgroundColor: '#092E1D',
     borderRadius: 24,
     padding: 24,
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.3)',
+    borderColor: 'rgba(228,219,196,0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -353,29 +353,29 @@ const s = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 3,
     borderWidth: 2.5,
-    borderColor: '#FFCC00',
+    borderColor: '#E4DBC4',
     marginBottom: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: { width: '100%', height: '100%', borderRadius: 32 },
   name: { fontSize: 18, fontWeight: '800', color: '#ffffff', textAlign: 'center', marginBottom: 2 },
-  email: { fontSize: 12, color: '#94a3b8', textAlign: 'center', marginBottom: 12 },
+  email: { fontSize: 12, color: '#879687', textAlign: 'center', marginBottom: 12 },
   badge: {
-    backgroundColor: 'rgba(255,204,0,0.15)',
+    backgroundColor: 'rgba(228,219,196,0.15)',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,204,0,0.4)',
+    borderColor: 'rgba(228,219,196,0.4)',
   },
-  badgeText: { fontSize: 11, fontWeight: '800', color: '#FFCC00', textTransform: 'uppercase', letterSpacing: 0.5 },
+  badgeText: { fontSize: 11, fontWeight: '800', color: '#E4DBC4', textTransform: 'uppercase', letterSpacing: 0.5 },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -383,20 +383,20 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     elevation: 1,
   },
-  cardTitle: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 },
-  cardTitleNoMargin: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
+  cardTitle: { fontSize: 11, fontWeight: '800', color: '#0A3824', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 },
+  cardTitleNoMargin: { fontSize: 11, fontWeight: '800', color: '#0A3824', textTransform: 'uppercase', letterSpacing: 0.5 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  label: { fontSize: 12, color: '#64748b', fontWeight: '600', marginBottom: 4 },
-  value: { fontSize: 13, fontWeight: '700', color: '#1e293b', flex: 1, textAlign: 'right' },
-  valueBold: { fontSize: 14, fontWeight: '900', color: '#0A3D24' },
-  divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 10 },
+  label: { fontSize: 12, color: '#526257', fontWeight: '600', marginBottom: 4 },
+  value: { fontSize: 13, fontWeight: '700', color: '#26372D', flex: 1, textAlign: 'right' },
+  valueBold: { fontSize: 14, fontWeight: '900', color: '#0A3824' },
+  divider: { height: 1, backgroundColor: '#F4F6F2', marginVertical: 10 },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     borderRadius: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F7F9F5',
     marginBottom: 12,
     paddingRight: 8,
   },
@@ -405,17 +405,17 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     fontSize: 13,
-    color: '#0f172a',
+    color: '#18271D',
   },
   eyeButton: { padding: 4 },
   savePwdBtn: {
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     borderRadius: 10,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 4,
   },
-  savePwdBtnText: { color: '#FFCC00', fontWeight: '800', fontSize: 13 },
+  savePwdBtnText: { color: '#E4DBC4', fontWeight: '800', fontSize: 13 },
   alertError: {
     backgroundColor: '#fef2f2',
     borderWidth: 1,
@@ -435,9 +435,9 @@ const s = StyleSheet.create({
   },
   alertSuccessText: { fontSize: 11, color: '#047857', fontWeight: '700' },
   infoCard: {
-    backgroundColor: 'rgba(10,61,36,0.05)',
+    backgroundColor: 'rgba(10,56,36,0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(10,61,36,0.15)',
+    borderColor: 'rgba(10,56,36,0.15)',
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -447,7 +447,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  infoText: { fontSize: 11, color: '#0A3D24', fontWeight: '700', textAlign: 'center' },
+  infoText: { fontSize: 11, color: '#0A3824', fontWeight: '700', textAlign: 'center' },
   signOutBtn: {
     backgroundColor: '#e11d48',
     borderRadius: 14,

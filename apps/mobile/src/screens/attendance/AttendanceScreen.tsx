@@ -379,7 +379,7 @@ export default function AttendanceScreen() {
   if (step === 'selfie' && !permission?.granted) {
     return (
       <View style={[s.permissionContainer, { paddingTop: insets.top }]}>
-        <Ionicons name="camera" size={48} color="#0A3D24" style={{ marginBottom: 14 }} />
+        <Ionicons name="camera" size={48} color="#0A3824" style={{ marginBottom: 14 }} />
         <Text style={s.permissionTitle}>Camera Access Required</Text>
         <Text style={s.permissionText}>
           Colegio de Montalban OJT policies require real front-camera selfie evidence for daily attendance verification.
@@ -430,7 +430,7 @@ export default function AttendanceScreen() {
   if (step === 'submitting') {
     return (
       <View style={[s.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color="#0A3D24" />
+        <ActivityIndicator size="large" color="#0A3824" />
         <Text style={s.submittingText}>
           {mode === 'time_in' ? 'Recording Time In...' : 'Recording Time Out...'}
         </Text>
@@ -441,7 +441,7 @@ export default function AttendanceScreen() {
   if (loading) {
     return (
       <View style={[s.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color="#0A3D24" />
+        <ActivityIndicator size="large" color="#0A3824" />
       </View>
     );
   }
@@ -471,7 +471,7 @@ export default function AttendanceScreen() {
             activeOpacity={0.75}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="settings-outline" size={20} color="#0A3D24" />
+            <Ionicons name="settings-outline" size={20} color="#0A3824" />
           </TouchableOpacity>
         </View>
 
@@ -488,7 +488,7 @@ export default function AttendanceScreen() {
             <Ionicons
               name={activeTab === 'check_in' ? 'camera' : 'camera-outline'}
               size={15}
-              color={activeTab === 'check_in' ? '#0A3D24' : '#475569'}
+              color={activeTab === 'check_in' ? '#0A3824' : '#37483C'}
             />
             <Text style={[s.segmentText, activeTab === 'check_in' && s.segmentTextActive]}>
               Live Check-In
@@ -506,7 +506,7 @@ export default function AttendanceScreen() {
             <Ionicons
               name={activeTab === 'history' ? 'time' : 'time-outline'}
               size={15}
-              color={activeTab === 'history' ? '#0A3D24' : '#475569'}
+              color={activeTab === 'history' ? '#0A3824' : '#37483C'}
             />
             <Text style={[s.segmentText, activeTab === 'history' && s.segmentTextActive]}>
               History Logs
@@ -520,7 +520,7 @@ export default function AttendanceScreen() {
         <ScrollView
           contentContainerStyle={s.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3824']} />}
         >
           {/* Offline Sync Banner */}
           {offlineCount > 0 && (
@@ -536,7 +536,7 @@ export default function AttendanceScreen() {
               {!isOffline && (
                 <TouchableOpacity onPress={handleSync} disabled={syncing} style={s.syncBtn} activeOpacity={0.85}>
                   {syncing ? (
-                    <ActivityIndicator size="small" color="#062415" />
+                    <ActivityIndicator size="small" color="#092E1D" />
                   ) : (
                     <Text style={s.syncBtnText}>Sync Now</Text>
                   )}
@@ -548,7 +548,7 @@ export default function AttendanceScreen() {
           {/* Success / Error Alerts */}
           {!!success && (
             <View style={s.alertSuccess}>
-              <Ionicons name="checkmark-circle" size={18} color="#0A3D24" />
+              <Ionicons name="checkmark-circle" size={18} color="#0A3824" />
               <Text style={s.alertSuccessText}>{success}</Text>
               <TouchableOpacity
                 onPress={() => setSuccess('')}
@@ -556,7 +556,7 @@ export default function AttendanceScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Dismiss success message"
               >
-                <Ionicons name="close" size={16} color="#0A3D24" />
+                <Ionicons name="close" size={16} color="#0A3824" />
               </TouchableOpacity>
             </View>
           )}
@@ -616,7 +616,7 @@ export default function AttendanceScreen() {
                     <Ionicons
                       name={doc.submitted ? "checkmark-circle" : "ellipse-outline"}
                       size={17}
-                      color={doc.submitted ? "#0A3D24" : "#94a3b8"}
+                      color={doc.submitted ? "#0A3824" : "#879687"}
                     />
                     <Text style={[s.gatewayItemText, doc.submitted && s.gatewayItemTextDone]}>
                       {doc.title}
@@ -634,11 +634,11 @@ export default function AttendanceScreen() {
               </View>
 
               {isGatewayCleared ? (
-                <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
+                <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#F4F6F2' }}>
                   {scheduleProposal ? (
                     <View style={s.scheduleStatusBox}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Ionicons name="time" size={18} color="#0A3D24" />
+                        <Ionicons name="time" size={18} color="#0A3824" />
                         <Text style={s.scheduleStatusTitle}>
                           {scheduleProposal.status === 'approved' ? 'Practicum Schedule Approved' : 'Schedule Proposal Submitted'}
                         </Text>
@@ -657,7 +657,7 @@ export default function AttendanceScreen() {
                         onPress={() => setScheduleModalOpen(true)}
                         activeOpacity={0.85}
                       >
-                        <Ionicons name="create-outline" size={16} color="#0A3D24" />
+                        <Ionicons name="create-outline" size={16} color="#0A3824" />
                         <Text style={s.scheduleModifyBtnText}>View / Modify Schedule Proposal</Text>
                       </TouchableOpacity>
                     </View>
@@ -667,7 +667,7 @@ export default function AttendanceScreen() {
                       onPress={() => setScheduleModalOpen(true)}
                       activeOpacity={0.85}
                     >
-                      <Ionicons name="calendar" size={18} color="#FFCC00" />
+                      <Ionicons name="calendar" size={18} color="#E4DBC4" />
                       <Text style={s.scheduleActionBtnText}>Set Up Practicum Work Schedule</Text>
                     </TouchableOpacity>
                   )}
@@ -678,7 +678,7 @@ export default function AttendanceScreen() {
                   onPress={() => navigation.navigate('Reports')}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="document-attach" size={17} color="#062415" />
+                  <Ionicons name="document-attach" size={17} color="#092E1D" />
                   <Text style={s.gatewayActionBtnText}>Go to Document Submissions</Text>
                 </TouchableOpacity>
               )}
@@ -716,7 +716,7 @@ export default function AttendanceScreen() {
                       <Text style={s.statusLabel}>Punctuality</Text>
                       <Text style={[
                         s.statusValue,
-                        todayRecord.late_status === 'late' ? { color: '#dc2626' } : { color: '#0A3D24' }
+                        todayRecord.late_status === 'late' ? { color: '#dc2626' } : { color: '#0A3824' }
                       ]}>
                         {todayRecord.late_status.replace('_', ' ').toUpperCase()}
                       </Text>
@@ -727,7 +727,7 @@ export default function AttendanceScreen() {
                         s.statusValue,
                         todayRecord.time_in_location_status === 'flagged_out_of_bounds'
                           ? { color: '#b45309' }
-                          : { color: '#0A3D24' }
+                          : { color: '#0A3824' }
                       ]}>
                         {todayRecord.time_in_location_status === 'not_applicable'
                           ? '💻 Remote Work'
@@ -757,7 +757,7 @@ export default function AttendanceScreen() {
                   </View>
                 ) : (
                   <View style={s.emptyBox}>
-                    <Ionicons name="time-outline" size={36} color="#94a3b8" style={{ marginBottom: 6 }} />
+                    <Ionicons name="time-outline" size={36} color="#879687" style={{ marginBottom: 6 }} />
                     <Text style={s.emptyText}>No attendance recorded yet today.</Text>
                   </View>
                 )}
@@ -815,13 +815,13 @@ export default function AttendanceScreen() {
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       {checkingLocation && mode === 'time_out' ? (
-                        <ActivityIndicator size="small" color="#0A3D24" />
+                        <ActivityIndicator size="small" color="#0A3824" />
                       ) : error ? (
-                        <Ionicons name="alert-circle-outline" size={22} color="#64748b" />
+                        <Ionicons name="alert-circle-outline" size={22} color="#526257" />
                       ) : (
-                        <Ionicons name="log-out-outline" size={22} color="#0A3D24" />
+                        <Ionicons name="log-out-outline" size={22} color="#0A3824" />
                       )}
-                      <Text style={[s.btnTimeOutText, error ? { color: '#64748b' } : null]}>
+                      <Text style={[s.btnTimeOutText, error ? { color: '#526257' } : null]}>
                         {checkingLocation && mode === 'time_out'
                           ? 'Acquiring GPS Fix...'
                           : error
@@ -843,7 +843,7 @@ export default function AttendanceScreen() {
 
                 {todayRecord?.time_out && (
                   <View style={s.completeCard}>
-                    <Ionicons name="checkmark-done-circle" size={28} color="#0A3D24" style={{ marginBottom: 4 }} />
+                    <Ionicons name="checkmark-done-circle" size={28} color="#0A3824" style={{ marginBottom: 4 }} />
                     <Text style={s.completeTitle}>Attendance Complete for Today</Text>
                     <Text style={s.completeSub}>Both Time In and Time Out have been securely recorded.</Text>
                   </View>
@@ -860,15 +860,15 @@ export default function AttendanceScreen() {
           data={historyRecords}
           keyExtractor={(item) => item.attendance_id}
           contentContainerStyle={s.historyListContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3D24']} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0A3824']} />}
           ListEmptyComponent={
             historyLoading ? (
               <View style={s.center}>
-                <ActivityIndicator size="large" color="#0A3D24" />
+                <ActivityIndicator size="large" color="#0A3824" />
               </View>
             ) : (
               <View style={s.emptyContainer}>
-                <Ionicons name="calendar-outline" size={40} color="#94a3b8" style={{ marginBottom: 8 }} />
+                <Ionicons name="calendar-outline" size={40} color="#879687" style={{ marginBottom: 8 }} />
                 <Text style={s.emptyTitle}>No attendance records found</Text>
                 <Text style={s.emptySub}>Your verified time in and out records will appear here.</Text>
               </View>
@@ -923,7 +923,7 @@ export default function AttendanceScreen() {
                 </View>
                 <View style={s.timeCol}>
                   <Text style={s.timeLabel}>Punctuality</Text>
-                  <Text style={[s.timeValue, item.late_status === 'late' ? { color: '#dc2626' } : { color: '#0A3D24' }]}>
+                  <Text style={[s.timeValue, item.late_status === 'late' ? { color: '#dc2626' } : { color: '#0A3824' }]}>
                     {item.late_status.replace('_', ' ')}
                   </Text>
                 </View>
@@ -946,7 +946,7 @@ export default function AttendanceScreen() {
               <Ionicons
                 name={tempLocationData?.coords.latitude === 0 ? "location-outline" : "navigate-outline"}
                 size={26}
-                color={tempLocationData?.coords.latitude === 0 ? "#0284c7" : "#0A3D24"}
+                color={tempLocationData?.coords.latitude === 0 ? "#0284c7" : "#0A3824"}
               />
               <Text style={s.modalTitle}>
                 {tempLocationData?.coords.latitude === 0 ? 'Location Notice' : 'Off-Site / Field Work Notice'}
@@ -956,7 +956,7 @@ export default function AttendanceScreen() {
               {tempLocationData?.coords.latitude === 0 ? (
                 'Could not obtain an active satellite GPS lock. This is common indoors, inside concrete structures, or in basement facilities.'
               ) : (
-                <>Your current location is approx. <Text style={{ fontWeight: 'bold', color: '#062415' }}>{tempLocationData?.distanceMeters}m</Text> from {tempLocationData?.companyName}.</>
+                <>Your current location is approx. <Text style={{ fontWeight: 'bold', color: '#092E1D' }}>{tempLocationData?.distanceMeters}m</Text> from {tempLocationData?.companyName}.</>
               )}
             </Text>
             <Text style={s.modalPrompt}>
@@ -969,7 +969,7 @@ export default function AttendanceScreen() {
             <TextInput
               style={s.modalInput}
               placeholder={tempLocationData?.coords.latitude === 0 ? "e.g. Inside basement / Office 3rd floor" : "e.g. Client visit / IT site deployment / Errand / WFH"}
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor="#879687"
               value={flagReasonInput}
               onChangeText={setFlagReasonInput}
               multiline
@@ -1006,9 +1006,9 @@ export default function AttendanceScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f4f6f9' },
+  root: { flex: 1, backgroundColor: '#F4F6F2' },
   content: { padding: 20, paddingBottom: 40 },
-  center: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 40 },
+  center: { flex: 1, backgroundColor: '#F4F6F2', alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 40 },
   header: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10 },
   headerTopRow: {
     flexDirection: 'row',
@@ -1017,9 +1017,9 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   headerTextCol: { flex: 1, paddingRight: 12 },
-  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
-  headerTitle: { fontSize: 24, fontWeight: '900', color: '#062415' },
-  headerDate: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  headerKicker: { fontSize: 11, fontWeight: '800', color: '#0A3824', textTransform: 'uppercase', letterSpacing: 0.5 },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: '#092E1D' },
+  headerDate: { fontSize: 12, color: '#526257', marginTop: 2 },
   settingsBtn: {
     width: 44,
     height: 44,
@@ -1028,7 +1028,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
@@ -1037,7 +1037,7 @@ const s = StyleSheet.create({
   },
   segmentedContainer: {
     flexDirection: 'row',
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#DCE5DB',
     padding: 4,
     borderRadius: 14,
     marginTop: 4,
@@ -1055,7 +1055,7 @@ const s = StyleSheet.create({
   segmentBtnActive: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#C7D2C7',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
@@ -1070,10 +1070,10 @@ const s = StyleSheet.create({
   segmentText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#475569',
+    color: '#37483C',
   },
   segmentTextActive: {
-    color: '#0A3D24',
+    color: '#0A3824',
     fontWeight: '800',
   },
   offlineBanner: {
@@ -1092,14 +1092,14 @@ const s = StyleSheet.create({
   offlineBannerTitle: { fontSize: 13, fontWeight: '800', color: '#92400e' },
   offlineBannerSub: { fontSize: 11, color: '#b45309', marginTop: 2 },
   syncBtn: {
-    backgroundColor: '#FFCC00',
+    backgroundColor: '#E4DBC4',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  syncBtnText: { color: '#062415', fontSize: 12, fontWeight: '800' },
+  syncBtnText: { color: '#092E1D', fontSize: 12, fontWeight: '800' },
   offlineTag: {
     backgroundColor: '#fef3c7',
     paddingHorizontal: 8,
@@ -1110,9 +1110,9 @@ const s = StyleSheet.create({
   },
   offlineTagText: { fontSize: 10, fontWeight: '800', color: '#b45309' },
   alertSuccess: {
-    backgroundColor: 'rgba(10,61,36,0.08)',
+    backgroundColor: 'rgba(10,56,36,0.08)',
     borderWidth: 1,
-    borderColor: '#0A3D24',
+    borderColor: '#0A3824',
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
@@ -1120,7 +1120,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  alertSuccessText: { color: '#0A3D24', fontSize: 13, fontWeight: '700', flex: 1 },
+  alertSuccessText: { color: '#0A3824', fontSize: 13, fontWeight: '700', flex: 1 },
   alertError: {
     backgroundColor: '#fbf2f2',
     borderWidth: 1,
@@ -1137,7 +1137,7 @@ const s = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     padding: 20,
     marginBottom: 20,
     shadowColor: '#000',
@@ -1147,31 +1147,31 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  cardHeading: { fontSize: 11, fontWeight: '800', color: '#0A3D24', textTransform: 'uppercase', letterSpacing: 0.5 },
+  cardHeading: { fontSize: 11, fontWeight: '800', color: '#0A3824', textTransform: 'uppercase', letterSpacing: 0.5 },
   statusList: { gap: 12 },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  statusLabel: { fontSize: 13, color: '#475569', fontWeight: '500' },
-  statusValue: { fontSize: 14, fontWeight: '700', color: '#0f172a' },
+  statusLabel: { fontSize: 13, color: '#37483C', fontWeight: '500' },
+  statusValue: { fontSize: 14, fontWeight: '700', color: '#18271D' },
   textMuted: { color: '#f59e0b', fontWeight: '600' },
   badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
-  badgeGreen: { backgroundColor: 'rgba(10,61,36,0.1)' },
-  badgeTextGreen: { color: '#0A3D24', fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
+  badgeGreen: { backgroundColor: 'rgba(10,56,36,0.1)' },
+  badgeTextGreen: { color: '#0A3824', fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
   badgeRed: { backgroundColor: '#fee2e2' },
   badgeTextRed: { color: '#dc2626', fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
   badgeAmber: { backgroundColor: '#fef3c7' },
   badgeTextAmber: { color: '#d97706', fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
   badgeText: { fontSize: 12, fontWeight: '600' },
   emptyBox: { alignItems: 'center', paddingVertical: 16 },
-  emptyText: { fontSize: 13, color: '#94a3b8', fontWeight: '500' },
+  emptyText: { fontSize: 13, color: '#879687', fontWeight: '500' },
   actionSection: { gap: 12 },
   btnTimeIn: {
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     borderRadius: 20,
     paddingVertical: 18,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#166534',
-    shadowColor: '#0A3D24',
+    shadowColor: '#0A3824',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -1180,8 +1180,8 @@ const s = StyleSheet.create({
   btnTimeInText: { color: '#ffffff', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
   btnSubtext: { color: '#ffffff', fontSize: 11, fontWeight: '600', marginTop: 4 },
   btnDisabled: {
-    backgroundColor: '#94a3b8',
-    borderColor: '#cbd5e1',
+    backgroundColor: '#879687',
+    borderColor: '#C7D2C7',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -1197,33 +1197,33 @@ const s = StyleSheet.create({
     paddingVertical: 18,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#0A3D24',
+    borderColor: '#0A3824',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
-  btnTimeOutText: { color: '#0A3D24', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
-  btnSubtextMuted: { color: '#64748b', fontSize: 11, fontWeight: '600', marginTop: 4 },
+  btnTimeOutText: { color: '#0A3824', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
+  btnSubtextMuted: { color: '#526257', fontSize: 11, fontWeight: '600', marginTop: 4 },
   completeCard: {
-    backgroundColor: 'rgba(10,61,36,0.06)',
+    backgroundColor: 'rgba(10,56,36,0.06)',
     borderRadius: 20,
     padding: 18,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#0A3D24',
+    borderColor: '#0A3824',
   },
-  completeTitle: { fontSize: 15, fontWeight: '800', color: '#0A3D24' },
-  completeSub: { fontSize: 12, color: '#475569', marginTop: 3 },
-  submittingText: { fontSize: 13, fontWeight: '700', color: '#0A3D24', marginTop: 8 },
-  permissionContainer: { flex: 1, backgroundColor: '#f4f6f9', alignItems: 'center', justifyContent: 'center', padding: 28 },
-  permissionTitle: { fontSize: 20, fontWeight: '900', color: '#062415', marginBottom: 8, textAlign: 'center' },
-  permissionText: { fontSize: 13, color: '#64748b', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  btnPrimary: { backgroundColor: '#0A3D24', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 24, width: '100%', alignItems: 'center', marginBottom: 10 },
-  btnPrimaryText: { color: '#FFCC00', fontSize: 14, fontWeight: '800' },
+  completeTitle: { fontSize: 15, fontWeight: '800', color: '#0A3824' },
+  completeSub: { fontSize: 12, color: '#37483C', marginTop: 3 },
+  submittingText: { fontSize: 13, fontWeight: '700', color: '#0A3824', marginTop: 8 },
+  permissionContainer: { flex: 1, backgroundColor: '#F4F6F2', alignItems: 'center', justifyContent: 'center', padding: 28 },
+  permissionTitle: { fontSize: 20, fontWeight: '900', color: '#092E1D', marginBottom: 8, textAlign: 'center' },
+  permissionText: { fontSize: 13, color: '#526257', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  btnPrimary: { backgroundColor: '#0A3824', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 24, width: '100%', alignItems: 'center', marginBottom: 10 },
+  btnPrimaryText: { color: '#E4DBC4', fontSize: 14, fontWeight: '800' },
   btnCancel: { paddingVertical: 10, alignItems: 'center' },
-  btnCancelText: { color: '#64748b', fontSize: 13, fontWeight: '600' },
+  btnCancelText: { color: '#526257', fontSize: 13, fontWeight: '600' },
   cameraContainer: { flex: 1, backgroundColor: '#000000' },
   cameraTopBar: {
     position: 'absolute',
@@ -1245,14 +1245,14 @@ const s = StyleSheet.create({
   },
   backBtnText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
   cameraTag: {
-    backgroundColor: 'rgba(10,61,36,0.8)',
+    backgroundColor: 'rgba(10,56,36,0.8)',
     borderWidth: 1,
-    borderColor: '#FFCC00',
+    borderColor: '#E4DBC4',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
   },
-  cameraTagText: { color: '#FFCC00', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  cameraTagText: { color: '#E4DBC4', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   faceGuideWrapper: {
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
@@ -1264,7 +1264,7 @@ const s = StyleSheet.create({
     height: 300,
     borderRadius: 110,
     borderWidth: 2,
-    borderColor: '#FFCC00',
+    borderColor: '#E4DBC4',
     borderStyle: 'dashed',
     backgroundColor: 'rgba(0,0,0,0.08)',
   },
@@ -1280,18 +1280,18 @@ const s = StyleSheet.create({
   },
   cameraOverlay: { position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center', gap: 20 },
   shutterOuter: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
-  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#FFCC00' },
+  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#E4DBC4' },
   historyListContent: { paddingHorizontal: 20, paddingBottom: 24, gap: 12 },
-  historyCard: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#e2e8f0', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  historyCard: { backgroundColor: '#ffffff', borderRadius: 18, borderWidth: 1, borderColor: '#DCE5DB', padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  dateText: { fontSize: 14, fontWeight: '800', color: '#062415' },
-  timeGrid: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#f8fafc', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#f1f5f9' },
+  dateText: { fontSize: 14, fontWeight: '800', color: '#092E1D' },
+  timeGrid: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#F7F9F5', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#F4F6F2' },
   timeCol: { alignItems: 'flex-start' },
-  timeLabel: { fontSize: 11, color: '#64748b', marginBottom: 2, fontWeight: '500' },
-  timeValue: { fontSize: 13, fontWeight: '800', color: '#0f172a', textTransform: 'capitalize' },
+  timeLabel: { fontSize: 11, color: '#526257', marginBottom: 2, fontWeight: '500' },
+  timeValue: { fontSize: 13, fontWeight: '800', color: '#18271D', textTransform: 'capitalize' },
   emptyContainer: { alignItems: 'center', paddingVertical: 48 },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#334155' },
-  emptySub: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4, paddingHorizontal: 20 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#37483C' },
+  emptySub: { fontSize: 13, color: '#879687', textAlign: 'center', marginTop: 4, paddingHorizontal: 20 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -1320,28 +1320,28 @@ const s = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#062415',
+    color: '#092E1D',
   },
   modalDesc: {
     fontSize: 14,
-    color: '#334155',
+    color: '#37483C',
     lineHeight: 20,
     marginBottom: 8,
   },
   modalPrompt: {
     fontSize: 12,
-    color: '#64748b',
+    color: '#526257',
     lineHeight: 17,
     marginBottom: 12,
   },
   modalInput: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F7F9F5',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#C7D2C7',
     borderRadius: 12,
     padding: 12,
     fontSize: 13,
-    color: '#0f172a',
+    color: '#18271D',
     minHeight: 70,
     textAlignVertical: 'top',
     marginBottom: 16,
@@ -1354,27 +1354,27 @@ const s = StyleSheet.create({
     flex: 1,
     paddingVertical: 13,
     borderRadius: 12,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#F4F6F2',
     alignItems: 'center',
   },
   modalCancelText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#475569',
+    color: '#37483C',
   },
   modalConfirmBtn: {
     flex: 1.5,
     paddingVertical: 13,
     borderRadius: 12,
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     alignItems: 'center',
   },
   modalConfirmText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFCC00',
+    color: '#E4DBC4',
   },
-  // ─── Pre-Deployment Gateway Card ──────────────────────────────────────────
+  // â”€â”€â”€ Pre-Deployment Gateway Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   gatewayCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -1415,7 +1415,7 @@ const s = StyleSheet.create({
   },
   gatewayDesc: {
     fontSize: 12,
-    color: '#475569',
+    color: '#37483C',
     lineHeight: 18,
     marginBottom: 14,
   },
@@ -1426,18 +1426,18 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#F4F6F2',
     marginBottom: 12,
   },
   gatewayProgressLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#062415',
+    color: '#092E1D',
   },
   gatewayProgressCount: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#0A3D24',
+    color: '#0A3824',
   },
   gatewayList: {
     gap: 8,
@@ -1452,11 +1452,11 @@ const s = StyleSheet.create({
   gatewayItemText: {
     flex: 1,
     fontSize: 12,
-    color: '#334155',
+    color: '#37483C',
     fontWeight: '500',
   },
   gatewayItemTextDone: {
-    color: '#0A3D24',
+    color: '#0A3824',
     fontWeight: '700',
   },
   gatewayStatusBadge: {
@@ -1469,26 +1469,26 @@ const s = StyleSheet.create({
     fontWeight: '700',
   },
   badgeGray: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#F4F6F2',
   },
   gatewayActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#FFCC00',
+    backgroundColor: '#E4DBC4',
     paddingVertical: 12,
     borderRadius: 12,
   },
   gatewayActionBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#062415',
+    color: '#092E1D',
   },
   scheduleStatusBox: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F7F9F5',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#DCE5DB',
     borderRadius: 12,
     padding: 12,
     gap: 4,
@@ -1496,16 +1496,16 @@ const s = StyleSheet.create({
   scheduleStatusTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#0A3D24',
+    color: '#0A3824',
   },
   scheduleStatusSub: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#334155',
+    color: '#37483C',
   },
   scheduleStatusNote: {
     fontSize: 10,
-    color: '#64748b',
+    color: '#526257',
     fontStyle: 'italic',
   },
   scheduleModifyBtn: {
@@ -1515,20 +1515,20 @@ const s = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(10,61,36,0.08)',
+    backgroundColor: 'rgba(10,56,36,0.08)',
     marginTop: 6,
   },
   scheduleModifyBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#0A3D24',
+    color: '#0A3824',
   },
   scheduleActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#0A3D24',
+    backgroundColor: '#0A3824',
     paddingVertical: 12,
     borderRadius: 12,
     shadowColor: '#000',
@@ -1540,6 +1540,6 @@ const s = StyleSheet.create({
   scheduleActionBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#FFCC00',
+    color: '#E4DBC4',
   },
 });

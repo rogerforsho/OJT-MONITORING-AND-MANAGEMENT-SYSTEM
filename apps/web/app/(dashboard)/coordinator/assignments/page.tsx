@@ -284,7 +284,7 @@ export default function AssignmentsPage() {
           onClick={() => setActiveTab('assignments')}
           className={`pb-3 px-4 text-sm font-semibold transition-colors border-b-2 relative ${
             activeTab === 'assignments'
-              ? 'border-[#0A3D24] text-[#0A3D24]'
+              ? 'border-[#0A3824] text-[#0A3824]'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -294,7 +294,7 @@ export default function AssignmentsPage() {
           onClick={() => setActiveTab('proposals')}
           className={`pb-3 px-4 text-sm font-semibold transition-colors border-b-2 relative flex items-center gap-2 ${
             activeTab === 'proposals'
-              ? 'border-[#0A3D24] text-[#0A3D24]'
+              ? 'border-[#0A3824] text-[#0A3824]'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -380,7 +380,7 @@ export default function AssignmentsPage() {
                 onClick={() => { setProposalsFilter('pending'); loadProposals('pending'); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   proposalsFilter === 'pending'
-                    ? 'bg-[#0A3D24] text-white shadow-xs'
+                    ? 'bg-[#0A3824] text-white shadow-xs'
                     : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -390,7 +390,7 @@ export default function AssignmentsPage() {
                 onClick={() => { setProposalsFilter('all'); loadProposals('all'); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   proposalsFilter === 'all'
-                    ? 'bg-[#0A3D24] text-white shadow-xs'
+                    ? 'bg-[#0A3824] text-white shadow-xs'
                     : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -552,7 +552,7 @@ export default function AssignmentsPage() {
               <select
                 value={reviewForm.company_id}
                 onChange={e => handleReviewCompanyChange(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824]"
                 required
               >
                 <option value="">Select partner company</option>
@@ -583,7 +583,7 @@ export default function AssignmentsPage() {
                 value={reviewForm.supervisor_id}
                 onChange={e => setReviewForm(f => ({ ...f, supervisor_id: e.target.value }))}
                 disabled={!reviewForm.company_id}
-                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] disabled:opacity-50"
+                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] disabled:opacity-50"
                 required
               >
                 <option value="">Select industry supervisor</option>
@@ -620,7 +620,7 @@ export default function AssignmentsPage() {
                 onChange={e => setReviewForm(f => ({ ...f, feedback: e.target.value }))}
                 placeholder="Optional notes or instructions for the trainee..."
                 rows={2}
-                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824]"
               />
             </div>
 
@@ -674,7 +674,7 @@ export default function AssignmentsPage() {
             <select
               value={form.student_id}
               onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] focus:border-[#0A3D24]"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] focus:border-[#0A3824]"
               required
             >
               <option value="">Select trainee</option>
@@ -722,7 +722,7 @@ export default function AssignmentsPage() {
             <select
               value={form.company_id}
               onChange={e => handleCompanyChange(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] focus:border-[#0A3D24]"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] focus:border-[#0A3824]"
               required
             >
               <option value="">Select company</option>
@@ -751,7 +751,7 @@ export default function AssignmentsPage() {
               value={form.supervisor_id}
               onChange={e => setForm(f => ({ ...f, supervisor_id: e.target.value }))}
               disabled={!form.company_id}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24] focus:border-[#0A3D24] disabled:opacity-50"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824] focus:border-[#0A3824] disabled:opacity-50"
               required
             >
               <option value="">Select supervisor</option>

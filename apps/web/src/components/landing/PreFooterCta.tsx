@@ -13,7 +13,7 @@ export default function PreFooterCta({ onOpenAccessPortal }: PreFooterCtaProps) 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Banner matching reference layout */}
-        <div className="rounded-3xl bg-[#062415] text-white p-8 sm:p-12 shadow-2xl border border-emerald-950 flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
+        <div className="rounded-3xl bg-[#092E1D] text-white p-8 sm:p-12 shadow-2xl border border-emerald-950 flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
           {/* Subtle glow */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -33,7 +33,7 @@ export default function PreFooterCta({ onOpenAccessPortal }: PreFooterCtaProps) 
           <div className="relative z-10 shrink-0">
             <button
               onClick={onOpenAccessPortal}
-              className="px-8 py-4 rounded-xl bg-[#FFCC00] hover:bg-amber-400 active:scale-98 text-slate-950 font-black text-sm shadow-xl transition-all flex items-center gap-2.5 cursor-pointer"
+              className="px-8 py-4 rounded-xl bg-[var(--cdm-sand)] hover:bg-amber-400 active:scale-98 text-slate-950 font-black text-sm shadow-xl transition-all flex items-center gap-2.5 cursor-pointer"
             >
               <span>Access Portal Now</span>
               <ArrowRight className="w-4 h-4 text-slate-950" />

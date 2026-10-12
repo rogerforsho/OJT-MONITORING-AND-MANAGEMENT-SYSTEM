@@ -1,15 +1,19 @@
 const { app, BrowserWindow, ipcMain, Notification, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const http = require('http');
-const https = require('https');
 const { spawn } = require('child_process');
 const { createTray } = require('./tray');
 const { createDesktopSecurity } = require('./security');
+const { checkServerReady } = require('./portal-connection');
+
+const CONNECTION_RETRY_MS = 15000;
 
 let mainWindow = null;
 let tray = null;
 let webServerProcess = null;
+let connectionRetryTimer = null;
+let connectionCheckInProgress = false;
+let lastConnectionState = { phase: 'checking' };
 app.isQuitting = false;
 
 // Ensure single instance lock
@@ -41,45 +45,12 @@ const targetUrl = process.env.DESKTOP_TARGET_URL || (isProd ? config.productionU
 
 const desktopSecurity = createDesktopSecurity(() => mainWindow, targetUrl, path.join(__dirname, 'loader.html'));
 
-function checkServerReady(url) {
-  return new Promise((resolve) => {
-    try {
-      const parsed = new URL(url);
-      const isHttps = parsed.protocol === 'https:';
-      const client = isHttps ? https : http;
-      const defaultPort = isHttps ? 443 : 80;
-
-      const req = client.request(
-        {
-          hostname: parsed.hostname,
-          port: parsed.port || defaultPort,
-          path: parsed.pathname || '/',
-          method: 'HEAD',
-          timeout: 2500,
-          headers: { 'User-Agent': 'CdM-Desktop-Client/1.0.0' },
-        },
-        (res) => {
-          resolve(res.statusCode >= 200 && res.statusCode < 500);
-        }
-      );
-      req.on('error', () => resolve(false));
-      req.on('timeout', () => {
-        req.destroy();
-        resolve(false);
-      });
-      req.end();
-    } catch {
-      resolve(false);
-    }
-  });
-}
-
 function autoStartWebServerIfNeeded(url) {
   // Never attempt to spawn local dev server in packaged production or if pointing to remote https
   if (app.isPackaged || url.startsWith('https://')) return;
 
-  checkServerReady(url).then((isReady) => {
-    if (!isReady) {
+  checkServerReady(url).then((result) => {
+    if (!result.ready) {
       console.log('Local server not detected at ' + url + '. Attempting background startup...');
       const projectRoot = path.resolve(__dirname, '..', '..', '..');
       try {
@@ -104,23 +75,70 @@ function autoStartWebServerIfNeeded(url) {
 function loadSplashScreen() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const loaderPath = path.join(__dirname, 'loader.html');
+  lastConnectionState = { phase: 'checking' };
   mainWindow.loadFile(loaderPath, {
     query: { url: targetUrl, isProd: isProd ? '1' : '0' },
+  }).then(() => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.webContents.send('portal-connection-state', lastConnectionState);
+    void connectToPortal();
+  }).catch((error) => {
+    console.error('Could not load the portal connection screen:', error);
   });
 }
 
-function connectToPortal() {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
+function publishConnectionState(state) {
+  lastConnectionState = state;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('portal-connection-state', state);
+  }
+}
 
-  checkServerReady(targetUrl).then((ready) => {
-    if (ready) {
-      console.log('Connecting to ' + targetUrl);
-      mainWindow.loadURL(targetUrl);
-    } else {
-      console.log('Target ' + targetUrl + ' not reachable yet. Polling...');
-      loadSplashScreen();
+function scheduleConnectionRetry() {
+  clearTimeout(connectionRetryTimer);
+  connectionRetryTimer = setTimeout(() => {
+    connectionRetryTimer = null;
+    void connectToPortal();
+  }, CONNECTION_RETRY_MS);
+}
+
+async function connectToPortal() {
+  if (!mainWindow || mainWindow.isDestroyed() || connectionCheckInProgress) return;
+  clearTimeout(connectionRetryTimer);
+  connectionRetryTimer = null;
+  connectionCheckInProgress = true;
+  publishConnectionState({ phase: 'checking' });
+
+  try {
+    const result = await checkServerReady(targetUrl);
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+
+    if (result.ready) {
+      console.log('Portal is reachable. Loading ' + targetUrl);
+      publishConnectionState({ phase: 'connected' });
+      await mainWindow.loadURL(targetUrl);
+      return;
     }
-  });
+
+    console.warn('Portal is unavailable.', result.statusCode ? `HTTP ${result.statusCode}` : result.errorCode);
+    publishConnectionState({
+      phase: 'unavailable',
+      statusCode: result.statusCode || null,
+      errorCode: result.errorCode || null,
+      retryInSeconds: CONNECTION_RETRY_MS / 1000,
+    });
+    scheduleConnectionRetry();
+  } catch (error) {
+    console.error('Portal connection check failed:', error);
+    publishConnectionState({
+      phase: 'unavailable',
+      errorCode: 'NETWORK_ERROR',
+      retryInSeconds: CONNECTION_RETRY_MS / 1000,
+    });
+    scheduleConnectionRetry();
+  } finally {
+    connectionCheckInProgress = false;
+  }
 }
 
 function createMainWindow() {
@@ -142,21 +160,6 @@ function createMainWindow() {
 
   // Load splash screen first
   loadSplashScreen();
-
-  // Check server readiness and navigate
-  const pollInterval = setInterval(async () => {
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      clearInterval(pollInterval);
-      return;
-    }
-
-    const ready = await checkServerReady(targetUrl);
-    if (ready) {
-      clearInterval(pollInterval);
-      console.log('Portal ready. Loading ' + targetUrl);
-      mainWindow.loadURL(targetUrl);
-    }
-  }, 1500);
 
   // Auto-spawn dev server if in local dev mode
   autoStartWebServerIfNeeded(targetUrl);
@@ -185,7 +188,8 @@ function createMainWindow() {
   });
 
   // Graceful handling of network drops / failure to load
-  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, _url, isMainFrame) => {
+    if (errorCode === -3 || !isMainFrame) return; // Ignore aborted navigations and failed subresources.
     console.warn(`Portal load failed (${errorCode}: ${errorDescription}). Displaying reconnect screen...`);
     loadSplashScreen();
   });
@@ -298,6 +302,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   app.isQuitting = true;
+  clearTimeout(connectionRetryTimer);
   if (webServerProcess) {
     try {
       webServerProcess.kill();

@@ -1,6 +1,7 @@
 'use server';
 
-import { createClient } from '@/src/lib/supabase/server';
+import { getTrustedActor } from '@/src/lib/trusted-actor';
+
 import { canManageDepartmentRecord, canManageDepartmentStudent } from '@/src/lib/department-scope';
 import { getServiceClient } from '@/src/lib/supabase/service';
 import { recordAuditEvent } from '@/src/lib/audit';
@@ -8,17 +9,7 @@ import type { AppResult, DbEvaluation } from '@ojt/shared';
 
 const serviceClient = getServiceClient;
 
-async function getAuthUserWithRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null };
-  const { data: profile } = await supabase
-    .from('users')
-    .select('role, account_status')
-    .eq('user_id', user.id)
-    .single();
-  return { supabase, user, profile };
-}
+
 
 export interface EvaluationWithStudent extends DbEvaluation {
   students: {
@@ -48,7 +39,7 @@ export async function listEvaluationsForSupervisor(
   page = 1,
   pageSize = 20
 ): Promise<AppResult<{ evaluations: EvaluationWithStudent[]; total: number }>> {
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -96,7 +87,7 @@ export async function createEvaluation(input: EvaluationInput): Promise<AppResul
     })) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Each rubric score must be within its displayed range.' } };
   }
 
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -174,7 +165,7 @@ export interface StudentEvaluationSummary {
 }
 
 export async function getStudentEvaluationSummary(student_id?: string): Promise<AppResult<StudentEvaluationSummary>> {
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || !profile || profile.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 
@@ -273,7 +264,7 @@ export async function overrideEvaluation(
   if (typeof new_score !== 'number' || !Number.isFinite(new_score) || new_score < 0 || new_score > 100) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Score must be between 0 and 100.' } };
   if (!reason?.trim()) return { data: null, error: { code: 'VALIDATION_FAILURE', message: 'Override justification is required.' } };
 
-  const { supabase, user, profile } = await getAuthUserWithRole();
+  const { supabase, user, profile } = await getTrustedActor();
   if (!user || !profile || !['Coordinator', 'Admin', 'ProgramHead'].includes(profile.role) || profile.account_status !== 'active') {
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied. Requires Coordinator or Admin privileges.' } };
   }
@@ -303,7 +294,7 @@ export async function overrideEvaluation(
 }
 
 export async function listAssignedStudents(): Promise<AppResult<{ student_id: string; full_name: string; student_number: string; course: string }[]>> {
-  const { user, profile } = await getAuthUserWithRole();
+  const { user, profile } = await getTrustedActor();
   if (!user || profile?.role !== 'Supervisor' || profile?.account_status !== 'active')
     return { data: null, error: { code: 'FORBIDDEN', message: 'Access denied.' } };
 

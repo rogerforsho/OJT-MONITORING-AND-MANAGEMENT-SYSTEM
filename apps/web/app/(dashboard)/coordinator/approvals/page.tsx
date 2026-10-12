@@ -184,7 +184,7 @@ export default function CoordinatorApprovalsPage() {
               onClick={handleBatchApprove}
               loading={batchLoading}
               disabled={loading || !!actionLoading || rejectSubmitting || !!error}
-              className="bg-[#0A3D24] hover:bg-[#062415] text-white shadow-sm font-medium text-xs sm:text-sm px-4 py-2"
+              className="bg-[#0A3824] hover:bg-[#092E1D] text-white shadow-sm font-medium text-xs sm:text-sm px-4 py-2"
             >
               Approve {selectedIds.length > 0 ? `Selected (${selectedIds.length})` : `This Page (${students.length})`}
             </Button>
@@ -204,7 +204,7 @@ export default function CoordinatorApprovalsPage() {
             onClick={() => { requestRef.current++; setSelectedIds([]); setPage(1); setCourseFilter(c); }}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
               courseFilter === c
-                ? 'bg-[#062415] text-white shadow-sm'
+                ? 'bg-[#092E1D] text-white shadow-sm'
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
@@ -234,7 +234,7 @@ export default function CoordinatorApprovalsPage() {
                       type="checkbox"
                       checked={selectedIds.length === filteredStudents.length && filteredStudents.length > 0}
                       onChange={toggleSelectAll}
-                      className="rounded border-slate-300 text-[#0A3D24] focus:ring-[#0A3D24]"
+                      className="rounded border-slate-300 text-[#0A3824] focus:ring-[#0A3824]"
                     />
                   </th>
                   <th className="px-5 py-3.5 font-medium text-slate-600">Student</th>
@@ -256,7 +256,7 @@ export default function CoordinatorApprovalsPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelectOne(student.user_id)}
-                          className="rounded border-slate-300 text-[#0A3D24] focus:ring-[#0A3D24]"
+                          className="rounded border-slate-300 text-[#0A3824] focus:ring-[#0A3824]"
                         />
                       </td>
                       <td className="px-5 py-4">
@@ -302,7 +302,7 @@ export default function CoordinatorApprovalsPage() {
                           <Button
                             onClick={() => handleAction(student.user_id, 'active')}
                             loading={actionLoading === student.user_id}
-                            className="bg-[#0A3D24] hover:bg-[#062415] text-white text-xs px-3 py-1.5"
+                            className="bg-[#0A3824] hover:bg-[#092E1D] text-white text-xs px-3 py-1.5"
                           >
                             Approve
                           </Button>
@@ -346,7 +346,7 @@ export default function CoordinatorApprovalsPage() {
                 href={viewingId.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[#0A3D24] font-semibold hover:underline flex items-center gap-1"
+                className="text-[#0A3824] font-semibold hover:underline flex items-center gap-1"
               >
                 <span>↗</span> Open in new tab
               </a>
@@ -385,7 +385,7 @@ export default function CoordinatorApprovalsPage() {
                 onChange={e => setRejectionReason(e.target.value)}
                 placeholder="e.g., Unclear student ID photo, student number mismatch, or unverified enrollment. Please re-register with a clear copy of your CdM ID."
                 rows={3}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3D24]"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-[#0A3824]"
                 required
               />
             </div>

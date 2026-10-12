@@ -34,11 +34,11 @@ export async function sendOtpEmail({
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px;">
         <div style="max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
           <!-- Header -->
-          <div style="background-color: #0A3D24; padding: 28px 24px; text-align: center;">
+          <div style="background-color: #0A3824; padding: 28px 24px; text-align: center;">
             <h1 style="color: #ffffff; font-size: 20px; font-weight: 800; margin: 0; letter-spacing: 0.5px;">
               COLEGIO DE MONTALBAN
             </h1>
-            <p style="color: #FFCC00; font-size: 12px; font-weight: 700; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">
+            <p style="color: #D5B254; font-size: 12px; font-weight: 700; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">
               Cross-Platform OJT Practicum System
             </p>
           </div>
@@ -49,15 +49,15 @@ export async function sendOtpEmail({
               Password Recovery Verification
             </h2>
             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-              Hello <strong style="color: #0A3D24;">${escapeHtml(fullName)}</strong>,
+              Hello <strong style="color: #0A3824;">${escapeHtml(fullName)}</strong>,
             </p>
             <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
               We received a request to reset your password for your Colegio de Montalban OJT Portal account. Please use the 6-digit verification code below to complete your password update:
             </p>
 
             <!-- Code Highlight Box -->
-            <div style="background-color: #f0fdf4; border: 2px dashed #0A3D24; border-radius: 10px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
-              <span style="font-size: 34px; font-weight: 800; letter-spacing: 10px; color: #0A3D24; font-family: monospace;">
+            <div style="background-color: #f0fdf4; border: 2px dashed #0A3824; border-radius: 10px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
+              <span style="font-size: 34px; font-weight: 800; letter-spacing: 10px; color: #0A3824; font-family: monospace;">
                 ${otp}
               </span>
               <p style="color: #15803d; font-size: 12px; font-weight: 600; margin: 10px 0 0 0;">

@@ -213,7 +213,7 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto page-fade-in">
       {/* Streamlined Executive Welcome Card */}
-      <div className="rounded-2xl bg-[#062415] p-5 sm:p-6 text-white shadow-2xs border border-emerald-950/40 relative overflow-hidden">
+      <div className="rounded-2xl bg-[#092E1D] p-5 sm:p-6 text-white shadow-2xs border border-emerald-950/40 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-700/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
@@ -292,7 +292,7 @@ export default async function DashboardPage() {
       {user.role === 'Student' && stats.student && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Timer className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -307,7 +307,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Hourglass className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -320,7 +320,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -335,7 +335,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <CalendarCheck className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -364,14 +364,14 @@ export default async function DashboardPage() {
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Registrations</p>
               <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5 leading-tight">{stats.pendingApprovals}</h3>
-              <Link href="/coordinator/approvals" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline truncate">
+              <Link href="/coordinator/approvals" className="text-xs text-[#0A3824] dark:text-emerald-400 font-bold hover:underline truncate">
                 Review queue →
               </Link>
             </div>
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -382,7 +382,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -408,7 +408,7 @@ export default async function DashboardPage() {
       {user.role === 'Supervisor' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -419,26 +419,26 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Timer className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Attendance</p>
               <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-0.5 leading-tight">{stats.pendingAttendance}</h3>
-              <Link href="/supervisor/attendance" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline truncate">
+              <Link href="/supervisor/attendance" className="text-xs text-[#0A3824] dark:text-emerald-400 font-bold hover:underline truncate">
                 Verify logs →
               </Link>
             </div>
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Star className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Evaluations</p>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.completedEvaluations}</h3>
-              <Link href="/supervisor/evaluations" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline truncate">
+              <Link href="/supervisor/evaluations" className="text-xs text-[#0A3824] dark:text-emerald-400 font-bold hover:underline truncate">
                 Rate students →
               </Link>
             </div>
@@ -449,7 +449,7 @@ export default async function DashboardPage() {
       {user.role === 'ProgramHead' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -460,7 +460,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               {stats.dept === 'ICS' ? <Laptop className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -475,7 +475,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               {stats.dept === 'ICS' ? <Cpu className="w-5 h-5" /> : <TrendingUp className="w-5 h-5" />}
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -490,13 +490,13 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner HTEs</p>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">{stats.totalCompanies}</h3>
-              <Link href="/program-head/reports" className="text-xs text-[#0A3D24] dark:text-emerald-400 font-bold hover:underline inline-block mt-0.5 truncate">
+              <Link href="/program-head/reports" className="text-xs text-[#0A3824] dark:text-emerald-400 font-bold hover:underline inline-block mt-0.5 truncate">
                 View Reports →
               </Link>
             </div>
@@ -507,7 +507,7 @@ export default async function DashboardPage() {
       {user.role === 'Admin' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Users className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -542,7 +542,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="group h-full min-h-[104px] p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-3.5 cursor-default">
-            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Building2 className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -571,10 +571,10 @@ export default async function DashboardPage() {
                   href="/student/attendance"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center">
                     <Clock className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Log Attendance</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Log Attendance</span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">Record daily time-in & selfie</span>
                 </Link>
 
@@ -582,10 +582,10 @@ export default async function DashboardPage() {
                   href="/student/reports"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center">
                     <FileText className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Submit Reports</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Submit Reports</span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">Upload weekly journals & DTR</span>
                 </Link>
 
@@ -593,10 +593,10 @@ export default async function DashboardPage() {
                   href="/student/progress"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center">
                     <BarChart3 className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Track Progress</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Track Progress</span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">View completion milestones</span>
                 </Link>
               </div>
@@ -627,10 +627,10 @@ export default async function DashboardPage() {
                   href="/coordinator/students"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center">
                     <Users className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Trainee Directory</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Trainee Directory</span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">View active student placements</span>
                 </Link>
 
@@ -638,10 +638,10 @@ export default async function DashboardPage() {
                   href="/coordinator/submissions"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex flex-col gap-2 group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center">
                     <ClipboardCheck className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Review Submissions</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Review Submissions</span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">Grade DTRs & requirement files</span>
                 </Link>
               </div>
@@ -657,7 +657,7 @@ export default async function DashboardPage() {
                 </div>
                 <Link
                   href="/admin"
-                  className="text-xs font-bold text-[#0A3D24] dark:text-emerald-400 hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-[#0A3824] dark:text-emerald-400 hover:underline flex items-center gap-1"
                 >
                   Open Console <ArrowRight className="w-3 h-3" />
                 </Link>
@@ -667,11 +667,11 @@ export default async function DashboardPage() {
                   href="/admin"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center shrink-0">
                     <Users className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">User Management</h4>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">User Management</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Filter, search, activate, or delete accounts</p>
                   </div>
                 </Link>
@@ -680,11 +680,11 @@ export default async function DashboardPage() {
                   href="/admin"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Security & Audit Logs</h4>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Security & Audit Logs</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Immutable audit trail of system events</p>
                   </div>
                 </Link>
@@ -705,11 +705,11 @@ export default async function DashboardPage() {
                   href="/supervisor/attendance"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center shrink-0">
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Verify Attendance Logs</h4>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Verify Attendance Logs</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Review intern time-in and selfie captures</p>
                   </div>
                 </Link>
@@ -718,11 +718,11 @@ export default async function DashboardPage() {
                   href="/supervisor/evaluations"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center shrink-0">
                     <Star className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Performance Evaluations</h4>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Performance Evaluations</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Grade trainees based on standard rubrics</p>
                   </div>
                 </Link>
@@ -739,7 +739,7 @@ export default async function DashboardPage() {
                 </div>
                 <Link
                   href="/program-head/reports"
-                  className="text-xs font-bold text-[#0A3D24] dark:text-emerald-400 hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-[#0A3824] dark:text-emerald-400 hover:underline flex items-center gap-1"
                 >
                   Full Report <ArrowRight className="w-3 h-3" />
                 </Link>
@@ -749,11 +749,11 @@ export default async function DashboardPage() {
                   href="/program-head/reports"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center shrink-0">
                     <BarChart3 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">Cohort Completion Rates</h4>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">Cohort Completion Rates</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Compare {stats.dept} progress statistics</p>
                   </div>
                 </Link>
@@ -762,11 +762,11 @@ export default async function DashboardPage() {
                   href="/program-head/reports"
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/30 transition-all flex items-center gap-3.5 group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#0A3D24] text-[#FFCC00] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A3824] text-[var(--cdm-sand)] flex items-center justify-center shrink-0">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3D24] dark:group-hover:text-emerald-400">HTE Partner Distribution</h4>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#0A3824] dark:group-hover:text-emerald-400">HTE Partner Distribution</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Inspect company deployment capacity</p>
                   </div>
                 </Link>

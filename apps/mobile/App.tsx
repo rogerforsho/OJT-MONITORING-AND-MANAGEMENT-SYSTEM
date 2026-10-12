@@ -2,6 +2,7 @@ import { clearAttendanceIdentity } from './src/lib/attendanceCache';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { supabase } from './src/lib/supabase';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import StudentNavigator from './src/navigation/StudentNavigator';
@@ -39,24 +40,24 @@ export default function App() {
     return () => { cancelled = true; subscription.unsubscribe(); };
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#14b8a6" />
-      </View>
-    );
-  }
-
   return (
-    <NavigationContainer>
-      {user && user.account_status === 'active' && user.role === 'Student'
-        ? <StudentNavigator />
-        : <AuthNavigator />
-      }
-    </NavigationContainer>
+    <SafeAreaProvider>
+      {loading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color="#0A3824" />
+        </View>
+      ) : (
+        <NavigationContainer>
+          {user && user.account_status === 'active' && user.role === 'Student'
+            ? <StudentNavigator />
+            : <AuthNavigator />
+          }
+        </NavigationContainer>
+      )}
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, backgroundColor: '#042f2e', alignItems: 'center', justifyContent: 'center' },
+  loading: { flex: 1, backgroundColor: '#F4F6F2', alignItems: 'center', justifyContent: 'center' },
 });

@@ -127,14 +127,14 @@
     <h1>Colegio de Montalban</h1>
     <div class="subtitle">OJT Practicum Portal</div>
     
-    <div class="progress-bar-container">
+    <div class="progress-bar-container" id="connection-progress" aria-hidden="true">
       <div class="progress-bar-indicator"></div>
     </div>
 
     <div class="status" id="status-text">Connecting to Practicum Cloud...</div>
 
-    <div class="hint" id="hint-text">
-      Establishing secure institutional connection...
+    <div class="hint" id="hint-text" aria-live="polite">
+      Checking the portal server...
     </div>
 
     <button class="btn-retry" id="btn-retry" onclick="triggerReconnect()">Retry Connection</button>
@@ -146,10 +146,40 @@
     const isProd = params.get('isProd') === '1' || targetUrl.startsWith('https://');
     let attempts = 0;
 
+    function updateConnectionState(state) {
+      const statusText = document.getElementById('status-text');
+      const hintText = document.getElementById('hint-text');
+      const retryButton = document.getElementById('btn-retry');
+      const progress = document.getElementById('connection-progress');
+      if (!state || state.phase === 'checking') {
+        statusText.innerText = attempts
+          ? 'Checking connection (attempt ' + attempts + ')...'
+          : 'Connecting to Practicum Cloud...';
+        hintText.innerText = 'Checking the portal server...';
+        retryButton.disabled = true;
+        progress.style.display = '';
+        return;
+      }
+      if (state.phase === 'connected') return;
+
+      retryButton.disabled = false;
+      progress.style.display = 'none';
+      statusText.innerText = state.statusCode
+        ? 'Portal unavailable (HTTP ' + state.statusCode + ')'
+        : 'Could not reach the portal server';
+      hintText.innerText = state.statusCode && state.statusCode >= 500
+        ? 'The campus cloud service is unavailable. This app will retry in ' + state.retryInSeconds + ' seconds.'
+        : 'Check your internet connection. This app will retry in ' + state.retryInSeconds + ' seconds.';
+    }
+
+    if (window.electronAPI && typeof window.electronAPI.onPortalConnectionState === 'function') {
+      window.electronAPI.onPortalConnectionState(updateConnectionState);
+    }
+
     function triggerReconnect() {
       attempts++;
-      document.getElementById('status-text').innerText = 'Connecting (Attempt ' + attempts + ')...';
       if (window.electronAPI && typeof window.electronAPI.retryConnection === 'function') {
+        updateConnectionState({ phase: 'checking' });
         window.electronAPI.retryConnection();
       } else {
         window.location.href = targetUrl;
@@ -164,9 +194,6 @@
         'Connecting to verified campus cloud servers.';
     }
 
-    setInterval(() => {
-      triggerReconnect();
-    }, 3000);
   </script>
 </body>
 </html>

@@ -73,6 +73,13 @@ FROM pg_policies
 WHERE schemaname='public' AND tablename='attendance'
   AND policyname='student_complete_verified_attendance_timeout';
 
+-- After 035: Program Head announcement reads are restricted to their department
+-- and campus-wide announcements. Expect one RESTRICTIVE SELECT policy for authenticated.
+SELECT policyname, permissive, roles, cmd, qual
+FROM pg_policies
+WHERE schemaname='public' AND tablename='announcements'
+  AND policyname='program_head_announcement_department_boundary';
+
 -- After 030: five enabled field guards and one enabled enrollment guard.
 SELECT n.nspname AS schema_name,c.relname AS table_name,t.tgname AS trigger_name,t.tgenabled
 FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace

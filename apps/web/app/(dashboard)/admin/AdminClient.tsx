@@ -524,7 +524,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
         <div>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3D24] dark:text-emerald-400 hover:text-[#062415] hover:underline mb-1 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A3824] dark:text-emerald-400 hover:text-[#092E1D] hover:underline mb-1 transition-colors cursor-pointer"
           >
             Back to Dashboard
           </Link>
@@ -536,7 +536,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
         <div>
           <Button
             onClick={() => { setCreateError(''); setCreateModalOpen(true); }}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold shadow-xs hover:shadow-md transition-all duration-150 cursor-pointer active:scale-95"
+            className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold shadow-xs hover:shadow-md transition-all duration-150 cursor-pointer active:scale-95"
           >
             + Create Staff Account
           </Button>
@@ -622,7 +622,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             onClick={() => setMainTab('users')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               mainTab === 'users'
-                ? 'bg-white dark:bg-slate-900 text-[#0A3D24] dark:text-emerald-400 shadow-xs ring-1 ring-slate-200/50 dark:ring-slate-700'
+                ? 'bg-white dark:bg-slate-900 text-[#0A3824] dark:text-emerald-400 shadow-xs ring-1 ring-slate-200/50 dark:ring-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -634,7 +634,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             onClick={() => setMainTab('reports')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               mainTab === 'reports'
-                ? 'bg-white dark:bg-slate-900 text-[#0A3D24] dark:text-emerald-400 shadow-xs ring-1 ring-slate-200/50 dark:ring-slate-700'
+                ? 'bg-white dark:bg-slate-900 text-[#0A3824] dark:text-emerald-400 shadow-xs ring-1 ring-slate-200/50 dark:ring-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -646,7 +646,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             onClick={() => setMainTab('backups')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               mainTab === 'backups'
-                ? 'bg-white dark:bg-slate-900 text-[#0A3D24] dark:text-emerald-400 shadow-xs ring-1 ring-slate-200/50 dark:ring-slate-700'
+                ? 'bg-white dark:bg-slate-900 text-[#0A3824] dark:text-emerald-400 shadow-xs ring-1 ring-slate-200/50 dark:ring-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -670,7 +670,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
           <Button
             onClick={() => setBackupConfirmOpen(true)}
             disabled={backupLoading}
-            className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs gap-1.5 shadow-xs cursor-pointer"
+            className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold text-xs gap-1.5 shadow-xs cursor-pointer"
           >
             <Database className="w-3.5 h-3.5" />
             Create Backup Snapshot
@@ -709,7 +709,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     placeholder="Search by name or email..."
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-[#0A3D24] dark:focus:border-emerald-500 focus:ring-1 focus:ring-[#0A3D24]/15 transition-all"
+                    className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-[#0A3824] dark:focus:border-emerald-500 focus:ring-1 focus:ring-[#0A3824]/15 transition-all"
                   />
                   {searchQuery && (
                     <button
@@ -728,7 +728,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     <select
                       value={statusFilter}
                       onChange={(e) => handleStatusFilterChange(e.target.value)}
-                      className="w-full sm:w-auto pl-8.5 pr-8 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium text-slate-700 dark:text-slate-200 outline-none hover:border-slate-300 dark:hover:border-slate-600 focus:border-[#0A3D24] dark:focus:border-emerald-500 cursor-pointer appearance-none shadow-2xs"
+                      className="w-full sm:w-auto pl-8.5 pr-8 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium text-slate-700 dark:text-slate-200 outline-none hover:border-slate-300 dark:hover:border-slate-600 focus:border-[#0A3824] dark:focus:border-emerald-500 cursor-pointer appearance-none shadow-2xs"
                     >
                       <option value="all">All Statuses</option>
                       <option value="active">Active Accounts</option>
@@ -820,7 +820,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                       <tr>
                         <td colSpan={4} className="px-6 py-12 text-center text-xs text-slate-400">
                           <div className="flex items-center justify-center gap-2.5">
-                            <div className="w-4 h-4 border-2 border-[#0A3D24] dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-[#0A3824] dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
                             <span className="font-medium text-slate-500">Loading directory...</span>
                           </div>
                         </td>
@@ -1000,7 +1000,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
               className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors select-none"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-[#0A3D24] dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-[#0A3824] dark:text-emerald-400 flex items-center justify-center shrink-0">
                   <Megaphone className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -1017,7 +1017,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
               </div>
 
               <div className="flex items-center gap-2 shrink-0 ml-3">
-                <span className="text-xs font-bold text-[#0A3D24] dark:text-emerald-400">
+                <span className="text-xs font-bold text-[#0A3824] dark:text-emerald-400">
                   {isBroadcastFormOpen ? 'Minimize' : '+ New Broadcast'}
                 </span>
                 <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
@@ -1043,7 +1043,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Target Institute / Department</label>
                       <select
-                        className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white outline-none focus:border-[#0A3D24] focus:ring-1 focus:ring-[#0A3D24] transition-all cursor-pointer"
+                        className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white outline-none focus:border-[#0A3824] focus:ring-1 focus:ring-[#0A3824] transition-all cursor-pointer"
                         value={anncDept}
                         onChange={(e) => setAnncDept(e.target.value)}
                       >
@@ -1057,7 +1057,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Broadcast Message</label>
                     <textarea
-                      className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white outline-none focus:border-[#0A3D24] focus:ring-1 focus:ring-[#0A3D24] min-h-[75px] transition-all"
+                      className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white outline-none focus:border-[#0A3824] focus:ring-1 focus:ring-[#0A3824] min-h-[75px] transition-all"
                       placeholder="Enter the broadcast notice message for all system users..."
                       value={anncContent}
                       onChange={(e) => setAnncContent(e.target.value)}
@@ -1072,7 +1072,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                         onClick={() => setAnncDeliveryType('announcement')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                           anncDeliveryType === 'announcement'
-                            ? 'bg-[#0A3D24] text-[#FFCC00] shadow-xs'
+                            ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-xs'
                             : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                         }`}
                       >
@@ -1102,7 +1102,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                       </Button>
                       <Button
                         type="submit"
-                        className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold text-xs cursor-pointer shadow-xs"
+                        className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold text-xs cursor-pointer shadow-xs"
                         loading={anncLoading}
                       >
                         {anncDeliveryType === 'alert' ? 'Publish Urgent Alert (🚨)' : 'Publish Announcement (📢)'}
@@ -1146,7 +1146,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     e.stopPropagation();
                     loadAnnouncements();
                   }}
-                  className="text-xs font-bold text-[#0A3D24] dark:text-emerald-400 hover:underline px-2 py-1 cursor-pointer"
+                  className="text-xs font-bold text-[#0A3824] dark:text-emerald-400 hover:underline px-2 py-1 cursor-pointer"
                 >
                   Refresh
                 </button>
@@ -1174,7 +1174,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                       <div key={annc.announcement_id} className="p-3.5 sm:p-4 flex items-start justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-[#0A3D24] text-[#FFCC00] uppercase tracking-wider">
+                            <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-[#0A3824] text-[var(--cdm-sand)] uppercase tracking-wider">
                               {annc.target_department === 'All' ? 'Campus-Wide' : `${annc.target_department} Dept`}
                             </span>
                             <span className="text-[11px] text-slate-400 font-medium">
@@ -1208,7 +1208,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#0A3D24]" />
+            <Shield className="w-5 h-5 text-[#0A3824]" />
             <h2 className="text-lg font-bold text-slate-900">System Activity & Security Audit Trail</h2>
           </div>
           <Button size="sm" variant="outline" onClick={loadAudit} disabled={auditLoading} className="text-xs h-7 cursor-pointer">
@@ -1283,7 +1283,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs">
             <div>
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-[#0A3D24] dark:text-emerald-400" />
+                <BarChart3 className="w-5 h-5 text-[#0A3824] dark:text-emerald-400" />
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Practicum & Placement Analytics</h2>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1422,7 +1422,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                   onClick={() => setReportProgramFilter(tab.id)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     reportProgramFilter === tab.id
-                      ? 'bg-[#0A3D24] text-[#FFCC00] shadow-2xs'
+                      ? 'bg-[#0A3824] text-[var(--cdm-sand)] shadow-2xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -1438,7 +1438,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                 placeholder="Search trainee, student #, company..."
                 value={reportSearchQuery}
                 onChange={(e) => setReportSearchQuery(e.target.value)}
-                className="w-full text-xs pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0A3D24]"
+                className="w-full text-xs pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0A3824]"
               />
             </div>
           </div>
@@ -1599,12 +1599,12 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
       {mainTab === 'backups' && (
         <div className="space-y-6">
           {/* Compliance & Standard Card */}
-          <div className="p-6 rounded-2xl bg-[#0A3D24] text-white shadow-md relative overflow-hidden">
+          <div className="p-6 rounded-2xl bg-[#0A3824] text-white shadow-md relative overflow-hidden">
             <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 opacity-10 pointer-events-none">
-              <Database className="w-64 h-64 text-[#FFCC00]" />
+              <Database className="w-64 h-64 text-[var(--cdm-sand)]" />
             </div>
             <div className="max-w-2xl relative z-10 space-y-3">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 text-[#FFCC00] text-[11px] font-extrabold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 text-[var(--cdm-sand)] text-[11px] font-extrabold uppercase tracking-wider">
                 <Shield className="w-3.5 h-3.5" />
                 ISO/IEC 25010:2023 &amp; RA 10173 Compliant
               </div>
@@ -1619,7 +1619,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                 <Button
                   onClick={() => setBackupConfirmOpen(true)}
                   disabled={backupLoading}
-                  className="bg-[#FFCC00] hover:bg-[#e6b800] text-[#0A3D24] font-black text-xs h-9 px-4 rounded-xl shadow-xs cursor-pointer gap-2"
+                  className="bg-[var(--cdm-sand)] hover:bg-[var(--cdm-sand)] text-[#0A3824] font-black text-xs h-9 px-4 rounded-xl shadow-xs cursor-pointer gap-2"
                 >
                   <Database className="w-4 h-4" />
                   {backupLoading ? 'Generating Snapshot...' : 'Generate New Database Backup'}
@@ -1861,7 +1861,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     employee_number: `${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
                   })
                 }
-                className="text-[11px] font-bold text-[#0A3D24] hover:underline cursor-pointer"
+                className="text-[11px] font-bold text-[#0A3824] hover:underline cursor-pointer"
               >
                 🎲 Generate ID
               </button>
@@ -1900,7 +1900,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Department / Institute</label>
               <select
-                className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0A3D24]"
+                className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0A3824]"
                 value={staffForm.department_or_program}
                 onChange={(e) => setStaffForm({ ...staffForm, department_or_program: e.target.value })}
               >
@@ -1926,7 +1926,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             <Button
               type="submit"
               loading={createLoading}
-              className="flex-1 bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold"
+              className="flex-1 bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold"
             >
               Create & Activate
             </Button>
@@ -1950,7 +1950,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-xs space-y-1">
               <p className="font-bold text-slate-800">{userToReset.full_name}</p>
               <p className="text-slate-600">{userToReset.email}</p>
-              <p className="text-[10px] text-slate-400 pt-0.5">Role: <span className="font-bold uppercase text-[#0A3D24]">{userToReset.role}</span></p>
+              <p className="text-[10px] text-slate-400 pt-0.5">Role: <span className="font-bold uppercase text-[#0A3824]">{userToReset.role}</span></p>
             </div>
 
             {!generatedPasswordResult ? (
@@ -1961,7 +1961,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     <button
                       type="button"
                       onClick={handleGenerateRandomPassword}
-                      className="text-[11px] font-bold text-[#0A3D24] hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-[#0A3824] hover:underline cursor-pointer"
                     >
                       🎲 Generate New
                     </button>
@@ -1992,7 +1992,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                     size="sm"
                     onClick={confirmAdminPasswordReset}
                     loading={resetPasswordLoading}
-                    className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold cursor-pointer"
+                    className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold cursor-pointer"
                   >
                     <Key className="w-4 h-4 mr-1.5" />
                     Apply Password Reset
@@ -2095,9 +2095,9 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
       {backupConfirmOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 page-fade-in">
-            <div className="flex items-center gap-3 text-[#0A3D24] dark:text-emerald-400 mb-4">
+            <div className="flex items-center gap-3 text-[#0A3824] dark:text-emerald-400 mb-4">
               <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
-                <Database className="w-5 h-5 text-[#0A3D24] dark:text-emerald-400" />
+                <Database className="w-5 h-5 text-[#0A3824] dark:text-emerald-400" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">Generate Database Backup Snapshot</h3>
@@ -2140,7 +2140,7 @@ export default function AdminClient({ initialUsers, totalUsers: initialTotal, ov
                 size="sm"
                 onClick={handleExecuteBackup}
                 loading={backupLoading}
-                className="bg-[#0A3D24] hover:bg-[#062415] text-[#FFCC00] font-bold cursor-pointer"
+                className="bg-[#0A3824] hover:bg-[#092E1D] text-[var(--cdm-sand)] font-bold cursor-pointer"
               >
                 <Database className="w-4 h-4 mr-1.5" />
                 Confirm &amp; Export Backup
