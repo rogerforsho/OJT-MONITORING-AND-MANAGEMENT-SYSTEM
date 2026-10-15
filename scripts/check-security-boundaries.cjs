@@ -35,6 +35,7 @@ async function main(){
  }
  const revision=(await db.query('SELECT public.ojt_security_revision() AS revision')).rows[0].revision;
  assert.equal(Number(revision),34,'migration 035 must advance readiness revision to 34');checks++;
+ await db.exec(fs.readFileSync(path.join(dir,'035_coordinator_supervisor_chat.sql'),'utf8'));
  await db.exec(fs.readFileSync(path.join(__dirname,'../database/verification/launch_security_checks.sql'),'utf8'));
  checks++;
  // Reapplying the new migrations must be safe.
@@ -55,6 +56,7 @@ async function main(){
  ('${id(11)}','${id(1)}','TEST-A','BSIT',4,486), ('${id(12)}','${id(2)}','TEST-B','BSBA',4,486);
  INSERT INTO companies(company_id,company_name,address,contact_person,contact_email,contact_number) VALUES ('${id(20)}','Synthetic','Test','Test','test@example.invalid','0');
  INSERT INTO supervisors(supervisor_id,user_id,company_id,position) VALUES ('${id(13)}','${id(3)}','${id(20)}','Test');
+ INSERT INTO coordinators(coordinator_id,user_id,department) VALUES ('${id(14)}','${id(4)}','ICS');
  INSERT INTO program_heads(user_id,department_or_program) VALUES ('${id(5)}','ICS');
  INSERT INTO announcements(announcement_id,author_user_id,title,content,target_role,target_department) VALUES
  ('${id(50)}','${id(4)}','ICS Notice','ICS only','All','ICS'),
@@ -65,6 +67,34 @@ async function main(){
  `);
  async function asUser(n,sql){await db.exec(`RESET ROLE; SET ROLE authenticated; SET request.jwt.claim.sub='${id(n)}'`);return (await db.query(sql)).rows;}
  async function denied(n,sql){await assert.rejects(()=>asUser(n,sql),undefined,sql);checks++;}
+ const coordinatorContacts=await asUser(4,'SELECT counterpart_user_id, is_eligible FROM public.list_chat_contacts()');
+ assert.deepEqual(coordinatorContacts,[{counterpart_user_id:id(3),is_eligible:true}]);checks++;
+ const firstChatMessage=await asUser(4,`SELECT * FROM public.send_chat_message('${id(3)}','Placement check-in')`);
+ const chatConversationId=firstChatMessage[0].conversation_id;
+ assert.equal((await asUser(4,`SELECT content FROM public.chat_messages WHERE conversation_id='${chatConversationId}'`))[0].content,'Placement check-in');checks++;
+ assert.equal((await asUser(3,`SELECT count(*)::int AS n FROM public.chat_messages WHERE conversation_id='${chatConversationId}'`))[0].n,1);checks++;
+ assert.equal((await asUser(2,`SELECT count(*)::int AS n FROM public.chat_messages WHERE conversation_id='${chatConversationId}'`))[0].n,0);checks++;
+ const chatNotification=(await asUser(3,`SELECT message,status,related_conversation_id FROM public.notifications WHERE receiver_user_id='${id(3)}'`))[0];
+ assert.equal(chatNotification.message,'New chat message from Coordinator');assert.equal(chatNotification.status,'unread');assert.equal(chatNotification.related_conversation_id,chatConversationId);checks++;
+ await denied(4,`UPDATE public.chat_messages SET content='changed' WHERE conversation_id='${chatConversationId}'`);
+ await denied(4,`INSERT INTO public.chat_messages(conversation_id,sender_user_id,content) VALUES ('${chatConversationId}','${id(4)}','Bypass send function')`);
+ await denied(4,`SELECT * FROM public.send_chat_message('${id(3)}','   ')`);
+ await denied(4,`SELECT * FROM public.send_chat_message('${id(3)}','${'x'.repeat(4001)}')`);
+ await denied(5,`INSERT INTO public.chat_messages(conversation_id,sender_user_id,content) VALUES ('${chatConversationId}','${id(5)}','Program Head cannot write')`);
+ assert.equal((await asUser(5,`SELECT count(*)::int AS n FROM public.chat_messages WHERE conversation_id='${chatConversationId}'`))[0].n,0);checks++;
+ await denied(5,`SELECT * FROM public.send_chat_message('${id(3)}','Program Head cannot chat')`);
+ await asUser(3,`SELECT public.mark_chat_read('${chatConversationId}')`);
+ assert.equal((await asUser(3,`SELECT status FROM public.notifications WHERE related_conversation_id='${chatConversationId}'`))[0].status,'read');checks++;
+ await db.exec(`RESET ROLE; UPDATE student_assignments SET assignment_status='reassigned' WHERE assignment_id='${id(30)}'`);
+ assert.equal((await asUser(4,`SELECT count(*)::int AS n FROM public.chat_messages WHERE conversation_id='${chatConversationId}'`))[0].n,1);checks++;
+ await denied(4,`SELECT * FROM public.send_chat_message('${id(3)}','Archived thread')`);
+ await db.exec(`RESET ROLE; UPDATE student_assignments SET assignment_status='active' WHERE assignment_id='${id(30)}'`);
+ await asUser(3,`SELECT * FROM public.send_chat_message('${id(4)}','Placement resumed')`);checks++;
+ assert.equal((await asUser(4,`SELECT count(*)::int AS n FROM public.chat_messages WHERE conversation_id='${chatConversationId}'`))[0].n,2);checks++;
+ await db.exec(`RESET ROLE; UPDATE users SET account_status='inactive' WHERE user_id='${id(4)}'`);
+ assert.equal((await asUser(4,`SELECT count(*)::int AS n FROM public.chat_messages WHERE conversation_id='${chatConversationId}'`))[0].n,0);checks++;
+ await denied(4,`SELECT * FROM public.send_chat_message('${id(3)}','Inactive coordinator')`);
+ await db.exec(`RESET ROLE; UPDATE users SET account_status='active' WHERE user_id='${id(4)}'`);
  const icsAnnouncements=await asUser(5,"SELECT title FROM announcements ORDER BY title");
  assert.deepEqual(icsAnnouncements.map(row=>row.title),['Campus Notice','ICS Notice']);checks++;
  const att=status=>`INSERT INTO attendance(student_id,assignment_id,attendance_date,time_in,verification_status,time_in_selfie_path) VALUES ('${id(11)}','${id(30)}','2026-10-08','2026-10-08 08:00+08','${status}','${id(11)}/time-in.jpg')`;

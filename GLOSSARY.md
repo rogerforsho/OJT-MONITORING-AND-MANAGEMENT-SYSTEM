@@ -35,3 +35,11 @@ _Avoid_: Student account registration (when referring to pre-deployment submissi
 **Pre-deployment Review**:
 A review of a student's submitted pre-deployment requirements to determine whether they are ready for placement.
 _Avoid_: Account review
+
+**Eligible Coordinator–Supervisor Pair**:
+An active Coordinator and active Supervisor where the Coordinator’s department matches the course department of at least one of the Supervisor’s active student placements.
+_Avoid_: Direct assignment (there is no direct Coordinator-to-Supervisor assignment)
+
+**Conversation**:
+The single ongoing private message thread shared by one eligible Coordinator–Supervisor pair. It remains available as read-only history while the pair has no active matching placement.
+_Avoid_: Trainee-specific chat

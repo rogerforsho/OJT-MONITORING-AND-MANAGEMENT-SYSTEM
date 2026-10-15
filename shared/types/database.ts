@@ -183,6 +183,7 @@ export interface DbNotification {
   message: string;
   notification_date: string;
   status: NotificationStatus;
+  related_conversation_id?: string | null;
 }
 
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed';

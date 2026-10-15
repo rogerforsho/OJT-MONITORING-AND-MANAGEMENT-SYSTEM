@@ -6,13 +6,13 @@ const KNOWN_PATHS = new Set([
   '/', '/admin', '/api/registration/id-card', '/auth/callback', '/auth/pending',
   '/auth/register', '/auth/reset-password', '/auth/sign-in',
   '/coordinator/approvals', '/coordinator/assignments', '/coordinator/companies',
-  '/coordinator/progress', '/coordinator/students', '/coordinator/submissions',
+  '/coordinator/progress', '/coordinator/students', '/coordinator/submissions', '/coordinator/messages', '/coordinator/notifications',
   '/coordinator/supervisors', '/dashboard', '/health', '/map', '/program-head',
   '/program-head/reports', '/ready', '/robots.txt', '/settings', '/sitemap.xml',
   '/student/attendance', '/student/certificate', '/student/evaluation-summary',
   '/student/notifications', '/student/progress', '/student/reports',
   '/supervisor/attendance', '/supervisor/evaluations', '/supervisor/reports',
-  '/supervisor/students', '/verify-certificate', '/verify-certificate/search',
+  '/supervisor/students', '/supervisor/messages', '/supervisor/notifications', '/verify-certificate', '/verify-certificate/search',
 ]);
 
 function isKnownPath(path: string) {
@@ -171,7 +171,13 @@ export async function middleware(request: NextRequest) {
     if (path.startsWith('/coordinator') && !['Coordinator', 'Admin'].includes(role) && !programHeadWorkflow) {
       return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
+    if ((path === '/coordinator/messages' || path === '/coordinator/notifications') && role !== 'Coordinator') {
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
+    }
     if (path.startsWith('/supervisor') && !['CompanySupervisor', 'Supervisor', 'Admin'].includes(role)) {
+      return redirectToPath(request, '/dashboard?reason=unauthorized');
+    }
+    if ((path === '/supervisor/messages' || path === '/supervisor/notifications') && role !== 'Supervisor') {
       return redirectToPath(request, '/dashboard?reason=unauthorized');
     }
     if (path.startsWith('/program-head') && !['ProgramHead', 'Admin'].includes(role)) {

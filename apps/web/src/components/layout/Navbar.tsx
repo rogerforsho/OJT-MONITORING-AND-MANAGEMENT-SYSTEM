@@ -13,6 +13,7 @@ import {
 } from '@/src/components/ui/Icons';
 import SignOutButton from '@/src/components/layout/SignOutButton';
 import ThemeToggle from '@/src/components/theme/ThemeToggle';
+import StaffNotificationBell from '@/src/components/notifications/StaffNotificationBell';
 
 interface NavbarProps {
   user: AuthUser;
@@ -29,6 +30,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/student/evaluation-summary': 'Performance Evaluation Summary',
   '/student/notifications': 'Broadcasts & Alerts',
   '/coordinator/approvals': 'Trainee Approvals',
+  '/coordinator/messages': 'Messages',
+  '/coordinator/notifications': 'Notifications',
   '/coordinator/students': 'Trainee Roster',
   '/coordinator/companies': 'Partner Companies (HTEs)',
   '/coordinator/supervisors': 'Company Supervisors',
@@ -36,6 +39,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/coordinator/submissions': 'Report Submissions',
   '/coordinator/progress': 'Cohort Monitoring',
   '/supervisor/students': 'Assigned Interns',
+  '/supervisor/messages': 'Messages',
+  '/supervisor/notifications': 'Notifications',
   '/supervisor/attendance': 'Attendance Verification',
   '/supervisor/reports': 'Trainee Weekly Reports',
   '/supervisor/evaluations': 'Performance Evaluations',
@@ -124,6 +129,8 @@ export default function Navbar({ user, isMenuOpen = false, onMenuToggle }: Navba
             <Bell className="w-4 h-4" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900" />
           </Link>
+        ) : user.role === 'Coordinator' || user.role === 'Supervisor' ? (
+          <StaffNotificationBell userId={user.user_id} role={user.role} />
         ) : (
           <div
             className="p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"

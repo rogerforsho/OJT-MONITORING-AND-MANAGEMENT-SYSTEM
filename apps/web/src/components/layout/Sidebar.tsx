@@ -23,6 +23,7 @@ import {
   Settings,
   ShieldCheck,
   MapPin,
+  MessagesSquare,
   type IconProps,
 } from '@/src/components/ui/Icons';
 
@@ -52,12 +53,16 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: 'Assignments', href: '/coordinator/assignments', icon: FileSignature },
     { label: 'Submissions', href: '/coordinator/submissions', icon: ClipboardCheck },
     { label: 'Progress', href: '/coordinator/progress', icon: BarChart3 },
+    { label: 'Messages', href: '/coordinator/messages', icon: MessagesSquare },
+    { label: 'Notifications', href: '/coordinator/notifications', icon: Bell },
   ],
   Supervisor: [
     { label: 'My Students', href: '/supervisor/students', icon: Users },
     { label: 'Attendance', href: '/supervisor/attendance', icon: Clock },
     { label: 'Weekly Reports', href: '/supervisor/reports', icon: FileText },
     { label: 'Evaluations', href: '/supervisor/evaluations', icon: Star },
+    { label: 'Messages', href: '/supervisor/messages', icon: MessagesSquare },
+    { label: 'Notifications', href: '/supervisor/notifications', icon: Bell },
   ],
   ProgramHead: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
